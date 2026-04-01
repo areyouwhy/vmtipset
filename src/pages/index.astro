@@ -340,40 +340,22 @@
 				display: grid;
 				grid-template-columns: 48px 1fr 80px;
 				align-items: center;
-				padding: 0;
 				margin-bottom: 2px;
 				cursor: pointer;
 				border-radius: 4px;
 				overflow: hidden;
-				position: relative;
-				transition: transform 0.15s ease;
-			}
-
-			.lb-row::before {
-				content: '';
-				position: absolute;
-				inset: 0;
 				background: var(--card);
-				z-index: 0;
-				transition: background 0.2s ease;
+				transition: transform 0.15s ease, background 0.2s ease;
 			}
 
 			.lb-row:hover {
 				transform: scale(1.01);
-			}
-
-			.lb-row:hover::before {
 				background: #172033;
 			}
 
-			.lb-row.selected::before {
+			.lb-row.selected {
 				background: #172033;
 				border-left: 3px solid var(--yellow);
-			}
-
-			.lb-row > * {
-				position: relative;
-				z-index: 1;
 			}
 
 			.lb-pos {
