@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 const API_BASE = 'https://api-manager.aftonbladet.se';
 
 // TODO: Replace with VM-elvan 2026 competition ID when available
-const COMPETITION_ID = 667074; // Allsvenskan 2026 "Bönas ligan" for testing
+const COMPETITION_ID = 666201; // PL Spring 2026 "Alla experter samlade" for testing
 
 interface FantasyTeamValue {
   round: number;
