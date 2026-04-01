@@ -1,12 +1,11 @@
 import type { APIRoute } from 'astro';
 import QRCode from 'qrcode';
 
-const SWISH_DATA = JSON.stringify({
-  format: '1',
-  payee: { value: '0703064211' },
-  amount: { value: 300 },
-  message: { value: 'La Copa del Mundo 2026' },
-});
+// Swish C2B QR format: C<payee>;<amount>;<message>;<lock_mask>
+// Amount uses comma as decimal separator per spec.
+// Lock mask 0 = all fields locked (payee bit 0, amount bit 1, message bit 2).
+// See: Guide Swish QR Code specification v1.7.2, section 6.1
+const SWISH_DATA = 'C0703064211;300,00;La Copa del Mundo 2026;0';
 
 export const GET: APIRoute = async () => {
   const png = await QRCode.toBuffer(SWISH_DATA, {
