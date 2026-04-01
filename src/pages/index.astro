@@ -231,20 +231,79 @@
 			}
 
 			/* ---- LEADERBOARD ---- */
-			.leaderboard-soon {
+			.leaderboard-loading {
 				background: var(--card);
-				padding: 4rem 2rem;
+				padding: 3rem 2rem;
 				text-align: center;
+				color: var(--muted);
 			}
 
-			.leaderboard-soon .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
-			.leaderboard-soon p { color: var(--muted); }
+			.leaderboard-table {
+				width: 100%;
+				border-collapse: collapse;
+			}
 
-			.leaderboard-soon .date {
+			.leaderboard-table th {
 				font-family: 'Oswald', sans-serif;
-				font-size: 1.3rem;
-				color: var(--yellow);
-				margin-top: 0.4rem;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+				font-size: 0.8rem;
+				color: var(--muted);
+				padding: 0.75rem 1rem;
+				text-align: left;
+				border-bottom: 1px solid rgba(255,255,255,0.08);
+			}
+
+			.leaderboard-table th:last-child,
+			.leaderboard-table td:last-child {
+				text-align: right;
+			}
+
+			.leaderboard-table td {
+				padding: 0.7rem 1rem;
+				border-bottom: 1px solid rgba(255,255,255,0.04);
+				font-size: 0.95rem;
+			}
+
+			.leaderboard-table tr:hover td {
+				background: rgba(255,255,255,0.02);
+			}
+
+			.leaderboard-table .pos {
+				font-family: 'Oswald', sans-serif;
+				font-weight: 700;
+				color: var(--muted);
+				width: 2.5rem;
+			}
+
+			.leaderboard-table tr:nth-child(1) .pos { color: var(--yellow); }
+			.leaderboard-table tr:nth-child(2) .pos { color: var(--celeste); }
+			.leaderboard-table tr:nth-child(3) .pos { color: #cd7f32; }
+
+			.leaderboard-table .team-name {
+				font-weight: 600;
+			}
+
+			.leaderboard-table .manager-name {
+				color: var(--muted);
+				font-size: 0.85rem;
+			}
+
+			.leaderboard-table .growth {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.05rem;
+				font-weight: 600;
+			}
+
+			.leaderboard-table .growth.positive { color: #4ade80; }
+			.leaderboard-table .growth.zero { color: var(--muted); }
+
+			.leaderboard-info {
+				margin-top: 1rem;
+				font-size: 0.8rem;
+				color: var(--muted);
+				opacity: 0.6;
+				text-align: right;
 			}
 
 			/* ---- TIKTOKS ---- */
@@ -366,14 +425,58 @@
 
 		<hr class="divider" />
 
-		<section class="section">
+		<section class="section" id="leaderboard">
 			<h2>Ställning</h2>
-			<div class="leaderboard-soon">
-				<div class="icon">&#9917;</div>
-				<p>Turneringen har inte börjat än.</p>
-				<p class="date">Avspark 11 juni 2026</p>
+			<p class="section-intro">Live från Aftonbladet Manager.</p>
+			<div id="leaderboard-container">
+				<div class="leaderboard-loading">Laddar ställning...</div>
 			</div>
 		</section>
+
+		<script>
+			async function loadLeaderboard() {
+				const container = document.getElementById('leaderboard-container');
+				try {
+					const res = await fetch('/api/leaderboard');
+					if (!res.ok) throw new Error('API error');
+					const data = await res.json();
+
+					if (!data.leaderboard || data.leaderboard.length === 0) {
+						container.innerHTML = '<div class="leaderboard-loading">Inga lag registrerade ännu.</div>';
+						return;
+					}
+
+					const rows = data.leaderboard.map(entry => {
+						const growthVal = entry.growth / 1000000;
+						const growthClass = growthVal > 0 ? 'positive' : 'zero';
+						const growthText = growthVal > 0 ? '+' + growthVal.toFixed(1) + 'M' : '0';
+						return '<tr>' +
+							'<td class="pos">' + entry.position + '</td>' +
+							'<td><span class="team-name">' + escapeHtml(entry.teamName) + '</span><br>' +
+							'<span class="manager-name">' + escapeHtml(entry.manager) + '</span></td>' +
+							'<td class="growth ' + growthClass + '">' + growthText + '</td>' +
+							'</tr>';
+					}).join('');
+
+					container.innerHTML =
+						'<table class="leaderboard-table">' +
+						'<thead><tr><th>#</th><th>Lag</th><th>Poäng</th></tr></thead>' +
+						'<tbody>' + rows + '</tbody>' +
+						'</table>' +
+						'<p class="leaderboard-info">' + data.count + ' lag &bull; Uppdateras live</p>';
+				} catch (e) {
+					container.innerHTML = '<div class="leaderboard-loading">Kunde inte ladda ställningen.</div>';
+				}
+			}
+
+			function escapeHtml(text) {
+				const div = document.createElement('div');
+				div.textContent = text;
+				return div.innerHTML;
+			}
+
+			loadLeaderboard();
+		</script>
 
 		<hr class="divider" />
 
