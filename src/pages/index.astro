@@ -752,6 +752,67 @@
 			.h2h-summary .total { font-weight: 700; font-size: 1.1rem; }
 			.h2h-summary .wins { color: var(--muted); font-size: 0.8rem; }
 
+			/* ---- LINE CHART ---- */
+			.line-chart-wrap {
+				margin-top: 8px;
+				margin-bottom: 8px;
+			}
+
+			.line-chart-wrap svg {
+				width: 100%;
+				height: auto;
+				display: block;
+			}
+
+			.line-chart-wrap .chart-line {
+				fill: none;
+				stroke-width: 2.5;
+				stroke-linecap: round;
+				stroke-linejoin: round;
+			}
+
+			.line-chart-wrap .chart-dot {
+				stroke-width: 2;
+			}
+
+			.line-chart-wrap .chart-area {
+				opacity: 0.08;
+			}
+
+			.line-chart-wrap .chart-grid {
+				stroke: rgba(255,255,255,0.04);
+				stroke-width: 1;
+			}
+
+			.line-chart-wrap .chart-label {
+				fill: var(--muted);
+				font-family: 'Oswald', sans-serif;
+				font-size: 9px;
+			}
+
+			.chart-legend {
+				display: flex;
+				gap: 16px;
+				justify-content: center;
+				margin-top: 8px;
+				font-size: 0.75rem;
+				color: var(--muted);
+			}
+
+			.chart-legend span::before {
+				content: '';
+				display: inline-block;
+				width: 12px;
+				height: 3px;
+				border-radius: 2px;
+				margin-right: 6px;
+				vertical-align: middle;
+			}
+
+			.chart-legend .leg-a::before { background: var(--yellow); }
+			.chart-legend .leg-b::before { background: var(--celeste); }
+			.chart-legend .leg-single::before { background: var(--yellow); }
+
 			/* ---- TRADES ---- */
 			.tp-trade {
 				display: flex;
@@ -1132,13 +1193,92 @@
 							}).join('') + '</div>';
 					}
 
+					// Build cumulative growth chart
+					var chartHtml = '';
+					if (data.rounds && data.rounds.length > 1) {
+						var cumulative = 0;
+						var cumPoints = data.rounds.map(function(r) {
+							cumulative += r.growth;
+							return { x: r.round, y: cumulative };
+						});
+						chartHtml = '<div class="tp-section"><div class="tp-section-title">Utveckling</div>' +
+							'<div class="line-chart-wrap">' +
+							buildLineChart([{ label: data.name, color: '#fecc02', points: cumPoints }], { width: 400, height: 140 }) +
+							'</div></div>';
+					}
+
 					panel.innerHTML =
 						'<div class="tp-header"><h3>' + escapeHtml(data.name) + '</h3>' +
 						'<div class="tp-manager">' + escapeHtml(data.manager) + '</div></div>' +
-						playersHtml + roundsHtml + tradesHtml;
+						chartHtml + playersHtml + roundsHtml + tradesHtml;
 				} catch (e) {
 					panel.innerHTML = '<div class="tp-loading">Kunde inte ladda laget.</div>';
 				}
+			}
+
+			function buildLineChart(series, opts) {
+				// series: [{label, color, points: [{x, y}]}]
+				// opts: {width, height, padX, padY}
+				var W = opts.width || 400;
+				var H = opts.height || 150;
+				var pX = opts.padX || 36;
+				var pY = opts.padY || 20;
+				var chartW = W - pX * 2;
+				var chartH = H - pY * 2;
+
+				var allPoints = [];
+				series.forEach(function(s) { allPoints = allPoints.concat(s.points); });
+				if (allPoints.length === 0) return '';
+
+				var minX = Math.min.apply(null, allPoints.map(function(p) { return p.x; }));
+				var maxX = Math.max.apply(null, allPoints.map(function(p) { return p.x; }));
+				var minY = Math.min.apply(null, allPoints.map(function(p) { return p.y; }));
+				var maxY = Math.max.apply(null, allPoints.map(function(p) { return p.y; }));
+				if (minY === maxY) { minY -= 1; maxY += 1; }
+				var rangeX = maxX - minX || 1;
+				var rangeY = maxY - minY;
+
+				function sx(v) { return pX + ((v - minX) / rangeX) * chartW; }
+				function sy(v) { return pY + chartH - ((v - minY) / rangeY) * chartH; }
+
+				var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+				// Grid lines (horizontal)
+				var gridSteps = 4;
+				for (var g = 0; g <= gridSteps; g++) {
+					var gy = pY + (g / gridSteps) * chartH;
+					var gVal = maxY - (g / gridSteps) * rangeY;
+					svg += '<line class="chart-grid" x1="' + pX + '" y1="' + gy + '" x2="' + (W - pX) + '" y2="' + gy + '"/>';
+					svg += '<text class="chart-label" x="' + (pX - 4) + '" y="' + (gy + 3) + '" text-anchor="end">' + (gVal / 1000000).toFixed(1) + '</text>';
+				}
+
+				// X labels
+				series[0].points.forEach(function(p) {
+					svg += '<text class="chart-label" x="' + sx(p.x) + '" y="' + (H - 4) + '" text-anchor="middle">' + p.x + '</text>';
+				});
+
+				// Lines + areas + dots
+				series.forEach(function(s) {
+					if (s.points.length < 2) return;
+					var sorted = s.points.slice().sort(function(a, b) { return a.x - b.x; });
+					var pathD = sorted.map(function(p, i) { return (i === 0 ? 'M' : 'L') + sx(p.x).toFixed(1) + ',' + sy(p.y).toFixed(1); }).join(' ');
+
+					// Area fill
+					var areaD = pathD + ' L' + sx(sorted[sorted.length-1].x).toFixed(1) + ',' + sy(minY).toFixed(1) +
+						' L' + sx(sorted[0].x).toFixed(1) + ',' + sy(minY).toFixed(1) + ' Z';
+					svg += '<path class="chart-area" d="' + areaD + '" fill="' + s.color + '"/>';
+
+					// Line
+					svg += '<path class="chart-line" d="' + pathD + '" stroke="' + s.color + '"/>';
+
+					// Dots
+					sorted.forEach(function(p) {
+						svg += '<circle class="chart-dot" cx="' + sx(p.x).toFixed(1) + '" cy="' + sy(p.y).toFixed(1) + '" r="3" fill="' + s.color + '" stroke="var(--bg)"/>';
+					});
+				});
+
+				svg += '</svg>';
+				return svg;
 			}
 
 			function escapeHtml(text) {
@@ -1232,7 +1372,27 @@
 				var totalA = (teamA.totalGrowth / 1000000).toFixed(2);
 				var totalB = (teamB.totalGrowth / 1000000).toFixed(2);
 
+				// Build cumulative H2H chart
+				var cumA = 0, cumB = 0;
+				var ptsA = [], ptsB = [];
+				for (var ci = 0; ci < maxRounds; ci++) {
+					var crA = teamA.rounds[ci] || { round: ci + 1, growth: 0 };
+					var crB = teamB.rounds[ci] || { round: ci + 1, growth: 0 };
+					cumA += crA.growth; cumB += crB.growth;
+					ptsA.push({ x: crA.round, y: cumA });
+					ptsB.push({ x: crB.round, y: cumB });
+				}
+
+				var h2hChart = '<div class="line-chart-wrap">' +
+					buildLineChart([
+						{ label: teamA.name, color: '#fecc02', points: ptsA },
+						{ label: teamB.name, color: '#75aadb', points: ptsB }
+					], { width: 500, height: 180 }) +
+					'<div class="chart-legend"><span class="leg-a">' + escapeHtml(teamA.name) + '</span><span class="leg-b">' + escapeHtml(teamB.name) + '</span></div>' +
+					'</div>';
+
 				result.innerHTML =
+					h2hChart +
 					'<div class="h2h-rounds">' + rows + '</div>' +
 					'<div class="h2h-summary">' +
 					'<div><div class="total">+' + totalA + 'M</div><div class="wins">' + winsA + ' vunna omgångar</div></div>' +
