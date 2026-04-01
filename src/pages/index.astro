@@ -1,0 +1,403 @@
+---
+
+---
+
+<html lang="sv">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>La Copa del Mundo 2026</title>
+		<style>
+			@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+
+			:root {
+				--bg: #0a0e14;
+				--card: #111825;
+				--text: #f0f0f0;
+				--muted: #8a9ab5;
+				--yellow: #fecc02;
+				--celeste: #75aadb;
+			}
+
+			* { margin: 0; padding: 0; box-sizing: border-box; }
+			html { scroll-behavior: smooth; }
+
+			body {
+				font-family: 'Inter', system-ui, sans-serif;
+				background: var(--bg);
+				color: var(--text);
+				line-height: 1.6;
+			}
+
+			h1, h2, h3 {
+				font-family: 'Oswald', sans-serif;
+				text-transform: uppercase;
+			}
+
+			/* ---- HERO ---- */
+			.hero {
+				position: relative;
+				height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				text-align: center;
+				overflow: hidden;
+			}
+
+			.hero-bg {
+				position: absolute;
+				inset: 0;
+				background: url('/hero.jpg') center center / cover no-repeat;
+				filter: brightness(0.3) saturate(1.2);
+			}
+
+			.hero-overlay {
+				position: absolute;
+				inset: 0;
+				background: linear-gradient(
+					to bottom,
+					rgba(10, 14, 20, 0.2) 0%,
+					rgba(10, 14, 20, 0.1) 50%,
+					rgba(10, 14, 20, 0.9) 90%,
+					rgba(10, 14, 20, 1) 100%
+				);
+			}
+
+			.hero-content {
+				position: relative;
+				z-index: 1;
+				padding: 2rem;
+			}
+
+			.hero h1 {
+				font-size: clamp(2.5rem, 8vw, 5.5rem);
+				font-weight: 700;
+				line-height: 1;
+				letter-spacing: 0.03em;
+				margin-bottom: 1rem;
+			}
+
+			.hero .sub {
+				font-family: 'Oswald', sans-serif;
+				font-size: clamp(1rem, 2.5vw, 1.4rem);
+				text-transform: uppercase;
+				letter-spacing: 0.15em;
+				color: var(--muted);
+				margin-bottom: 3rem;
+				font-style: italic;
+			}
+
+			.cta {
+				display: inline-block;
+				padding: 1rem 2.5rem;
+				background: var(--yellow);
+				color: var(--bg);
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.15rem;
+				font-weight: 700;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+				text-decoration: none;
+				transition: all 0.2s;
+			}
+
+			.cta:hover {
+				background: #fff;
+				transform: translateY(-2px);
+				box-shadow: 0 8px 30px rgba(245, 197, 24, 0.2);
+			}
+
+			/* ---- SECTIONS ---- */
+			.section {
+				padding: 5rem 2rem;
+				max-width: 800px;
+				margin: 0 auto;
+			}
+
+			.section h2 {
+				font-size: 2rem;
+				margin-bottom: 0.5rem;
+				color: var(--yellow);
+			}
+
+			.section-intro {
+				color: var(--muted);
+				margin-bottom: 2rem;
+			}
+
+			/* ---- STEPS ---- */
+			.steps { display: grid; gap: 1.25rem; }
+
+			.step {
+				display: flex;
+				gap: 1.5rem;
+				align-items: flex-start;
+				background: var(--card);
+				padding: 1.75rem;
+				border-left: 3px solid var(--celeste);
+			}
+
+			.step-num {
+				font-family: 'Oswald', sans-serif;
+				font-size: 2.2rem;
+				font-weight: 700;
+				color: var(--celeste);
+				line-height: 1;
+				flex-shrink: 0;
+				width: 2rem;
+				text-align: center;
+			}
+
+			.step h3 { font-size: 1.1rem; margin-bottom: 0.3rem; }
+			.step p { color: var(--muted); }
+			.step strong { color: var(--text); }
+
+			/* ---- PRIZES ---- */
+			.prizes {
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				gap: 1.25rem;
+				margin-bottom: 1.25rem;
+			}
+
+			.prize {
+				background: var(--card);
+				padding: 1.75rem 1.25rem;
+				text-align: center;
+			}
+
+			.prize-place {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.3rem;
+				font-weight: 700;
+				margin-bottom: 0.2rem;
+			}
+
+			.prize:nth-child(1) .prize-place { color: var(--yellow); }
+			.prize:nth-child(2) .prize-place { color: var(--celeste); }
+			.prize:nth-child(3) .prize-place { color: #cd7f32; }
+
+			.prize:nth-child(1) { border-top: 3px solid var(--yellow); }
+			.prize:nth-child(2) { border-top: 3px solid var(--celeste); }
+			.prize:nth-child(3) { border-top: 3px solid #cd7f32; }
+
+			.prize-pct {
+				font-family: 'Oswald', sans-serif;
+				font-size: 2.8rem;
+				font-weight: 700;
+				line-height: 1;
+			}
+
+			.prize-label { color: var(--muted); font-size: 0.85rem; }
+
+			.prize-example {
+				background: var(--card);
+				padding: 1.1rem;
+				color: var(--muted);
+				text-align: center;
+				font-size: 0.9rem;
+			}
+
+			.prize-example strong { color: var(--text); }
+
+			/* ---- PARTICIPANTS ---- */
+			.participants-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+				gap: 0.6rem;
+			}
+
+			.participant {
+				background: var(--card);
+				padding: 0.8rem 1rem;
+				display: flex;
+				align-items: center;
+				gap: 0.7rem;
+				font-weight: 500;
+			}
+
+			.participant .num {
+				font-family: 'Oswald', sans-serif;
+				color: var(--celeste);
+				font-weight: 600;
+			}
+
+			.participant.empty {
+				opacity: 0.2;
+				border: 1px dashed var(--muted);
+				background: transparent;
+			}
+
+			/* ---- LEADERBOARD ---- */
+			.leaderboard-soon {
+				background: var(--card);
+				padding: 4rem 2rem;
+				text-align: center;
+			}
+
+			.leaderboard-soon .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+			.leaderboard-soon p { color: var(--muted); }
+
+			.leaderboard-soon .date {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.3rem;
+				color: var(--yellow);
+				margin-top: 0.4rem;
+			}
+
+			/* ---- TIKTOKS ---- */
+			.tiktoks {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+				gap: 1.5rem;
+				justify-items: center;
+			}
+
+			/* ---- DIVIDER ---- */
+			.divider {
+				max-width: 800px;
+				margin: 0 auto;
+				border: none;
+				border-top: 1px solid rgba(255,255,255,0.05);
+			}
+
+			/* ---- FOOTER ---- */
+			footer {
+				text-align: center;
+				padding: 3rem 2rem;
+				border-top: 1px solid rgba(255,255,255,0.05);
+				color: var(--muted);
+				font-size: 0.85rem;
+			}
+
+			footer strong { color: var(--text); }
+
+			@media (max-width: 640px) {
+				.prizes { grid-template-columns: 1fr; }
+				.step { flex-direction: column; gap: 0.5rem; }
+				.section { padding: 3rem 1.25rem; }
+				.tiktoks { grid-template-columns: 1fr; }
+			}
+		</style>
+	</head>
+	<body>
+
+		<section class="hero">
+			<div class="hero-bg"></div>
+			<div class="hero-overlay"></div>
+			<div class="hero-content">
+				<h1>La Copa del Mundo 2026</h1>
+				<p class="sub">En mot en, alla mot alla</p>
+				<a href="#how" class="cta">Secure your spot</a>
+			</div>
+		</section>
+
+		<section class="section" id="how">
+			<h2>Så funkar det</h2>
+			<p class="section-intro">Tre steg, sen är du med.</p>
+			<div class="steps">
+				<div class="step">
+					<div class="step-num">1</div>
+					<div>
+						<h3>Skapa ditt lag</h3>
+						<p>Gå till Aftonbladets <strong>VM-elvan</strong> och skapa ditt lag. Välj spelare, sätt din startelva, och tävla baserat på verklig matchstatistik.</p>
+					</div>
+				</div>
+				<div class="step">
+					<div class="step-num">2</div>
+					<div>
+						<h3>Swisha 300 kr</h3>
+						<p>Skicka <strong>300 kr</strong> till Ruy via Swish: <strong>+46 70 306 42 11</strong>. Skriv ditt VM-elvan-lagnamn i meddelandet.</p>
+					</div>
+				</div>
+				<div class="step">
+					<div class="step-num">3</div>
+					<div>
+						<h3>Du är med!</h3>
+						<p>När vi fått ditt lagnamn och betalning dyker du upp i deltagarlistan. Avspark <strong>11 juni</strong>.</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<hr class="divider" />
+
+		<section class="section">
+			<h2>Potten</h2>
+			<p class="section-intro">Vinnaren tar nästan allt.</p>
+			<div class="prizes">
+				<div class="prize">
+					<div class="prize-place">1:a</div>
+					<div class="prize-pct">85%</div>
+					<div class="prize-label">av potten</div>
+				</div>
+				<div class="prize">
+					<div class="prize-place">2:a</div>
+					<div class="prize-pct">10%</div>
+					<div class="prize-label">av potten</div>
+				</div>
+				<div class="prize">
+					<div class="prize-place">3:a</div>
+					<div class="prize-pct">5%</div>
+					<div class="prize-label">av potten</div>
+				</div>
+			</div>
+			<div class="prize-example">
+				Med <strong>30 spelare</strong> = pott <strong>9 000 kr</strong>: 1:a &rarr; 7 650 kr &bull; 2:a &rarr; 900 kr &bull; 3:a &rarr; 450 kr
+			</div>
+		</section>
+
+		<hr class="divider" />
+
+		<section class="section">
+			<h2>Deltagare</h2>
+			<p class="section-intro">Betalda och bekräftade.</p>
+			<div class="participants-grid">
+				<div class="participant"><span class="num">01</span> Ruy</div>
+				<div class="participant empty"><span class="num">02</span> Din plats?</div>
+				<div class="participant empty"><span class="num">03</span> Din plats?</div>
+				<div class="participant empty"><span class="num">04</span> Din plats?</div>
+				<div class="participant empty"><span class="num">05</span> Din plats?</div>
+				<div class="participant empty"><span class="num">06</span> Din plats?</div>
+			</div>
+		</section>
+
+		<hr class="divider" />
+
+		<section class="section">
+			<h2>Ställning</h2>
+			<div class="leaderboard-soon">
+				<div class="icon">&#9917;</div>
+				<p>Turneringen har inte börjat än.</p>
+				<p class="date">Avspark 11 juni 2026</p>
+			</div>
+		</section>
+
+		<hr class="divider" />
+
+		<section class="section">
+			<h2>VM-hype</h2>
+			<p class="section-intro">Stämningen inför turneringen.</p>
+			<div class="tiktoks">
+				<blockquote class="tiktok-embed" cite="https://www.tiktok.com/@antonyg02/video/7623206243003370773" data-video-id="7623206243003370773" data-embed-from="oembed" style="max-width:605px; min-width:300px;">
+					<section><a target="_blank" href="https://www.tiktok.com/@antonyg02?refer=embed">@antonyg02</a></section>
+				</blockquote>
+				<blockquote class="tiktok-embed" cite="https://www.tiktok.com/@classicftbal/video/7623764887390424342" data-video-id="7623764887390424342" data-embed-from="oembed" style="max-width:605px; min-width:300px;">
+					<section><a target="_blank" href="https://www.tiktok.com/@classicftbal?refer=embed">@classicftbal</a></section>
+				</blockquote>
+				<blockquote class="tiktok-embed" cite="https://www.tiktok.com/@rk.teamsport/video/7620575248575941910" data-video-id="7620575248575941910" data-embed-from="oembed" style="max-width:605px; min-width:300px;">
+					<section><a target="_blank" href="https://www.tiktok.com/@rk.teamsport?refer=embed">@rk.teamsport</a></section>
+				</blockquote>
+			</div>
+		</section>
+
+		<footer>
+			<p style="margin-bottom: 0.5rem;">Swish <strong>300 kr</strong> till <strong>+46 70 306 42 11</strong> (Ruy)</p>
+			<p>La Copa del Mundo 2026</p>
+		</footer>
+
+		<script async src="https://www.tiktok.com/embed.js"></script>
+	</body>
+</html>
