@@ -375,6 +375,119 @@
 				text-align: right;
 			}
 
+			.leaderboard-table tr { cursor: pointer; }
+
+			.leaderboard-pages {
+				display: flex;
+				justify-content: center;
+				gap: 0.5rem;
+				margin-top: 1.25rem;
+			}
+
+			.leaderboard-pages button {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1rem;
+				padding: 0.5rem 1rem;
+				background: var(--card);
+				color: var(--muted);
+				border: 1px solid rgba(255,255,255,0.08);
+				cursor: pointer;
+				transition: all 0.2s;
+			}
+
+			.leaderboard-pages button:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+			.leaderboard-pages button.active { color: var(--yellow); border-color: var(--yellow); }
+			.leaderboard-pages button:disabled { opacity: 0.3; cursor: default; }
+
+			/* ---- TEAM MODAL ---- */
+			.modal-overlay {
+				display: none;
+				position: fixed;
+				inset: 0;
+				background: rgba(0,0,0,0.8);
+				z-index: 100;
+				align-items: center;
+				justify-content: center;
+				padding: 2rem;
+			}
+
+			.modal-overlay.open { display: flex; }
+
+			.modal {
+				background: var(--bg);
+				border: 1px solid rgba(255,255,255,0.08);
+				max-width: 500px;
+				width: 100%;
+				max-height: 80vh;
+				overflow-y: auto;
+				padding: 2rem;
+			}
+
+			.modal-close {
+				float: right;
+				background: none;
+				border: none;
+				color: var(--muted);
+				font-size: 1.5rem;
+				cursor: pointer;
+				line-height: 1;
+			}
+
+			.modal-close:hover { color: var(--text); }
+
+			.modal h3 {
+				font-size: 1.4rem;
+				margin-bottom: 0.25rem;
+			}
+
+			.modal .modal-manager {
+				color: var(--muted);
+				font-size: 0.9rem;
+				margin-bottom: 1.5rem;
+			}
+
+			.modal h4 {
+				font-size: 0.85rem;
+				color: var(--muted);
+				letter-spacing: 0.1em;
+				margin-bottom: 0.75rem;
+			}
+
+			.modal-player {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 0.5rem 0;
+				border-bottom: 1px solid rgba(255,255,255,0.04);
+				font-size: 0.95rem;
+			}
+
+			.modal-player .captain { color: var(--yellow); font-size: 0.75rem; margin-left: 0.4rem; }
+			.modal-player .club { color: var(--muted); font-size: 0.85rem; }
+
+			.modal-rounds {
+				margin-top: 1.5rem;
+			}
+
+			.modal-round {
+				display: flex;
+				justify-content: space-between;
+				padding: 0.35rem 0;
+				border-bottom: 1px solid rgba(255,255,255,0.04);
+				font-size: 0.9rem;
+				color: var(--muted);
+			}
+
+			.modal-round .round-growth { font-family: 'Oswald', sans-serif; }
+			.modal-round .round-growth.positive { color: #4ade80; }
+			.modal-round .round-growth.negative { color: #f87171; }
+
+			.modal-loading {
+				text-align: center;
+				color: var(--muted);
+				padding: 2rem;
+			}
+
 			/* ---- TIKTOKS ---- */
 			.tiktoks {
 				display: grid;
@@ -571,44 +684,132 @@
 			</div>
 		</section>
 
-		<script>
-			async function loadLeaderboard() {
-				const container = document.getElementById('leaderboard-container');
-				try {
-					const res = await fetch('/api/leaderboard');
-					if (!res.ok) throw new Error('API error');
-					const data = await res.json();
+		<!-- Team detail modal -->
+		<div class="modal-overlay" id="team-modal">
+			<div class="modal">
+				<button class="modal-close" onclick="closeModal()">&times;</button>
+				<div id="modal-content">
+					<div class="modal-loading">Laddar...</div>
+				</div>
+			</div>
+		</div>
 
-					if (!data.leaderboard || data.leaderboard.length === 0) {
+		<script>
+			var PAGE_SIZE = 10;
+			var currentPage = 1;
+			var leaderboardData = [];
+
+			async function loadLeaderboard() {
+				var container = document.getElementById('leaderboard-container');
+				try {
+					var res = await fetch('/api/leaderboard');
+					if (!res.ok) throw new Error('API error');
+					var data = await res.json();
+					leaderboardData = data.leaderboard || [];
+
+					if (leaderboardData.length === 0) {
 						container.innerHTML = '<div class="leaderboard-loading">Inga lag registrerade ännu.</div>';
 						return;
 					}
 
-					const rows = data.leaderboard.map(entry => {
-						const growthVal = entry.growth / 1000000;
-						const growthClass = growthVal > 0 ? 'positive' : 'zero';
-						const growthText = growthVal > 0 ? '+' + growthVal.toFixed(1) + 'M' : '0';
-						return '<tr>' +
-							'<td class="pos">' + entry.position + '</td>' +
-							'<td><span class="team-name">' + escapeHtml(entry.teamName) + '</span><br>' +
-							'<span class="manager-name">' + escapeHtml(entry.manager) + '</span></td>' +
-							'<td class="growth ' + growthClass + '">' + growthText + '</td>' +
-							'</tr>';
-					}).join('');
-
-					container.innerHTML =
-						'<table class="leaderboard-table">' +
-						'<thead><tr><th>#</th><th>Lag</th><th>Poäng</th></tr></thead>' +
-						'<tbody>' + rows + '</tbody>' +
-						'</table>' +
-						'<p class="leaderboard-info">' + data.count + ' lag &bull; Uppdateras live</p>';
+					renderPage(1);
 				} catch (e) {
 					container.innerHTML = '<div class="leaderboard-loading">Kunde inte ladda ställningen.</div>';
 				}
 			}
 
+			function renderPage(page) {
+				currentPage = page;
+				var container = document.getElementById('leaderboard-container');
+				var totalPages = Math.ceil(leaderboardData.length / PAGE_SIZE);
+				var start = (page - 1) * PAGE_SIZE;
+				var pageData = leaderboardData.slice(start, start + PAGE_SIZE);
+
+				var rows = pageData.map(function(entry) {
+					var growthVal = entry.growth / 1000000;
+					var growthClass = growthVal > 0 ? 'positive' : 'zero';
+					var growthText = growthVal > 0 ? '+' + growthVal.toFixed(1) + 'M' : '0';
+					return '<tr onclick="openTeam(' + entry.teamId + ')">' +
+						'<td class="pos">' + entry.position + '</td>' +
+						'<td><span class="team-name">' + escapeHtml(entry.teamName) + '</span><br>' +
+						'<span class="manager-name">' + escapeHtml(entry.manager) + '</span></td>' +
+						'<td class="growth ' + growthClass + '">' + growthText + '</td>' +
+						'</tr>';
+				}).join('');
+
+				var pageButtons = '';
+				for (var i = 1; i <= totalPages; i++) {
+					pageButtons += '<button onclick="renderPage(' + i + ')" class="' + (i === page ? 'active' : '') + '">' + i + '</button>';
+				}
+
+				container.innerHTML =
+					'<table class="leaderboard-table">' +
+					'<thead><tr><th>#</th><th>Lag</th><th>Poäng</th></tr></thead>' +
+					'<tbody>' + rows + '</tbody>' +
+					'</table>' +
+					(totalPages > 1 ? '<div class="leaderboard-pages">' + pageButtons + '</div>' : '') +
+					'<p class="leaderboard-info">' + leaderboardData.length + ' lag &bull; Sida ' + page + ' av ' + totalPages + '</p>';
+			}
+
+			async function openTeam(teamId) {
+				var modal = document.getElementById('team-modal');
+				var content = document.getElementById('modal-content');
+				modal.classList.add('open');
+				content.innerHTML = '<div class="modal-loading">Laddar lag...</div>';
+
+				try {
+					var res = await fetch('/api/team/' + teamId);
+					if (!res.ok) throw new Error('Failed');
+					var data = await res.json();
+
+					var posNames = { 6: 'MV', 7: 'FÖR', 8: 'MF', 9: 'ANF' };
+					var playersHtml = '';
+					if (data.players && data.players.length > 0) {
+						playersHtml = '<h4>Uppställning</h4>' + data.players.map(function(p) {
+							var pos = posNames[p.position] || '';
+							var captain = p.isCaptain ? '<span class="captain">C</span>' : '';
+							return '<div class="modal-player">' +
+								'<span>' + escapeHtml(p.name) + captain + '</span>' +
+								'<span class="club">' + escapeHtml(p.clubAbbr || p.club) + ' &bull; ' + pos + '</span>' +
+								'</div>';
+						}).join('');
+					} else {
+						playersHtml = '<p style="color:var(--muted);font-size:0.9rem;">Ingen uppställning tillgänglig ännu.</p>';
+					}
+
+					var roundsHtml = '';
+					if (data.rounds && data.rounds.length > 0) {
+						roundsHtml = '<div class="modal-rounds"><h4>Poäng per omgång</h4>' +
+							data.rounds.map(function(r) {
+								var g = r.growth / 1000000;
+								var cls = g > 0 ? 'positive' : g < 0 ? 'negative' : '';
+								var text = g > 0 ? '+' + g.toFixed(2) + 'M' : g.toFixed(2) + 'M';
+								return '<div class="modal-round">' +
+									'<span>Omgång ' + r.round + '</span>' +
+									'<span class="round-growth ' + cls + '">' + text + '</span>' +
+									'</div>';
+							}).join('') + '</div>';
+					}
+
+					content.innerHTML =
+						'<h3>' + escapeHtml(data.name) + '</h3>' +
+						'<p class="modal-manager">' + escapeHtml(data.manager) + '</p>' +
+						playersHtml + roundsHtml;
+				} catch (e) {
+					content.innerHTML = '<div class="modal-loading">Kunde inte ladda laget.</div>';
+				}
+			}
+
+			function closeModal() {
+				document.getElementById('team-modal').classList.remove('open');
+			}
+
+			document.getElementById('team-modal').addEventListener('click', function(e) {
+				if (e.target === this) closeModal();
+			});
+
 			function escapeHtml(text) {
-				const div = document.createElement('div');
+				var div = document.createElement('div');
 				div.textContent = text;
 				return div.innerHTML;
 			}

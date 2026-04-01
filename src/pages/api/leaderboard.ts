@@ -75,6 +75,7 @@ export const GET: APIRoute = async () => {
 
     const leaderboard = teamResults.map((entry, i) => ({
       position: i + 1,
+      teamId: entry.team.id,
       teamName: entry.team.name,
       manager: entry.team.user.username,
       value: entry.value,
