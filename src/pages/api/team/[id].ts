@@ -51,11 +51,14 @@ export const GET: APIRoute = async ({ params }) => {
     // Sort values by round
     const sortedValues = (values as any[]).sort((a, b) => a.round - b.round);
 
+    const validPlayers = players.filter(Boolean) as NonNullable<typeof players[number]>[];
+    validPlayers.sort((a, b) => a.position - b.position);
+
     return new Response(
       JSON.stringify({
         name: team.name,
         manager: team.user?.username || team.slug,
-        players: players.filter(Boolean),
+        players: validPlayers,
         rounds: sortedValues.map((v: any) => ({
           round: v.round,
           value: v.value,

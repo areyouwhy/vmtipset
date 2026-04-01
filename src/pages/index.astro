@@ -783,7 +783,7 @@
 					if (!res.ok) throw new Error('Failed');
 					var data = await res.json();
 
-					var posNames = { 6: 'MV', 7: 'FÖR', 8: 'MF', 9: 'ANF' };
+					var posNames = { 6: 'MV', 7: 'BACK', 8: 'MITT', 9: 'ANF' };
 					var playersHtml = '';
 					if (data.players && data.players.length > 0) {
 						playersHtml = '<h4>Uppställning</h4>' + data.players.map(function(p) {
