@@ -301,37 +301,38 @@
 
 			/* ---- LEADERBOARD ---- */
 			.section-wide {
-				max-width: 1000px;
+				max-width: 1100px;
 			}
 
 			.leaderboard-layout {
 				display: grid;
-				grid-template-columns: 1fr 1fr;
-				gap: 1.5rem;
+				grid-template-columns: 1.2fr 1fr;
+				gap: 24px;
 				align-items: start;
 			}
 
 			.leaderboard-loading {
 				background: var(--card);
-				padding: 3rem 2rem;
+				border-radius: 12px;
+				padding: 48px 24px;
 				text-align: center;
 				color: var(--muted);
 			}
 
 			.leaderboard-table {
 				width: 100%;
-				border-collapse: collapse;
+				border-collapse: separate;
+				border-spacing: 0 4px;
 			}
 
 			.leaderboard-table th {
 				font-family: 'Oswald', sans-serif;
 				text-transform: uppercase;
-				letter-spacing: 0.05em;
-				font-size: 0.8rem;
+				letter-spacing: 0.08em;
+				font-size: 0.75rem;
 				color: var(--muted);
-				padding: 0.75rem 1rem;
+				padding: 8px 16px 12px;
 				text-align: left;
-				border-bottom: 1px solid rgba(255,255,255,0.08);
 			}
 
 			.leaderboard-table th:last-child,
@@ -340,168 +341,239 @@
 			}
 
 			.leaderboard-table td {
-				padding: 0.7rem 1rem;
-				border-bottom: 1px solid rgba(255,255,255,0.04);
+				padding: 14px 16px;
 				font-size: 0.95rem;
+				background: var(--card);
+				transition: all 0.2s ease;
+			}
+
+			.leaderboard-table td:first-child {
+				border-radius: 8px 0 0 8px;
+			}
+
+			.leaderboard-table td:last-child {
+				border-radius: 0 8px 8px 0;
 			}
 
 			.leaderboard-table tbody tr {
 				cursor: pointer;
-				transition: background 0.15s;
 			}
 
 			.leaderboard-table tbody tr:hover td {
-				background: rgba(117, 170, 219, 0.08);
+				background: #1e2d4a;
+				transform: translateX(4px);
 			}
 
 			.leaderboard-table tbody tr:hover .team-name {
-				color: var(--celeste);
+				color: var(--yellow);
 			}
 
 			.leaderboard-table tbody tr.selected td {
-				background: rgba(117, 170, 219, 0.12);
+				background: #1e2d4a;
+				box-shadow: inset 3px 0 0 var(--yellow);
 			}
 
 			.leaderboard-table tbody tr.selected .team-name {
-				color: var(--celeste);
+				color: var(--yellow);
 			}
 
 			.leaderboard-table .pos {
 				font-family: 'Oswald', sans-serif;
+				font-size: 1.1rem;
 				font-weight: 700;
 				color: var(--muted);
-				width: 2.5rem;
+				width: 3rem;
+				text-align: center;
 			}
 
-			.leaderboard-table tr:nth-child(1) .pos { color: var(--yellow); }
-			.leaderboard-table tr:nth-child(2) .pos { color: var(--celeste); }
-			.leaderboard-table tr:nth-child(3) .pos { color: #cd7f32; }
+			.leaderboard-table tbody tr:nth-child(1) .pos { color: var(--yellow); }
+			.leaderboard-table tbody tr:nth-child(2) .pos { color: var(--celeste); }
+			.leaderboard-table tbody tr:nth-child(3) .pos { color: #cd7f32; }
 
 			.leaderboard-table .team-name {
 				font-weight: 600;
+				font-size: 1rem;
+				transition: color 0.2s ease;
 			}
 
 			.leaderboard-table .manager-name {
 				color: var(--muted);
-				font-size: 0.85rem;
+				font-size: 0.8rem;
+				margin-top: 2px;
 			}
 
 			.leaderboard-table .growth {
 				font-family: 'Oswald', sans-serif;
-				font-size: 1.05rem;
+				font-size: 1.1rem;
 				font-weight: 600;
 			}
 
-			.leaderboard-table .growth.positive { color: #4ade80; }
+			.leaderboard-table .growth.positive { color: #22c55e; }
 			.leaderboard-table .growth.zero { color: var(--muted); }
 
 			.leaderboard-info {
-				margin-top: 1rem;
-				font-size: 0.8rem;
+				margin-top: 16px;
+				font-size: 0.75rem;
 				color: var(--muted);
-				opacity: 0.6;
+				opacity: 0.5;
 				text-align: right;
-			}
-
-			.leaderboard-table .team-name {
-				transition: color 0.15s;
+				font-family: 'Oswald', sans-serif;
+				letter-spacing: 0.05em;
+				text-transform: uppercase;
 			}
 
 			.leaderboard-pages {
 				display: flex;
 				justify-content: center;
-				gap: 0.5rem;
-				margin-top: 1.25rem;
+				gap: 8px;
+				margin-top: 20px;
 			}
 
 			.leaderboard-pages button {
 				font-family: 'Oswald', sans-serif;
-				font-size: 1rem;
-				padding: 0.5rem 1rem;
+				font-size: 0.95rem;
+				padding: 8px 16px;
 				background: var(--card);
 				color: var(--muted);
-				border: 1px solid rgba(255,255,255,0.08);
+				border: 1px solid rgba(255,255,255,0.06);
+				border-radius: 8px;
 				cursor: pointer;
-				transition: all 0.2s;
+				transition: all 0.2s ease;
 			}
 
-			.leaderboard-pages button:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
-			.leaderboard-pages button.active { color: var(--yellow); border-color: var(--yellow); }
+			.leaderboard-pages button:hover {
+				color: var(--text);
+				background: #1e2d4a;
+				border-color: rgba(255,255,255,0.12);
+			}
+
+			.leaderboard-pages button.active {
+				color: var(--bg);
+				background: var(--yellow);
+				border-color: var(--yellow);
+				font-weight: 700;
+			}
 
 			/* ---- TEAM PANEL ---- */
 			.team-panel {
 				background: var(--card);
-				padding: 1.5rem;
+				border-radius: 12px;
+				padding: 24px;
 				position: sticky;
-				top: 2rem;
+				top: 24px;
+				border: 1px solid rgba(255,255,255,0.04);
 			}
 
 			.team-panel-empty {
 				text-align: center;
 				color: var(--muted);
-				padding: 3rem 1rem;
-				font-size: 0.95rem;
+				padding: 48px 24px;
+				font-size: 0.9rem;
+				line-height: 1.6;
 			}
 
 			.team-panel-empty .arrow {
-				font-size: 1.5rem;
-				margin-bottom: 0.5rem;
+				font-size: 2rem;
+				margin-bottom: 12px;
 				display: block;
+				opacity: 0.4;
 			}
 
 			.team-panel h3 {
-				font-size: 1.3rem;
-				margin-bottom: 0.2rem;
+				font-size: 1.4rem;
+				margin-bottom: 4px;
+				letter-spacing: 0.01em;
 			}
 
 			.team-panel .tp-manager {
 				color: var(--muted);
-				font-size: 0.85rem;
-				margin-bottom: 1.25rem;
+				font-size: 0.8rem;
+				margin-bottom: 24px;
+				padding-bottom: 16px;
+				border-bottom: 1px solid rgba(255,255,255,0.06);
 			}
 
 			.team-panel h4 {
-				font-size: 0.8rem;
+				font-size: 0.7rem;
 				color: var(--muted);
-				letter-spacing: 0.1em;
-				margin-bottom: 0.5rem;
-				margin-top: 1.25rem;
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+				margin-bottom: 8px;
+				margin-top: 24px;
+			}
+
+			.team-panel h4:first-of-type {
+				margin-top: 0;
 			}
 
 			.tp-player {
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
-				padding: 0.4rem 0;
-				border-bottom: 1px solid rgba(255,255,255,0.04);
+				padding: 10px 12px;
+				margin-bottom: 4px;
+				border-radius: 6px;
 				font-size: 0.9rem;
+				transition: background 0.15s;
 			}
 
-			.tp-player .captain { color: var(--yellow); font-size: 0.7rem; margin-left: 0.3rem; }
-			.tp-player .club { color: var(--muted); font-size: 0.8rem; }
+			.tp-player:hover {
+				background: rgba(255,255,255,0.03);
+			}
+
+			.tp-player .captain {
+				color: var(--bg);
+				background: var(--yellow);
+				font-size: 0.65rem;
+				font-weight: 700;
+				font-family: 'Oswald', sans-serif;
+				margin-left: 8px;
+				padding: 1px 6px;
+				border-radius: 4px;
+				vertical-align: middle;
+			}
+
+			.tp-player .club {
+				color: var(--muted);
+				font-size: 0.8rem;
+				font-family: 'Oswald', sans-serif;
+				letter-spacing: 0.03em;
+			}
 
 			.tp-round {
 				display: flex;
 				justify-content: space-between;
-				padding: 0.3rem 0;
-				border-bottom: 1px solid rgba(255,255,255,0.04);
+				padding: 8px 12px;
+				margin-bottom: 2px;
+				border-radius: 6px;
 				font-size: 0.85rem;
 				color: var(--muted);
+				transition: background 0.15s;
 			}
 
-			.tp-round .rg { font-family: 'Oswald', sans-serif; }
-			.tp-round .rg.pos { color: #4ade80; }
-			.tp-round .rg.neg { color: #f87171; }
+			.tp-round:hover {
+				background: rgba(255,255,255,0.03);
+			}
+
+			.tp-round .rg {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.95rem;
+				font-weight: 600;
+			}
+
+			.tp-round .rg.pos { color: #22c55e; }
+			.tp-round .rg.neg { color: #ef4444; }
 
 			.tp-loading {
 				text-align: center;
 				color: var(--muted);
-				padding: 2rem;
+				padding: 48px 24px;
 			}
 
 			@media (max-width: 768px) {
 				.leaderboard-layout { grid-template-columns: 1fr; }
 				.section-wide { max-width: 800px; }
+				.leaderboard-table tbody tr:hover td { transform: none; }
 			}
 
 			/* ---- TIKTOKS ---- */
