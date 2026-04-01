@@ -154,6 +154,74 @@
 			.step p { color: var(--muted); }
 			.step strong { color: var(--text); }
 
+			/* ---- SWISH ---- */
+			.swish-box {
+				background: var(--card);
+				padding: 2.5rem 2rem;
+				text-align: center;
+			}
+
+			.swish-box h3 {
+				font-size: 1.4rem;
+				margin-bottom: 0.5rem;
+			}
+
+			.swish-box .amount {
+				font-family: 'Oswald', sans-serif;
+				font-size: 2.5rem;
+				font-weight: 700;
+				color: var(--yellow);
+				margin-bottom: 1.5rem;
+			}
+
+			.swish-qr {
+				background: #fff;
+				display: inline-block;
+				padding: 1rem;
+				border-radius: 8px;
+				margin-bottom: 1rem;
+			}
+
+			.swish-qr img {
+				display: block;
+				width: 200px;
+				height: 200px;
+			}
+
+			.swish-btn {
+				display: none;
+				margin: 0 auto 1rem;
+				padding: 1rem 2rem;
+				background: #4DAB3D;
+				color: #fff;
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.15rem;
+				font-weight: 700;
+				text-transform: uppercase;
+				letter-spacing: 0.03em;
+				text-decoration: none;
+				border-radius: 40px;
+				transition: all 0.2s;
+				width: fit-content;
+			}
+
+			.swish-btn:hover {
+				background: #3d9a2e;
+				transform: translateY(-2px);
+				box-shadow: 0 6px 20px rgba(77, 171, 61, 0.3);
+			}
+
+			.swish-hint {
+				color: var(--muted);
+				font-size: 0.85rem;
+				margin-top: 0.5rem;
+			}
+
+			@media (max-width: 640px) {
+				.swish-btn { display: block; }
+				.swish-qr { display: none; }
+			}
+
 			/* ---- PRIZES ---- */
 			.prizes {
 				display: grid;
@@ -383,6 +451,29 @@
 
 		<hr class="divider" />
 
+		<section class="section" id="swish">
+			<h2>Betala</h2>
+			<p class="section-intro">Swisha insatsen direkt.</p>
+			<div class="swish-box">
+				<h3>Insats</h3>
+				<div class="amount">300 kr</div>
+
+				<a id="swish-btn" class="swish-btn"
+					href="swish://payment?data=%7B%22payee%22%3A%7B%22value%22%3A%220703064211%22%7D%2C%22amount%22%3A%7B%22value%22%3A300%7D%2C%22message%22%3A%7B%22value%22%3A%22La%20Copa%20del%20Mundo%202026%22%7D%7D">
+					Betala med Swish
+				</a>
+
+				<div class="swish-qr">
+					<img src="/api/swish-qr" alt="Swish QR-kod — 300 kr till Ruy" />
+				</div>
+
+				<p class="swish-hint">Skanna QR-koden med Swish-appen</p>
+				<p class="swish-hint">Till: Ruy (+46 70 306 42 11) &bull; Meddelande fylls i automatiskt</p>
+			</div>
+		</section>
+
+		<hr class="divider" />
+
 		<section class="section">
 			<h2>Potten</h2>
 			<p class="section-intro">Vinnaren tar nästan allt.</p>
@@ -501,6 +592,16 @@
 			<p>La Copa del Mundo 2026</p>
 		</footer>
 
+		<script>
+			// Show Swish button on mobile, QR on desktop
+			(function() {
+				var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+				var btn = document.getElementById('swish-btn');
+				if (isMobile && btn) {
+					btn.style.display = 'block';
+				}
+			})();
+		</script>
 		<script async src="https://www.tiktok.com/embed.js"></script>
 	</body>
 </html>
