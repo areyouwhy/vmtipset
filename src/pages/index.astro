@@ -189,8 +189,8 @@
 			}
 
 			.swish-btn {
-				display: none;
-				margin: 0 auto 1rem;
+				display: block;
+				margin: 0 auto 1.5rem;
 				padding: 1rem 2rem;
 				background: #4DAB3D;
 				color: #fff;
@@ -211,15 +211,16 @@
 				box-shadow: 0 6px 20px rgba(77, 171, 61, 0.3);
 			}
 
+			.swish-or {
+				color: var(--muted);
+				font-size: 0.85rem;
+				margin-bottom: 1rem;
+			}
+
 			.swish-hint {
 				color: var(--muted);
 				font-size: 0.85rem;
 				margin-top: 0.5rem;
-			}
-
-			@media (max-width: 640px) {
-				.swish-btn { display: block; }
-				.swish-qr { display: none; }
 			}
 
 			/* ---- PRIZES ---- */
@@ -498,16 +499,16 @@
 				<h3>Insats</h3>
 				<div class="amount">300 kr</div>
 
-				<a id="swish-btn" class="swish-btn"
+				<a class="swish-btn"
 					href="https://app.swish.nu/1/p/sw/?sw=0703064211&amt=300&msg=La%20Copa%20del%20Mundo%202026">
-					Betala med Swish
+					Öppna Swish
 				</a>
+
+				<p class="swish-or">eller skanna QR-koden</p>
 
 				<div class="swish-qr">
 					<img src="/api/swish-qr" alt="Swish QR-kod — 300 kr till Ruy" />
 				</div>
-
-				<p class="swish-hint">Skanna QR-koden med Swish-appen</p>
 				<p class="swish-hint">Till: Ruy (+46 70 306 42 11) &bull; Meddelande fylls i automatiskt</p>
 			</div>
 		</section>
@@ -635,16 +636,6 @@
 			<p>La Copa del Mundo 2026</p>
 		</footer>
 
-		<script>
-			// Show Swish button on mobile, QR on desktop
-			(function() {
-				var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-				var btn = document.getElementById('swish-btn');
-				if (isMobile && btn) {
-					btn.style.display = 'block';
-				}
-			})();
-		</script>
 		<script async src="https://www.tiktok.com/embed.js"></script>
 	</body>
 </html>
