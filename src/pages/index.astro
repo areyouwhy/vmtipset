@@ -382,6 +382,43 @@
 				justify-items: center;
 			}
 
+			/* ---- PHOTO BREAK ---- */
+			.photo-break {
+				position: relative;
+				height: 60vh;
+				min-height: 350px;
+				overflow: hidden;
+			}
+
+			.photo-break-bg {
+				position: absolute;
+				inset: 0;
+				background-size: cover;
+				background-position: center;
+				background-repeat: no-repeat;
+				background-attachment: fixed;
+				filter: brightness(0.4) saturate(1.2);
+			}
+
+			.photo-break-overlay {
+				position: absolute;
+				inset: 0;
+				background: linear-gradient(
+					to bottom,
+					rgba(10, 14, 20, 1) 0%,
+					rgba(10, 14, 20, 0) 15%,
+					rgba(10, 14, 20, 0) 85%,
+					rgba(10, 14, 20, 1) 100%
+				);
+			}
+
+			@media (max-width: 768px) {
+				.photo-break-bg {
+					background-attachment: scroll;
+				}
+				.photo-break { height: 40vh; min-height: 250px; }
+			}
+
 			/* ---- DIVIDER ---- */
 			.divider {
 				max-width: 800px;
@@ -449,7 +486,10 @@
 			</div>
 		</section>
 
-		<hr class="divider" />
+		<div class="photo-break">
+			<div class="photo-break-bg" style="background-image: url('/suarez.jpg');"></div>
+			<div class="photo-break-overlay"></div>
+		</div>
 
 		<section class="section" id="swish">
 			<h2>Betala</h2>
@@ -499,7 +539,10 @@
 			</div>
 		</section>
 
-		<hr class="divider" />
+		<div class="photo-break">
+			<div class="photo-break-bg" style="background-image: url('/hero.jpg');"></div>
+			<div class="photo-break-overlay"></div>
+		</div>
 
 		<section class="section">
 			<h2>Deltagare</h2>
