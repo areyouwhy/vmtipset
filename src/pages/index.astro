@@ -620,10 +620,174 @@
 				font-size: 0.85rem;
 			}
 
+			/* ---- STAT HIGHLIGHTS ---- */
+			.stat-cards {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+				gap: 8px;
+				margin-bottom: 32px;
+			}
+
+			.stat-card {
+				background: var(--card);
+				border-radius: 4px;
+				padding: 16px;
+				border-left: 3px solid var(--celeste);
+			}
+
+			.stat-card:nth-child(1) { border-left-color: var(--yellow); }
+			.stat-card:nth-child(2) { border-left-color: #ef4444; }
+			.stat-card:nth-child(3) { border-left-color: var(--celeste); }
+			.stat-card:nth-child(4) { border-left-color: #22c55e; }
+			.stat-card:nth-child(5) { border-left-color: #a855f7; }
+
+			.stat-card-label {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.6rem;
+				text-transform: uppercase;
+				letter-spacing: 0.14em;
+				color: var(--muted);
+				margin-bottom: 6px;
+			}
+
+			.stat-card-team {
+				font-weight: 600;
+				font-size: 0.95rem;
+				margin-bottom: 2px;
+			}
+
+			.stat-card-detail {
+				font-size: 0.8rem;
+				color: var(--muted);
+			}
+
+			/* ---- HEAD TO HEAD ---- */
+			.h2h-bar {
+				margin-bottom: 24px;
+			}
+
+			.h2h-select {
+				display: flex;
+				gap: 12px;
+				align-items: center;
+				margin-bottom: 16px;
+				flex-wrap: wrap;
+			}
+
+			.h2h-select select {
+				font-family: 'Inter', sans-serif;
+				font-size: 0.9rem;
+				padding: 8px 12px;
+				background: var(--card);
+				color: var(--text);
+				border: 1px solid rgba(255,255,255,0.08);
+				border-radius: 4px;
+				flex: 1;
+				min-width: 140px;
+			}
+
+			.h2h-select .vs {
+				font-family: 'Oswald', sans-serif;
+				color: var(--muted);
+				font-size: 0.85rem;
+			}
+
+			.h2h-rounds {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+			}
+
+			.h2h-round {
+				display: grid;
+				grid-template-columns: 80px 1fr 40px 1fr 80px;
+				align-items: center;
+				gap: 4px;
+				font-size: 0.8rem;
+			}
+
+			.h2h-round-label {
+				font-family: 'Oswald', sans-serif;
+				color: var(--muted);
+				font-size: 0.75rem;
+				text-align: center;
+			}
+
+			.h2h-val {
+				font-family: 'Oswald', sans-serif;
+				font-weight: 600;
+				font-size: 0.85rem;
+			}
+
+			.h2h-val.left { text-align: right; }
+			.h2h-val.right { text-align: left; }
+			.h2h-val.win { color: #22c55e; }
+			.h2h-val.lose { color: var(--muted); }
+
+			.h2h-bar-track {
+				height: 8px;
+				border-radius: 4px;
+				overflow: hidden;
+				background: rgba(255,255,255,0.04);
+			}
+
+			.h2h-bar-fill {
+				height: 100%;
+				border-radius: 4px;
+			}
+
+			.h2h-bar-fill.left { background: var(--yellow); float: right; }
+			.h2h-bar-fill.right { background: var(--celeste); }
+
+			.h2h-summary {
+				display: flex;
+				justify-content: space-between;
+				margin-top: 12px;
+				padding-top: 12px;
+				border-top: 1px solid rgba(255,255,255,0.06);
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.9rem;
+			}
+
+			.h2h-summary .total { font-weight: 700; font-size: 1.1rem; }
+			.h2h-summary .wins { color: var(--muted); font-size: 0.8rem; }
+
+			/* ---- TRADES ---- */
+			.tp-trade {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 6px 0;
+				border-bottom: 1px solid rgba(255,255,255,0.03);
+				font-size: 0.85rem;
+			}
+
+			.tp-trade:last-child { border-bottom: none; }
+
+			.tp-trade-type {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.6rem;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				padding: 2px 6px;
+				border-radius: 3px;
+				margin-right: 8px;
+			}
+
+			.tp-trade-type.buy { background: rgba(34,197,94,0.15); color: #22c55e; }
+			.tp-trade-type.sell { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+			.tp-trade-date {
+				color: var(--muted);
+				font-size: 0.75rem;
+				font-family: 'Oswald', sans-serif;
+			}
+
 			@media (max-width: 768px) {
 				.leaderboard-layout { grid-template-columns: 1fr; }
 				.section-wide { max-width: 800px; }
 				.lb-row:hover { transform: none; }
+				.h2h-round { grid-template-columns: 60px 1fr 30px 1fr 60px; font-size: 0.7rem; }
 			}
 
 			/* ---- TIKTOKS ---- */
@@ -817,15 +981,22 @@
 
 		<section class="section section-wide" id="leaderboard">
 			<h2>Ställning</h2>
-			<p class="section-intro">Live från Aftonbladet Manager. Klicka på ett lag för detaljer.</p>
+			<p class="section-intro">Live från Aftonbladet Manager.</p>
+
+			<div id="stat-cards"></div>
+
 			<div class="leaderboard-layout">
-				<div id="leaderboard-container">
-					<div class="leaderboard-loading">Laddar ställning...</div>
+				<div>
+					<div id="leaderboard-container">
+						<div class="leaderboard-loading">Laddar ställning...</div>
+					</div>
+
+					<div id="h2h-container" style="margin-top: 32px;"></div>
 				</div>
 				<div class="team-panel" id="team-panel">
 					<div class="team-panel-empty">
 						<span class="arrow">&larr;</span>
-						Klicka på ett lag för att se uppställning och poäng per omgång.
+						Klicka på ett lag för att se uppställning, värvningar och poäng per omgång.
 					</div>
 				</div>
 			</div>
@@ -945,10 +1116,26 @@
 							}).join('') + '</div>';
 					}
 
+					var tradesHtml = '';
+					if (data.trades && data.trades.length > 0) {
+						tradesHtml = '<div class="tp-section"><div class="tp-section-title">Värvningar</div>' +
+							data.trades.map(function(t) {
+								var typeClass = t.type === 'purchase' ? 'buy' : 'sell';
+								var typeLabel = t.type === 'purchase' ? 'KÖP' : 'SÄLJ';
+								var date = new Date(t.at);
+								var dateStr = date.getDate() + '/' + (date.getMonth() + 1);
+								return '<div class="tp-trade">' +
+									'<span><span class="tp-trade-type ' + typeClass + '">' + typeLabel + '</span>' +
+									escapeHtml(t.player) + '</span>' +
+									'<span class="tp-trade-date">' + dateStr + '</span>' +
+									'</div>';
+							}).join('') + '</div>';
+					}
+
 					panel.innerHTML =
 						'<div class="tp-header"><h3>' + escapeHtml(data.name) + '</h3>' +
 						'<div class="tp-manager">' + escapeHtml(data.manager) + '</div></div>' +
-						playersHtml + roundsHtml;
+						playersHtml + roundsHtml + tradesHtml;
 				} catch (e) {
 					panel.innerHTML = '<div class="tp-loading">Kunde inte ladda laget.</div>';
 				}
@@ -960,7 +1147,101 @@
 				return div.innerHTML;
 			}
 
+			// ---- STATS & H2H ----
+			var statsData = null;
+
+			async function loadStats() {
+				try {
+					var res = await fetch('/api/stats');
+					if (!res.ok) return;
+					statsData = await res.json();
+					renderStatCards(statsData.highlights);
+					renderH2H(statsData.teams);
+				} catch (e) {}
+			}
+
+			function renderStatCards(h) {
+				var container = document.getElementById('stat-cards');
+				var cards = [h.bestRound, h.worstRound, h.mostTrades, h.mostConsistent, h.longestStreak];
+				container.innerHTML = '<div class="stat-cards">' + cards.map(function(c) {
+					return '<div class="stat-card">' +
+						'<div class="stat-card-label">' + escapeHtml(c.label) + '</div>' +
+						'<div class="stat-card-team">' + escapeHtml(c.team) + '</div>' +
+						'<div class="stat-card-detail">' + escapeHtml(c.detail) + '</div>' +
+						'</div>';
+				}).join('') + '</div>';
+			}
+
+			function renderH2H(teams) {
+				var container = document.getElementById('h2h-container');
+				var options = teams.map(function(t) {
+					return '<option value="' + t.id + '">' + escapeHtml(t.name) + '</option>';
+				}).join('');
+
+				container.innerHTML =
+					'<h3 style="font-family:Oswald;text-transform:uppercase;font-size:1.2rem;color:var(--yellow);margin-bottom:12px;">Head to Head</h3>' +
+					'<div class="h2h-select">' +
+					'<select id="h2h-a">' + options + '</select>' +
+					'<span class="vs">VS</span>' +
+					'<select id="h2h-b">' + options + '</select>' +
+					'</div>' +
+					'<div id="h2h-result"></div>';
+
+				var selA = document.getElementById('h2h-a');
+				var selB = document.getElementById('h2h-b');
+				if (teams.length > 1) selB.selectedIndex = 1;
+				selA.onchange = function() { updateH2H(teams); };
+				selB.onchange = function() { updateH2H(teams); };
+				updateH2H(teams);
+			}
+
+			function updateH2H(teams) {
+				var idA = parseInt(document.getElementById('h2h-a').value);
+				var idB = parseInt(document.getElementById('h2h-b').value);
+				var teamA = teams.find(function(t) { return t.id === idA; });
+				var teamB = teams.find(function(t) { return t.id === idB; });
+				if (!teamA || !teamB) return;
+
+				var result = document.getElementById('h2h-result');
+				var maxRounds = Math.max(teamA.rounds.length, teamB.rounds.length);
+				var winsA = 0, winsB = 0;
+
+				var rows = '';
+				for (var i = 0; i < maxRounds; i++) {
+					var rA = teamA.rounds[i] || { round: i + 1, growth: 0 };
+					var rB = teamB.rounds[i] || { round: i + 1, growth: 0 };
+					var gA = rA.growth / 1000000;
+					var gB = rB.growth / 1000000;
+					var maxG = Math.max(Math.abs(rA.growth), Math.abs(rB.growth)) || 1;
+					var pctA = Math.round(Math.abs(rA.growth) / maxG * 100);
+					var pctB = Math.round(Math.abs(rB.growth) / maxG * 100);
+					var clsA = rA.growth >= rB.growth ? 'win' : 'lose';
+					var clsB = rB.growth >= rA.growth ? 'win' : 'lose';
+					if (rA.growth > rB.growth) winsA++;
+					else if (rB.growth > rA.growth) winsB++;
+
+					rows += '<div class="h2h-round">' +
+						'<span class="h2h-val left ' + clsA + '">' + (gA > 0 ? '+' : '') + gA.toFixed(2) + 'M</span>' +
+						'<div class="h2h-bar-track"><div class="h2h-bar-fill left" style="width:' + pctA + '%"></div></div>' +
+						'<span class="h2h-round-label">' + rA.round + '</span>' +
+						'<div class="h2h-bar-track"><div class="h2h-bar-fill right" style="width:' + pctB + '%"></div></div>' +
+						'<span class="h2h-val right ' + clsB + '">' + (gB > 0 ? '+' : '') + gB.toFixed(2) + 'M</span>' +
+						'</div>';
+				}
+
+				var totalA = (teamA.totalGrowth / 1000000).toFixed(2);
+				var totalB = (teamB.totalGrowth / 1000000).toFixed(2);
+
+				result.innerHTML =
+					'<div class="h2h-rounds">' + rows + '</div>' +
+					'<div class="h2h-summary">' +
+					'<div><div class="total">+' + totalA + 'M</div><div class="wins">' + winsA + ' vunna omgångar</div></div>' +
+					'<div style="text-align:right"><div class="total">+' + totalB + 'M</div><div class="wins">' + winsB + ' vunna omgångar</div></div>' +
+					'</div>';
+			}
+
 			loadLeaderboard();
+			loadStats();
 		</script>
 
 		<hr class="divider" />
