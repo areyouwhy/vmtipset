@@ -170,7 +170,7 @@
 				font-size: clamp(1rem, 2.5vw, 1.4rem);
 				text-transform: uppercase;
 				letter-spacing: 0.15em;
-				color: var(--muted);
+				color: var(--celeste);
 				margin-bottom: 3rem;
 				font-style: italic;
 			}
@@ -1293,7 +1293,7 @@
 			<div class="hero-overlay"></div>
 			<div class="hero-content">
 				<h1>La Copa del Mundo 2026</h1>
-				<p class="sub">En mot en, alla mot alla</p>
+				<p class="sub" id="hero-sub">Uruguay nomaaa</p>
 				<a href="#how" class="cta">Gå med</a>
 				<a href="#leaderboard" class="cta" style="background: var(--celeste); margin-left: 12px;">Tabell</a>
 			</div>
@@ -1481,12 +1481,19 @@
 
 				document.documentElement.setAttribute('data-theme', current);
 
+				// Set subtitle for persisted theme
+				var SUBS_INIT = { uru: 'Uruguay nomaaa', swe: 'Kanna på kanna på!', tun: 'Ri ri Riahi!' };
+				var subEl = document.getElementById('hero-sub');
+				if (subEl) subEl.textContent = SUBS_INIT[current] || SUBS_INIT.uru;
+
 				document.querySelectorAll('.theme-btn').forEach(function(btn) {
 					if (btn.getAttribute('data-theme') === current) {
 						btn.classList.add('active');
 					} else {
 						btn.classList.remove('active');
 					}
+
+					var SUBS = { uru: 'Uruguay nomaaa', swe: 'Kanna på kanna på!', tun: 'Ri ri Riahi!' };
 
 					btn.addEventListener('click', function() {
 						var theme = this.getAttribute('data-theme');
@@ -1500,6 +1507,10 @@
 							localStorage.setItem('vmtipset-theme', theme);
 							imgs.forEach(function(el) { el.style.opacity = '1'; });
 						}, 300);
+
+						// Update subtitle
+						var sub = document.getElementById('hero-sub');
+						if (sub) sub.textContent = SUBS[theme] || SUBS.uru;
 
 						document.querySelectorAll('.theme-btn').forEach(function(b) {
 							b.classList.remove('active');
