@@ -116,6 +116,78 @@ export const GET: APIRoute = async () => {
       }
     }
 
+    // 4. Fetch lineups for player/captain analysis
+    const playerCount: Record<number, number> = {};
+    const captainCount: Record<number, number> = {};
+    const teamSquads: Record<number, number[]> = {};
+
+    await Promise.all(
+      allTeams.map(async (team) => {
+        try {
+          const luRes = await fetch(`${API_BASE}/fantasyteams/${team.id}/lineup`);
+          if (!luRes.ok) return;
+          const luData = await luRes.json();
+          const lineup = luData.lineup || [];
+          const squad: number[] = [];
+
+          for (const entry of lineup) {
+            const pid = entry.player;
+            squad.push(pid);
+            playerCount[pid] = (playerCount[pid] || 0) + 1;
+            if ((entry.flags || []).includes('captain')) {
+              captainCount[pid] = (captainCount[pid] || 0) + 1;
+            }
+          }
+          teamSquads[team.id] = squad;
+        } catch {}
+      })
+    );
+
+    // Resolve top player names
+    async function resolvePlayerName(playerId: number): Promise<string> {
+      try {
+        const pRes = await fetch(`${API_BASE}/players/${playerId}`);
+        const p = await pRes.json();
+        const personRes = await fetch(`${API_BASE}/persons/${p.person}`);
+        const person = await personRes.json();
+        return person.fullName;
+      } catch {
+        return 'Okänd';
+      }
+    }
+
+    // Most used player
+    const sortedPlayers = Object.entries(playerCount).sort((a, b) => Number(b[1]) - Number(a[1]));
+    const topPlayerId = sortedPlayers.length > 0 ? Number(sortedPlayers[0][0]) : 0;
+    const topPlayerCount = sortedPlayers.length > 0 ? Number(sortedPlayers[0][1]) : 0;
+    const topPlayerName = topPlayerId ? await resolvePlayerName(topPlayerId) : '';
+
+    // Most captained
+    const sortedCaptains = Object.entries(captainCount).sort((a, b) => Number(b[1]) - Number(a[1]));
+    const topCaptainId = sortedCaptains.length > 0 ? Number(sortedCaptains[0][0]) : 0;
+    const topCaptainCount = sortedCaptains.length > 0 ? Number(sortedCaptains[0][1]) : 0;
+    const topCaptainName = topCaptainId ? await resolvePlayerName(topCaptainId) : '';
+
+    // Most unique team
+    let mostUniqueTeam = { id: 0, name: '', pct: 0 };
+    for (const team of allTeams) {
+      const squad = teamSquads[team.id];
+      if (!squad || squad.length === 0) continue;
+      const uniqueCount = squad.filter(p => playerCount[p] === 1).length;
+      const pct = uniqueCount / squad.length;
+      if (pct > mostUniqueTeam.pct) {
+        mostUniqueTeam = { id: team.id, name: team.name, pct };
+      }
+    }
+
+    // Fewest trades (most passive manager)
+    let fewestTrades = { id: 0, name: '', count: Infinity };
+    for (const team of teamData) {
+      if (team.tradeCount < fewestTrades.count) {
+        fewestTrades = { id: team.id, name: team.name, count: team.tradeCount };
+      }
+    }
+
     // Head-to-head data: return all teams with round values for client-side comparison
     const h2hData = teamData.map(t => ({
       id: t.id,
@@ -125,34 +197,66 @@ export const GET: APIRoute = async () => {
       totalGrowth: t.values.reduce((sum, v) => sum + v.growth, 0),
     }));
 
+    // Find team IDs for existing highlights
+    const findTeamId = (name: string) => allTeams.find(t => t.name === name)?.id || 0;
+
     return new Response(JSON.stringify({
-      highlights: {
-        bestRound: {
+      highlights: [
+        {
           label: 'Bästa omgång',
           team: bestRound.team,
+          teamId: findTeamId(bestRound.team),
           detail: 'Omgång ' + bestRound.round + ' — +' + (bestRound.growth / 1000000).toFixed(2) + 'M',
         },
-        worstRound: {
+        {
           label: 'Sämsta omgång',
           team: worstRound.team,
+          teamId: findTeamId(worstRound.team),
           detail: 'Omgång ' + worstRound.round + ' — ' + (worstRound.growth / 1000000).toFixed(2) + 'M',
         },
-        mostTrades: {
+        {
+          label: 'Populäraste spelaren',
+          team: topPlayerName,
+          teamId: 0,
+          detail: topPlayerCount + ' av ' + allTeams.length + ' lag',
+        },
+        {
+          label: 'Mest kaptensvald',
+          team: topCaptainName,
+          teamId: 0,
+          detail: topCaptainCount + ' lag har hen som kapten',
+        },
+        {
+          label: 'Mest unika lag',
+          team: mostUniqueTeam.name,
+          teamId: mostUniqueTeam.id,
+          detail: Math.round(mostUniqueTeam.pct * 100) + '% unika spelare',
+        },
+        {
           label: 'Flest värvningar',
           team: mostTrades.team,
+          teamId: findTeamId(mostTrades.team),
           detail: mostTrades.count + ' spelarköp',
         },
-        mostConsistent: {
+        {
+          label: 'Minst värvningar',
+          team: fewestTrades.name,
+          teamId: fewestTrades.id,
+          detail: fewestTrades.count + ' spelarköp',
+        },
+        {
           label: 'Mest jämn',
           team: mostConsistent.team,
+          teamId: findTeamId(mostConsistent.team),
           detail: 'Lägst variation mellan omgångar',
         },
-        longestStreak: {
+        {
           label: longestStreak.type === 'positive' ? 'Längsta vinstsvit' : 'Längsta svacka',
           team: longestStreak.team,
+          teamId: findTeamId(longestStreak.team),
           detail: longestStreak.streak + ' omgångar i rad',
         },
-      },
+      ],
       teams: h2hData,
     }), {
       headers: { 'Content-Type': 'application/json' },

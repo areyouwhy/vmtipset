@@ -901,6 +901,30 @@
 				color: var(--muted);
 			}
 
+			.stat-card[onclick] {
+				transition: background 0.15s, transform 0.15s;
+			}
+
+			.stat-card[onclick]:hover {
+				background: #1e2d4a;
+				transform: translateY(-2px);
+			}
+
+			.stat-card-link {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.65rem;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				color: var(--celeste);
+				margin-top: 8px;
+				opacity: 0;
+				transition: opacity 0.15s;
+			}
+
+			.stat-card:hover .stat-card-link {
+				opacity: 1;
+			}
+
 			/* ---- HEAD TO HEAD ---- */
 			.h2h-bar {
 				margin-bottom: 24px;
@@ -1767,14 +1791,15 @@
 				} catch (e) {}
 			}
 
-			function renderStatCards(h) {
+			function renderStatCards(cards) {
 				var container = document.getElementById('stat-cards');
-				var cards = [h.bestRound, h.worstRound, h.mostTrades, h.mostConsistent, h.longestStreak];
 				container.innerHTML = '<div class="stat-cards">' + cards.map(function(c) {
-					return '<div class="stat-card">' +
+					var clickAttr = c.teamId ? ' onclick="openTeam(' + c.teamId + ');switchMainTab(\'tabell\')" style="cursor:pointer"' : '';
+					return '<div class="stat-card"' + clickAttr + '>' +
 						'<div class="stat-card-label">' + escapeHtml(c.label) + '</div>' +
 						'<div class="stat-card-team">' + escapeHtml(c.team) + '</div>' +
 						'<div class="stat-card-detail">' + escapeHtml(c.detail) + '</div>' +
+						(c.teamId ? '<div class="stat-card-link">Visa lag &rarr;</div>' : '') +
 						'</div>';
 				}).join('') + '</div>';
 			}
