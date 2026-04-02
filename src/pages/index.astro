@@ -984,6 +984,22 @@
 			.tp-trade-type.buy { background: rgba(34,197,94,0.15); color: #22c55e; }
 			.tp-trade-type.sell { background: rgba(239,68,68,0.15); color: #ef4444; }
 
+			.tp-trade-summary {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.75rem;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				color: var(--muted);
+				margin-bottom: 12px;
+				padding-bottom: 8px;
+				border-bottom: 1px solid rgba(255,255,255,0.04);
+			}
+
+			.tp-trade-empty-round {
+				opacity: 0.4;
+				cursor: default;
+			}
+
 			@media (max-width: 768px) {
 				.leaderboard-layout { grid-template-columns: 1fr; }
 				.section-wide { max-width: 800px; }
@@ -1357,21 +1373,39 @@
 					}
 
 					var tradesHtml = '';
-					if (data.trades && data.trades.length > 0) {
-						// Group trades by round (newest round first)
+					if (data.rounds && data.rounds.length > 0) {
+						// Group trades by round, include empty rounds
 						var tradesByRound = {};
-						data.trades.forEach(function(t) {
-							var r = t.round || 0;
-							if (!tradesByRound[r]) tradesByRound[r] = [];
-							tradesByRound[r].push(t);
-						});
+						// Initialize all rounds
+						data.rounds.forEach(function(r) { tradesByRound[r.round] = []; });
+						if (data.trades) {
+							data.trades.forEach(function(t) {
+								var r = t.round || 0;
+								if (!tradesByRound[r]) tradesByRound[r] = [];
+								tradesByRound[r].push(t);
+							});
+						}
 						var roundKeys = Object.keys(tradesByRound).sort(function(a, b) { return b - a; });
 
+						var totalBuys = (data.trades || []).filter(function(t) { return t.type === 'purchase'; }).length;
+						var totalSells = (data.trades || []).filter(function(t) { return t.type === 'sale'; }).length;
+
 						tradesHtml = '<div class="tp-section">' +
+							'<div class="tp-trade-summary">' + totalBuys + ' köp, ' + totalSells + ' försäljningar totalt</div>' +
 							roundKeys.map(function(rk, idx) {
 								var trades = tradesByRound[rk];
 								var buys = trades.filter(function(t) { return t.type === 'purchase'; });
 								var sells = trades.filter(function(t) { return t.type === 'sale'; });
+								var isEmpty = trades.length === 0;
+
+								if (isEmpty) {
+									return '<div class="tp-trade-group">' +
+										'<div class="tp-trade-round-header tp-trade-empty-round">' +
+										'<span>Omgång ' + rk + '</span>' +
+										'<span class="tp-trade-count">inga byten</span>' +
+										'</div></div>';
+								}
+
 								var isOpen = idx === 0 ? ' open' : '';
 								var html = '<div class="tp-trade-group' + isOpen + '">' +
 									'<div class="tp-trade-round-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
