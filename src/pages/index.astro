@@ -271,6 +271,66 @@
 
 			.prize-example strong { color: var(--text); }
 
+			/* ---- HISTORY ---- */
+			.history-card {
+				background: var(--card);
+				border-radius: 4px;
+				padding: 24px;
+				margin-bottom: 16px;
+				border-left: 3px solid var(--yellow);
+			}
+
+			.history-card-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: baseline;
+				margin-bottom: 16px;
+			}
+
+			.history-card-title {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.2rem;
+				text-transform: uppercase;
+			}
+
+			.history-card-meta {
+				font-size: 0.8rem;
+				color: var(--muted);
+				font-family: 'Oswald', sans-serif;
+				letter-spacing: 0.04em;
+			}
+
+			.history-podium {
+				display: grid;
+				grid-template-columns: auto 1fr;
+				gap: 4px 12px;
+				align-items: center;
+			}
+
+			.history-pos {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.1rem;
+				font-weight: 700;
+				width: 28px;
+				text-align: center;
+			}
+
+			.history-pos.gold { color: var(--yellow); }
+			.history-pos.silver { color: var(--celeste); }
+			.history-pos.bronze { color: #cd7f32; }
+
+			.history-entry {
+				padding: 6px 0;
+				border-bottom: 1px solid rgba(255,255,255,0.04);
+				display: flex;
+				justify-content: space-between;
+			}
+
+			.history-entry:last-child { border-bottom: none; }
+
+			.history-name { font-weight: 500; }
+			.history-team { color: var(--muted); font-size: 0.85rem; }
+
 			/* ---- PARTICIPANTS ---- */
 			.participants-grid {
 				display: grid;
@@ -1174,6 +1234,37 @@
 			</div>
 			<div class="prize-example">
 				Med <strong>30 spelare</strong> = pott <strong>9 000 kr</strong>: 1:a &rarr; 7 650 kr &bull; 2:a &rarr; 900 kr &bull; 3:a &rarr; 450 kr
+			</div>
+		</section>
+
+		<hr class="divider" />
+
+		<section class="section">
+			<h2>Tidigare tävlingar</h2>
+			<p class="section-intro">Vi har gjort det förut.</p>
+
+			<div class="history-card">
+				<div class="history-card-header">
+					<div class="history-card-title">La Copa de Europa 2024</div>
+					<div class="history-card-meta">EM 2024 &bull; 42 spelare</div>
+				</div>
+				<div class="history-podium">
+					<div class="history-pos gold">1</div>
+					<div class="history-entry">
+						<span class="history-name">Ruy</span>
+						<span class="history-team">LaFackingLife</span>
+					</div>
+					<div class="history-pos silver">2</div>
+					<div class="history-entry">
+						<span class="history-name">Bershad Shadvari</span>
+						<span class="history-team">Salahärbäst</span>
+					</div>
+					<div class="history-pos bronze">3</div>
+					<div class="history-entry">
+						<span class="history-name">Kalim Khan</span>
+						<span class="history-team">Kobra Kaivertz</span>
+					</div>
+				</div>
 			</div>
 		</section>
 
