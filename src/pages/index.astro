@@ -1418,13 +1418,13 @@
 						'<div class="tp-header"><h3>' + escapeHtml(data.name) + '</h3>' +
 						'<div class="tp-manager">' + escapeHtml(data.manager) + '</div></div>' +
 						'<div class="tp-tabs">' +
-						'<button class="tp-tab active" data-tab="oversikt" onclick="switchTeamTab(\'oversikt\')">Översikt</button>' +
-						'<button class="tp-tab" data-tab="omgangar" onclick="switchTeamTab(\'omgangar\')">Omgångar</button>' +
-						'<button class="tp-tab" data-tab="varvningar" onclick="switchTeamTab(\'varvningar\')">Värvningar</button>' +
+						'<button class="tp-tab active" data-tab="laget" onclick="switchTeamTab(\'laget\')">Laget</button>' +
+						'<button class="tp-tab" data-tab="stats" onclick="switchTeamTab(\'stats\')">Stats</button>' +
+						'<button class="tp-tab" data-tab="transfers" onclick="switchTeamTab(\'transfers\')">Transfers</button>' +
 						'</div>' +
-						'<div class="tp-tab-content active" id="tp-tab-oversikt">' + chartHtml + playersHtml + '</div>' +
-						'<div class="tp-tab-content" id="tp-tab-omgangar">' + roundsHtml + '</div>' +
-						'<div class="tp-tab-content" id="tp-tab-varvningar">' + tradesHtml + '</div>';
+						'<div class="tp-tab-content active" id="tp-tab-laget">' + playersHtml + '</div>' +
+						'<div class="tp-tab-content" id="tp-tab-stats">' + chartHtml + roundsHtml + '</div>' +
+						'<div class="tp-tab-content" id="tp-tab-transfers">' + tradesHtml + '</div>';
 				} catch (e) {
 					panel.innerHTML = '<div class="tp-loading">Kunde inte ladda laget.</div>';
 				}
