@@ -1794,7 +1794,7 @@
 			function renderStatCards(cards) {
 				var container = document.getElementById('stat-cards');
 				container.innerHTML = '<div class="stat-cards">' + cards.map(function(c) {
-					var clickAttr = c.teamId ? ' onclick="openTeam(' + c.teamId + ');switchMainTab(\'tabell\')" style="cursor:pointer"' : '';
+					var clickAttr = c.teamId ? ' onclick="openTeam(' + c.teamId + ')" style="cursor:pointer"' : '';
 					return '<div class="stat-card"' + clickAttr + '>' +
 						'<div class="stat-card-label">' + escapeHtml(c.label) + '</div>' +
 						'<div class="stat-card-team">' + escapeHtml(c.team) + '</div>' +
