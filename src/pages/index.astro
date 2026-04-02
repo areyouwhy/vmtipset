@@ -909,7 +909,7 @@
 
 			/* ---- TRADES ---- */
 			.tp-trade-group {
-				margin-bottom: 16px;
+				margin-bottom: 4px;
 			}
 
 			.tp-trade-group:last-child { margin-bottom: 0; }
@@ -918,13 +918,39 @@
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
-				padding: 8px 12px;
+				padding: 10px 12px;
 				background: rgba(255,255,255,0.03);
 				border-radius: 4px;
-				margin-bottom: 4px;
 				font-family: 'Oswald', sans-serif;
 				font-size: 0.85rem;
 				font-weight: 600;
+				cursor: pointer;
+				transition: background 0.15s;
+				user-select: none;
+			}
+
+			.tp-trade-round-header:hover {
+				background: rgba(255,255,255,0.06);
+			}
+
+			.tp-trade-round-header .chevron {
+				font-size: 0.7rem;
+				transition: transform 0.2s;
+				color: var(--muted);
+				margin-right: 6px;
+			}
+
+			.tp-trade-group.open .chevron {
+				transform: rotate(90deg);
+			}
+
+			.tp-trade-list {
+				display: none;
+				padding: 4px 0 8px;
+			}
+
+			.tp-trade-group.open .tp-trade-list {
+				display: block;
 			}
 
 			.tp-trade-count {
@@ -1342,15 +1368,17 @@
 						var roundKeys = Object.keys(tradesByRound).sort(function(a, b) { return b - a; });
 
 						tradesHtml = '<div class="tp-section">' +
-							roundKeys.map(function(rk) {
+							roundKeys.map(function(rk, idx) {
 								var trades = tradesByRound[rk];
 								var buys = trades.filter(function(t) { return t.type === 'purchase'; });
 								var sells = trades.filter(function(t) { return t.type === 'sale'; });
-								var html = '<div class="tp-trade-group">' +
-									'<div class="tp-trade-round-header">' +
-									'<span>Omgång ' + rk + '</span>' +
+								var isOpen = idx === 0 ? ' open' : '';
+								var html = '<div class="tp-trade-group' + isOpen + '">' +
+									'<div class="tp-trade-round-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
+									'<span><span class="chevron">&#9654;</span>Omgång ' + rk + '</span>' +
 									'<span class="tp-trade-count">' + buys.length + ' in / ' + sells.length + ' ut</span>' +
-									'</div>';
+									'</div>' +
+									'<div class="tp-trade-list">';
 
 								if (buys.length > 0) {
 									html += buys.map(function(t) {
@@ -1368,7 +1396,7 @@
 											'</div>';
 									}).join('');
 								}
-								return html + '</div>';
+								return html + '</div></div>';
 							}).join('') + '</div>';
 					}
 
