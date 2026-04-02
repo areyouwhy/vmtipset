@@ -1077,6 +1077,33 @@
 			.chart-legend .leg-b::before { background: var(--celeste); }
 			.chart-legend .leg-single::before { background: var(--yellow); }
 
+			.stat-chart-title {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1rem;
+				text-transform: uppercase;
+				color: var(--yellow);
+				margin-bottom: 4px;
+			}
+
+			.stat-chart-sub {
+				font-size: 0.8rem;
+				color: var(--muted);
+				margin-bottom: 12px;
+			}
+
+			.bar-chart-wrap svg {
+				width: 100%;
+				height: auto;
+				display: block;
+			}
+
+			.bar-chart-wrap .bar-positive { fill: #22c55e; }
+			.bar-chart-wrap .bar-negative { fill: #ef4444; }
+			.bar-chart-wrap .bar-neutral { fill: var(--celeste); opacity: 0.6; }
+			.bar-chart-wrap .bar-label { fill: var(--muted); font-family: 'Oswald', sans-serif; font-size: 10px; }
+			.bar-chart-wrap .bar-value { fill: var(--muted); font-family: 'Oswald', sans-serif; font-size: 9px; }
+			.bar-chart-wrap .bar-grid { stroke: rgba(255,255,255,0.04); stroke-width: 1; }
+
 			/* ---- TRADES ---- */
 			.tp-trade-group {
 				margin-bottom: 4px;
@@ -1426,6 +1453,8 @@
 
 					<div id="main-tab-statistik" class="main-tab-content">
 						<div id="stat-cards"></div>
+						<div id="stat-race-chart" style="margin-top: 32px;"></div>
+						<div id="stat-avg-chart" style="margin-top: 32px;"></div>
 					</div>
 
 					<div id="main-tab-h2h" class="main-tab-content">
@@ -1787,8 +1816,107 @@
 					if (!res.ok) return;
 					statsData = await res.json();
 					renderStatCards(statsData.highlights);
+					renderRaceChart(statsData.teams);
+					renderAvgChart(statsData.teams);
 					renderH2H(statsData.teams);
 				} catch (e) {}
+			}
+
+			function renderRaceChart(teams) {
+				var container = document.getElementById('stat-race-chart');
+				if (!teams || teams.length === 0) return;
+
+				// Sort by total growth, take top 5
+				var sorted = teams.slice().sort(function(a, b) { return b.totalGrowth - a.totalGrowth; });
+				var top5 = sorted.slice(0, 5);
+				var colors = ['#ffffff', '#75aadb', '#22c55e', '#f0b429', '#a855f7'];
+
+				// Build cumulative series for each team
+				var series = top5.map(function(team, idx) {
+					var cum = 0;
+					var points = team.rounds.map(function(r) {
+						cum += r.growth;
+						return { x: r.round, y: cum };
+					});
+					return { label: team.name, color: colors[idx], points: points };
+				});
+
+				var legend = top5.map(function(team, idx) {
+					return '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:14px;font-size:0.75rem;color:var(--muted)">' +
+						'<span style="width:10px;height:3px;border-radius:2px;background:' + colors[idx] + ';display:inline-block"></span>' +
+						escapeHtml(team.name) + '</span>';
+				}).join('');
+
+				container.innerHTML =
+					'<div class="stat-chart-title">Toppstriden</div>' +
+					'<div class="stat-chart-sub">Topp 5 — kumulativ poäng per omgång</div>' +
+					'<div class="line-chart-wrap">' +
+					buildLineChart(series, { width: 500, height: 200, padX: 40, padY: 24 }) +
+					'<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">' + legend + '</div>' +
+					'</div>';
+			}
+
+			function renderAvgChart(teams) {
+				var container = document.getElementById('stat-avg-chart');
+				if (!teams || teams.length === 0) return;
+
+				// Compute average growth per round across all teams
+				var roundData = {};
+				teams.forEach(function(team) {
+					team.rounds.forEach(function(r) {
+						if (!roundData[r.round]) roundData[r.round] = { total: 0, count: 0 };
+						roundData[r.round].total += r.growth;
+						roundData[r.round].count++;
+					});
+				});
+
+				var rounds = Object.keys(roundData).sort(function(a, b) { return a - b; });
+				if (rounds.length === 0) return;
+
+				var avgs = rounds.map(function(r) {
+					return { round: Number(r), avg: roundData[r].total / roundData[r].count };
+				});
+
+				var maxAbs = Math.max.apply(null, avgs.map(function(a) { return Math.abs(a.avg); }));
+				if (maxAbs === 0) maxAbs = 1;
+
+				// Build SVG bar chart
+				var W = 500, H = 160, pX = 40, pY = 20;
+				var chartW = W - pX * 2;
+				var chartH = H - pY * 2;
+				var barW = Math.min(30, (chartW / avgs.length) * 0.7);
+				var gap = chartW / avgs.length;
+				var zeroY = pY + chartH / 2;
+
+				var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+				// Zero line
+				svg += '<line class="bar-grid" x1="' + pX + '" y1="' + zeroY + '" x2="' + (W - pX) + '" y2="' + zeroY + '" stroke-dasharray="4,4"/>';
+
+				avgs.forEach(function(a, i) {
+					var x = pX + i * gap + (gap - barW) / 2;
+					var barH = Math.abs(a.avg) / maxAbs * (chartH / 2 - 4);
+					var y = a.avg >= 0 ? zeroY - barH : zeroY;
+					var cls = a.avg > 0 ? 'bar-positive' : a.avg < 0 ? 'bar-negative' : 'bar-neutral';
+
+					svg += '<rect class="' + cls + '" x="' + x + '" y="' + y + '" width="' + barW + '" height="' + Math.max(barH, 1) + '" rx="2"/>';
+
+					// Round label
+					svg += '<text class="bar-label" x="' + (x + barW / 2) + '" y="' + (H - 4) + '" text-anchor="middle">' + a.round + '</text>';
+
+					// Value label
+					var valY = a.avg >= 0 ? y - 4 : y + barH + 12;
+					var valText = (a.avg / 1000000).toFixed(2);
+					if (a.avg > 0) valText = '+' + valText;
+					svg += '<text class="bar-value" x="' + (x + barW / 2) + '" y="' + valY + '" text-anchor="middle">' + valText + '</text>';
+				});
+
+				svg += '</svg>';
+
+				container.innerHTML =
+					'<div class="stat-chart-title">Omgångssnitt</div>' +
+					'<div class="stat-chart-sub">Genomsnittlig poäng per omgång — alla lag</div>' +
+					'<div class="bar-chart-wrap">' + svg + '</div>';
 			}
 
 			function renderStatCards(cards) {
