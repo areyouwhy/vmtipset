@@ -18,6 +18,19 @@ export const GET: APIRoute = async ({ params }) => {
 
     const team = await teamRes.json();
 
+    // Resolve username
+    const userId = team.user?.id || team.user;
+    let username = team.slug;
+    if (userId) {
+      try {
+        const userRes = await fetch(`${API_BASE}/users/${userId}`);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          username = userData.username || userData.slug || team.slug;
+        }
+      } catch {}
+    }
+
     // Fetch game rounds for trade grouping
     const gameId = team.game?.id || team.game;
     const gameRes = await fetch(`${API_BASE}/games/${gameId}`);
@@ -103,7 +116,7 @@ export const GET: APIRoute = async ({ params }) => {
     return new Response(
       JSON.stringify({
         name: team.name,
-        manager: team.user?.username || team.slug,
+        manager: username,
         players: validPlayers,
         rounds: sortedValues.map((v: any) => ({
           round: v.round,
