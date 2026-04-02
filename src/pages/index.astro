@@ -445,6 +445,93 @@
 				background: transparent;
 			}
 
+			/* ---- MATCHES ---- */
+			.matches-section-title {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.7rem;
+				text-transform: uppercase;
+				letter-spacing: 0.14em;
+				color: var(--celeste);
+				margin-bottom: 12px;
+				margin-top: 24px;
+			}
+
+			.matches-section-title:first-child { margin-top: 0; }
+
+			.match-round-info {
+				background: var(--card);
+				border-radius: 4px;
+				padding: 14px 16px;
+				margin-bottom: 16px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.match-round-label {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.1rem;
+				font-weight: 700;
+			}
+
+			.match-deadline {
+				font-size: 0.8rem;
+				color: var(--muted);
+			}
+
+			.match-deadline strong {
+				color: var(--yellow);
+			}
+
+			.match-row {
+				display: grid;
+				grid-template-columns: 1fr auto 1fr;
+				gap: 8px;
+				align-items: center;
+				padding: 10px 12px;
+				margin-bottom: 2px;
+				border-radius: 4px;
+				background: var(--card);
+			}
+
+			.match-home {
+				text-align: right;
+				font-size: 0.9rem;
+				font-weight: 500;
+			}
+
+			.match-away {
+				text-align: left;
+				font-size: 0.9rem;
+				font-weight: 500;
+			}
+
+			.match-score {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.1rem;
+				font-weight: 700;
+				text-align: center;
+				min-width: 60px;
+				color: var(--yellow);
+			}
+
+			.match-time {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.8rem;
+				text-align: center;
+				min-width: 60px;
+				color: var(--muted);
+			}
+
+			.match-date-header {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.75rem;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				color: var(--muted);
+				padding: 8px 0 4px;
+			}
+
 			/* ---- MAIN TABS ---- */
 			.main-tabs {
 				display: flex;
@@ -1438,6 +1525,7 @@
 			<!-- Main tabs -->
 			<div class="main-tabs">
 				<button class="main-tab active" onclick="switchMainTab('tabell')">Tabell</button>
+				<button class="main-tab" onclick="switchMainTab('matcher')">Matcher</button>
 				<button class="main-tab" onclick="switchMainTab('statistik')">Statistik</button>
 				<button class="main-tab" onclick="switchMainTab('h2h')">Head to Head</button>
 			</div>
@@ -1448,6 +1536,12 @@
 					<div id="main-tab-tabell" class="main-tab-content active">
 						<div id="leaderboard-container">
 							<div class="leaderboard-loading">Laddar ställning...</div>
+						</div>
+					</div>
+
+					<div id="main-tab-matcher" class="main-tab-content">
+						<div id="matches-container">
+							<div class="leaderboard-loading">Laddar matcher...</div>
 						</div>
 					</div>
 
@@ -1527,7 +1621,7 @@
 				document.querySelector('.main-tab-content#main-tab-' + tab).classList.add('active');
 				// Find the button by matching text
 				document.querySelectorAll('.main-tab').forEach(function(t) {
-					var map = { 'Tabell': 'tabell', 'Statistik': 'statistik', 'Head to Head': 'h2h' };
+					var map = { 'Tabell': 'tabell', 'Matcher': 'matcher', 'Statistik': 'statistik', 'Head to Head': 'h2h' };
 					if (map[t.textContent.trim()] === tab) t.classList.add('active');
 				});
 			}
@@ -2031,7 +2125,79 @@
 					'</div>';
 			}
 
+			async function loadMatches() {
+				var container = document.getElementById('matches-container');
+				try {
+					var res = await fetch('/api/matches');
+					if (!res.ok) throw new Error('API error');
+					var data = await res.json();
+
+					var html = '';
+
+					// Round info
+					if (data.currentRound) {
+						var dl = data.deadline ? new Date(data.deadline) : null;
+						var dlStr = dl ? dl.getDate() + '/' + (dl.getMonth() + 1) + ' ' + dl.getHours().toString().padStart(2,'0') + ':' + dl.getMinutes().toString().padStart(2,'0') : '';
+						html += '<div class="match-round-info">' +
+							'<span class="match-round-label">Omgång ' + data.currentRound + '</span>' +
+							(dlStr ? '<span class="match-deadline">Deadline: <strong>' + dlStr + '</strong></span>' : '') +
+							'</div>';
+					}
+
+					// Upcoming
+					if (data.upcoming && data.upcoming.length > 0) {
+						html += '<div class="matches-section-title">Kommande matcher</div>';
+						var lastDate = '';
+						data.upcoming.forEach(function(m) {
+							var d = new Date(m.start);
+							var dateStr = d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' });
+							if (dateStr !== lastDate) {
+								html += '<div class="match-date-header">' + dateStr + '</div>';
+								lastDate = dateStr;
+							}
+							var timeStr = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+							var parts = m.name.split(' - ');
+							var home = parts[0] || m.name;
+							var away = parts[1] || '';
+							html += '<div class="match-row">' +
+								'<span class="match-home">' + escapeHtml(home) + '</span>' +
+								'<span class="match-time">' + timeStr + '</span>' +
+								'<span class="match-away">' + escapeHtml(away) + '</span>' +
+								'</div>';
+						});
+					}
+
+					// Recent results
+					if (data.recent && data.recent.length > 0) {
+						html += '<div class="matches-section-title" style="margin-top:32px">Senaste resultat</div>';
+						var lastDate2 = '';
+						data.recent.forEach(function(m) {
+							var d = new Date(m.start);
+							var dateStr = d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' });
+							if (dateStr !== lastDate2) {
+								html += '<div class="match-date-header">' + dateStr + '</div>';
+								lastDate2 = dateStr;
+							}
+							var parts = m.name.split(' - ');
+							var home = parts[0] || m.name;
+							var away = parts[1] || '';
+							var score = m.homeScore + ' - ' + m.awayScore;
+							html += '<div class="match-row">' +
+								'<span class="match-home">' + escapeHtml(home) + '</span>' +
+								'<span class="match-score">' + score + '</span>' +
+								'<span class="match-away">' + escapeHtml(away) + '</span>' +
+								'</div>';
+						});
+					}
+
+					container.innerHTML = html || '<div class="leaderboard-loading">Inga matcher att visa.</div>';
+				} catch (e) {
+					container.innerHTML = '<div class="leaderboard-loading">Kunde inte ladda matcher.</div>';
+				}
+			}
+
 			loadLeaderboard();
+			loadMatches();
 			loadStats();
 		</script>
 
