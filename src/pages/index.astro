@@ -8,6 +8,12 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>La Copa del Mundo 2026</title>
+		<script>
+			(function() {
+				var t = localStorage.getItem('vmtipset-theme') || 'uru';
+				document.documentElement.setAttribute('data-theme', t);
+			})();
+		</script>
 		<style is:global>
 			@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
 
@@ -18,6 +24,84 @@
 				--muted: #8a9ab5;
 				--yellow: #fecc02;
 				--celeste: #75aadb;
+			}
+
+			/* Theme: Sweden */
+			html[data-theme="swe"] {
+				--yellow: #fecc02;
+				--celeste: #005baa;
+			}
+			html[data-theme="swe"] .hero-bg { background-image: url('/vmklar.jpg'); }
+			html[data-theme="swe"] [data-img="break-1"] { background-image: url('/vmklar.jpg'); }
+			html[data-theme="swe"] [data-img="break-2"] { background-image: url('/vmklar.jpg'); }
+			html[data-theme="swe"] [data-img="break-3"] { background-image: url('/vmklar.jpg'); }
+
+			/* Theme: Tunisia */
+			html[data-theme="tun"] {
+				--yellow: #e70013;
+				--celeste: #ffffff;
+			}
+			html[data-theme="tun"] .hero-bg { background-image: url('/forlan.jpg'); }
+			html[data-theme="tun"] [data-img="break-1"] { background-image: url('/suarez.jpg'); }
+			html[data-theme="tun"] [data-img="break-2"] { background-image: url('/hero.jpg'); }
+			html[data-theme="tun"] [data-img="break-3"] { background-image: url('/vmklar.jpg'); }
+
+			/* Default images (URU) */
+			.hero-bg { background-image: url('/forlan.jpg'); }
+			[data-img="break-1"] { background-image: url('/suarez.jpg'); }
+			[data-img="break-2"] { background-image: url('/hero.jpg'); }
+			[data-img="break-3"] { background-image: url('/vmklar.jpg'); }
+
+			/* ---- THEME SWITCHER ---- */
+			.theme-switcher {
+				position: fixed;
+				top: 1rem;
+				right: 1rem;
+				z-index: 1000;
+				display: flex;
+				gap: 0.35rem;
+				background: rgba(10, 14, 20, 0.85);
+				backdrop-filter: blur(8px);
+				-webkit-backdrop-filter: blur(8px);
+				padding: 0.3rem;
+				border-radius: 999px;
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				transition: opacity 0.3s;
+			}
+
+			.theme-switcher:not(:hover) { opacity: 0.6; }
+			.theme-switcher:hover { opacity: 1; }
+
+			.theme-btn {
+				width: 34px;
+				height: 34px;
+				border-radius: 50%;
+				border: 2px solid transparent;
+				background: none;
+				cursor: pointer;
+				font-size: 1.1rem;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: border-color 0.3s, transform 0.2s, opacity 0.3s;
+				opacity: 0.45;
+				padding: 0;
+				line-height: 1;
+			}
+
+			.theme-btn:hover {
+				opacity: 0.85;
+				transform: scale(1.1);
+			}
+
+			.theme-btn.active {
+				border-color: var(--yellow);
+				opacity: 1;
+			}
+
+			.hero-bg,
+			.photo-break-bg {
+				transition: opacity 0.3s ease;
 			}
 
 			* { margin: 0; padding: 0; box-sizing: border-box; }
@@ -49,7 +133,9 @@
 			.hero-bg {
 				position: absolute;
 				inset: 0;
-				background: url('/forlan.jpg') center center / cover no-repeat;
+				background-size: cover;
+				background-position: center;
+				background-repeat: no-repeat;
 				filter: brightness(0.3) saturate(1.2);
 			}
 
@@ -1145,6 +1231,12 @@
 	</head>
 	<body>
 
+		<div class="theme-switcher" id="theme-switcher">
+			<button class="theme-btn active" data-theme="uru" aria-label="Uruguay">&#x1f1fa;&#x1f1fe;</button>
+			<button class="theme-btn" data-theme="swe" aria-label="Sverige">&#x1f1f8;&#x1f1ea;</button>
+			<button class="theme-btn" data-theme="tun" aria-label="Tunisien">&#x1f1f9;&#x1f1f3;</button>
+		</div>
+
 		<section class="hero">
 			<div class="hero-bg"></div>
 			<div class="hero-overlay"></div>
@@ -1185,7 +1277,7 @@
 		</section>
 
 		<div class="photo-break">
-			<div class="photo-break-bg" style="background-image: url('/suarez.jpg');"></div>
+			<div class="photo-break-bg" data-img="break-1"></div>
 			<div class="photo-break-overlay"></div>
 		</div>
 
@@ -1269,7 +1361,7 @@
 		</section>
 
 		<div class="photo-break">
-			<div class="photo-break-bg" style="background-image: url('/hero.jpg');"></div>
+			<div class="photo-break-bg" data-img="break-2"></div>
 			<div class="photo-break-overlay"></div>
 		</div>
 
@@ -1287,7 +1379,7 @@
 		</section>
 
 		<div class="photo-break">
-			<div class="photo-break-bg" style="background-image: url('/vmklar.jpg');"></div>
+			<div class="photo-break-bg" data-img="break-3"></div>
 			<div class="photo-break-overlay"></div>
 		</div>
 
@@ -1328,6 +1420,42 @@
 		</section>
 
 		<script is:inline>
+			// ---- THEME SWITCHER ----
+			(function() {
+				var THEMES = ['uru', 'swe', 'tun'];
+				var stored = localStorage.getItem('vmtipset-theme');
+				var current = THEMES.indexOf(stored) >= 0 ? stored : 'uru';
+
+				document.documentElement.setAttribute('data-theme', current);
+
+				document.querySelectorAll('.theme-btn').forEach(function(btn) {
+					if (btn.getAttribute('data-theme') === current) {
+						btn.classList.add('active');
+					} else {
+						btn.classList.remove('active');
+					}
+
+					btn.addEventListener('click', function() {
+						var theme = this.getAttribute('data-theme');
+
+						// Crossfade images
+						var imgs = document.querySelectorAll('.hero-bg, .photo-break-bg');
+						imgs.forEach(function(el) { el.style.opacity = '0'; });
+
+						setTimeout(function() {
+							document.documentElement.setAttribute('data-theme', theme);
+							localStorage.setItem('vmtipset-theme', theme);
+							imgs.forEach(function(el) { el.style.opacity = '1'; });
+						}, 300);
+
+						document.querySelectorAll('.theme-btn').forEach(function(b) {
+							b.classList.remove('active');
+						});
+						this.classList.add('active');
+					});
+				});
+			})();
+
 			// ---- TAB SWITCHING ----
 			function switchMainTab(tab) {
 				document.querySelectorAll('.main-tab').forEach(function(t) { t.classList.remove('active'); });
