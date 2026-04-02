@@ -299,6 +299,100 @@
 				background: transparent;
 			}
 
+			/* ---- MAIN TABS ---- */
+			.main-tabs {
+				display: flex;
+				gap: 0;
+				margin-bottom: 24px;
+				border-bottom: 2px solid rgba(255,255,255,0.06);
+			}
+
+			.main-tab {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1rem;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				padding: 12px 24px;
+				background: none;
+				color: var(--muted);
+				border: none;
+				cursor: pointer;
+				position: relative;
+				transition: color 0.2s;
+			}
+
+			.main-tab:hover { color: var(--text); }
+
+			.main-tab.active {
+				color: var(--yellow);
+			}
+
+			.main-tab.active::after {
+				content: '';
+				position: absolute;
+				bottom: -2px;
+				left: 0;
+				right: 0;
+				height: 2px;
+				background: var(--yellow);
+			}
+
+			.main-tab-content {
+				display: none;
+			}
+
+			.main-tab-content.active {
+				display: block;
+			}
+
+			/* ---- TEAM PANEL TABS ---- */
+			.tp-tabs {
+				display: flex;
+				gap: 0;
+				border-bottom: 1px solid rgba(255,255,255,0.06);
+				margin: 0 -24px;
+				padding: 0 24px;
+			}
+
+			.tp-tab {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.75rem;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				padding: 10px 14px;
+				background: none;
+				color: var(--muted);
+				border: none;
+				cursor: pointer;
+				position: relative;
+				transition: color 0.2s;
+				white-space: nowrap;
+			}
+
+			.tp-tab:hover { color: var(--text); }
+
+			.tp-tab.active {
+				color: var(--celeste);
+			}
+
+			.tp-tab.active::after {
+				content: '';
+				position: absolute;
+				bottom: -1px;
+				left: 0;
+				right: 0;
+				height: 1px;
+				background: var(--celeste);
+			}
+
+			.tp-tab-content {
+				display: none;
+			}
+
+			.tp-tab-content.active {
+				display: block;
+			}
+
 			/* ---- LEADERBOARD ---- */
 			.section-wide {
 				max-width: 1200px;
@@ -814,16 +908,39 @@
 			.chart-legend .leg-single::before { background: var(--yellow); }
 
 			/* ---- TRADES ---- */
+			.tp-trade-group {
+				margin-bottom: 16px;
+			}
+
+			.tp-trade-group:last-child { margin-bottom: 0; }
+
+			.tp-trade-round-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 8px 12px;
+				background: rgba(255,255,255,0.03);
+				border-radius: 4px;
+				margin-bottom: 4px;
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.85rem;
+				font-weight: 600;
+			}
+
+			.tp-trade-count {
+				font-size: 0.7rem;
+				font-weight: 400;
+				color: var(--muted);
+				letter-spacing: 0.04em;
+			}
+
 			.tp-trade {
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
-				padding: 6px 0;
-				border-bottom: 1px solid rgba(255,255,255,0.03);
+				padding: 5px 12px;
 				font-size: 0.85rem;
 			}
-
-			.tp-trade:last-child { border-bottom: none; }
 
 			.tp-trade-type {
 				font-family: 'Oswald', sans-serif;
@@ -833,22 +950,23 @@
 				padding: 2px 6px;
 				border-radius: 3px;
 				margin-right: 8px;
+				display: inline-block;
+				min-width: 24px;
+				text-align: center;
 			}
 
 			.tp-trade-type.buy { background: rgba(34,197,94,0.15); color: #22c55e; }
 			.tp-trade-type.sell { background: rgba(239,68,68,0.15); color: #ef4444; }
-
-			.tp-trade-date {
-				color: var(--muted);
-				font-size: 0.75rem;
-				font-family: 'Oswald', sans-serif;
-			}
 
 			@media (max-width: 768px) {
 				.leaderboard-layout { grid-template-columns: 1fr; }
 				.section-wide { max-width: 800px; }
 				.lb-row:hover { transform: none; }
 				.h2h-round { grid-template-columns: 60px 1fr 30px 1fr 60px; font-size: 0.7rem; }
+				.main-tab { padding: 10px 16px; font-size: 0.9rem; }
+				.tp-tab { padding: 8px 10px; font-size: 0.7rem; }
+				.team-panel-empty .arrow { display: none; }
+				.team-panel-empty { padding: 32px 16px; }
 			}
 
 			/* ---- TIKTOKS ---- */
@@ -1041,29 +1159,64 @@
 		</div>
 
 		<section class="section section-wide" id="leaderboard">
-			<h2>Ställning</h2>
-			<p class="section-intro">Live från Aftonbladet Manager.</p>
-
-			<div id="stat-cards"></div>
+			<!-- Main tabs -->
+			<div class="main-tabs">
+				<button class="main-tab active" onclick="switchMainTab('tabell')">Tabell</button>
+				<button class="main-tab" onclick="switchMainTab('statistik')">Statistik</button>
+				<button class="main-tab" onclick="switchMainTab('h2h')">Head to Head</button>
+			</div>
 
 			<div class="leaderboard-layout">
+				<!-- Left column: main tab content -->
 				<div>
-					<div id="leaderboard-container">
-						<div class="leaderboard-loading">Laddar ställning...</div>
+					<div id="main-tab-tabell" class="main-tab-content active">
+						<div id="leaderboard-container">
+							<div class="leaderboard-loading">Laddar ställning...</div>
+						</div>
 					</div>
 
-					<div id="h2h-container" style="margin-top: 32px;"></div>
+					<div id="main-tab-statistik" class="main-tab-content">
+						<div id="stat-cards"></div>
+					</div>
+
+					<div id="main-tab-h2h" class="main-tab-content">
+						<div id="h2h-container"></div>
+					</div>
 				</div>
+
+				<!-- Right column: team panel -->
 				<div class="team-panel" id="team-panel">
 					<div class="team-panel-empty">
 						<span class="arrow">&larr;</span>
-						Klicka på ett lag för att se uppställning, värvningar och poäng per omgång.
+						Klicka på ett lag i tabellen
 					</div>
 				</div>
 			</div>
 		</section>
 
 		<script is:inline>
+			// ---- TAB SWITCHING ----
+			function switchMainTab(tab) {
+				document.querySelectorAll('.main-tab').forEach(function(t) { t.classList.remove('active'); });
+				document.querySelectorAll('.main-tab-content').forEach(function(c) { c.classList.remove('active'); });
+				document.querySelector('.main-tab-content#main-tab-' + tab).classList.add('active');
+				// Find the button by matching text
+				document.querySelectorAll('.main-tab').forEach(function(t) {
+					var map = { 'Tabell': 'tabell', 'Statistik': 'statistik', 'Head to Head': 'h2h' };
+					if (map[t.textContent.trim()] === tab) t.classList.add('active');
+				});
+			}
+
+			function switchTeamTab(tab) {
+				document.querySelectorAll('.tp-tab').forEach(function(t) { t.classList.remove('active'); });
+				document.querySelectorAll('.tp-tab-content').forEach(function(c) { c.classList.remove('active'); });
+				var el = document.getElementById('tp-tab-' + tab);
+				if (el) el.classList.add('active');
+				document.querySelectorAll('.tp-tab').forEach(function(t) {
+					if (t.getAttribute('data-tab') === tab) t.classList.add('active');
+				});
+			}
+
 			var PAGE_SIZE = 10;
 			var currentPage = 1;
 			var leaderboardData = [];
@@ -1179,17 +1332,43 @@
 
 					var tradesHtml = '';
 					if (data.trades && data.trades.length > 0) {
-						tradesHtml = '<div class="tp-section"><div class="tp-section-title">Värvningar</div>' +
-							data.trades.map(function(t) {
-								var typeClass = t.type === 'purchase' ? 'buy' : 'sell';
-								var typeLabel = t.type === 'purchase' ? 'KÖP' : 'SÄLJ';
-								var date = new Date(t.at);
-								var dateStr = date.getDate() + '/' + (date.getMonth() + 1);
-								return '<div class="tp-trade">' +
-									'<span><span class="tp-trade-type ' + typeClass + '">' + typeLabel + '</span>' +
-									escapeHtml(t.player) + '</span>' +
-									'<span class="tp-trade-date">' + dateStr + '</span>' +
+						// Group trades by round (newest round first)
+						var tradesByRound = {};
+						data.trades.forEach(function(t) {
+							var r = t.round || 0;
+							if (!tradesByRound[r]) tradesByRound[r] = [];
+							tradesByRound[r].push(t);
+						});
+						var roundKeys = Object.keys(tradesByRound).sort(function(a, b) { return b - a; });
+
+						tradesHtml = '<div class="tp-section">' +
+							roundKeys.map(function(rk) {
+								var trades = tradesByRound[rk];
+								var buys = trades.filter(function(t) { return t.type === 'purchase'; });
+								var sells = trades.filter(function(t) { return t.type === 'sale'; });
+								var html = '<div class="tp-trade-group">' +
+									'<div class="tp-trade-round-header">' +
+									'<span>Omgång ' + rk + '</span>' +
+									'<span class="tp-trade-count">' + buys.length + ' in / ' + sells.length + ' ut</span>' +
 									'</div>';
+
+								if (buys.length > 0) {
+									html += buys.map(function(t) {
+										return '<div class="tp-trade">' +
+											'<span><span class="tp-trade-type buy">IN</span>' +
+											escapeHtml(t.player) + '</span>' +
+											'</div>';
+									}).join('');
+								}
+								if (sells.length > 0) {
+									html += sells.map(function(t) {
+										return '<div class="tp-trade">' +
+											'<span><span class="tp-trade-type sell">UT</span>' +
+											escapeHtml(t.player) + '</span>' +
+											'</div>';
+									}).join('');
+								}
+								return html + '</div>';
 							}).join('') + '</div>';
 					}
 
@@ -1210,7 +1389,14 @@
 					panel.innerHTML =
 						'<div class="tp-header"><h3>' + escapeHtml(data.name) + '</h3>' +
 						'<div class="tp-manager">' + escapeHtml(data.manager) + '</div></div>' +
-						chartHtml + playersHtml + roundsHtml + tradesHtml;
+						'<div class="tp-tabs">' +
+						'<button class="tp-tab active" data-tab="oversikt" onclick="switchTeamTab(\'oversikt\')">Översikt</button>' +
+						'<button class="tp-tab" data-tab="omgangar" onclick="switchTeamTab(\'omgangar\')">Omgångar</button>' +
+						'<button class="tp-tab" data-tab="varvningar" onclick="switchTeamTab(\'varvningar\')">Värvningar</button>' +
+						'</div>' +
+						'<div class="tp-tab-content active" id="tp-tab-oversikt">' + chartHtml + playersHtml + '</div>' +
+						'<div class="tp-tab-content" id="tp-tab-omgangar">' + roundsHtml + '</div>' +
+						'<div class="tp-tab-content" id="tp-tab-varvningar">' + tradesHtml + '</div>';
 				} catch (e) {
 					panel.innerHTML = '<div class="tp-loading">Kunde inte ladda laget.</div>';
 				}

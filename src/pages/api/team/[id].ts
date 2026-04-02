@@ -17,6 +17,12 @@ export const GET: APIRoute = async ({ params }) => {
     if (!teamRes.ok) throw new Error('Team not found');
 
     const team = await teamRes.json();
+
+    // Fetch game rounds for trade grouping
+    const gameId = team.game?.id || team.game;
+    const gameRes = await fetch(`${API_BASE}/games/${gameId}`);
+    const game = gameRes.ok ? await gameRes.json() : { rounds: [] };
+    const gameRounds: { start: string; end: string }[] = game.rounds || [];
     const lineupData = await lineupRes.json();
     const values = await valuesRes.json();
     let trades: any[] = [];
@@ -77,10 +83,21 @@ export const GET: APIRoute = async ({ params }) => {
       })
     );
 
+    // Map trades to rounds
+    function getTradeRound(tradeDate: string): number {
+      const t = new Date(tradeDate).getTime();
+      for (let i = 0; i < gameRounds.length; i++) {
+        const end = new Date(gameRounds[i].end).getTime();
+        if (t <= end) return i + 1;
+      }
+      return gameRounds.length > 0 ? gameRounds.length : 0;
+    }
+
     const resolvedTrades = trades.map((t: any) => ({
       type: t.type,
       player: playerNameMap[t.player] || 'Okänd',
       at: t.at,
+      round: getTradeRound(t.at),
     })).sort((a: any, b: any) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
     return new Response(
