@@ -112,6 +112,7 @@
 				background: var(--bg);
 				color: var(--text);
 				line-height: 1.6;
+				padding-bottom: 0;
 			}
 
 			h1, h2, h3 {
@@ -173,6 +174,19 @@
 				color: var(--celeste);
 				margin-bottom: 3rem;
 				font-style: italic;
+			}
+
+			.hero-auth {
+				margin-top: 2rem;
+			}
+
+			.hero-auth .auth-form {
+				max-width: 280px;
+				margin: 0 auto;
+			}
+
+			.hero-auth .auth-user-bar {
+				justify-content: center;
 			}
 
 			.cta {
@@ -445,199 +459,7 @@
 				background: transparent;
 			}
 
-			/* ---- MATCHES ---- */
-			.matches-section-title {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.7rem;
-				text-transform: uppercase;
-				letter-spacing: 0.14em;
-				color: var(--celeste);
-				margin-bottom: 12px;
-				margin-top: 24px;
-			}
-
-			.matches-section-title:first-child { margin-top: 0; }
-
-			.match-round-info {
-				background: var(--card);
-				border-radius: 4px;
-				padding: 14px 16px;
-				margin-bottom: 16px;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-			}
-
-			.match-round-label {
-				font-family: 'Oswald', sans-serif;
-				font-size: 1.1rem;
-				font-weight: 700;
-			}
-
-			.match-deadline {
-				font-size: 0.8rem;
-				color: var(--muted);
-			}
-
-			.match-deadline strong {
-				color: var(--yellow);
-			}
-
-			.match-row {
-				display: grid;
-				grid-template-columns: 1fr auto 1fr;
-				gap: 8px;
-				align-items: center;
-				padding: 10px 12px;
-				margin-bottom: 2px;
-				border-radius: 4px;
-				background: var(--card);
-			}
-
-			.match-home {
-				text-align: right;
-				font-size: 0.9rem;
-				font-weight: 500;
-			}
-
-			.match-away {
-				text-align: left;
-				font-size: 0.9rem;
-				font-weight: 500;
-			}
-
-			.match-score {
-				font-family: 'Oswald', sans-serif;
-				font-size: 1.1rem;
-				font-weight: 700;
-				text-align: center;
-				min-width: 60px;
-				color: var(--yellow);
-			}
-
-			.match-time {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.8rem;
-				text-align: center;
-				min-width: 60px;
-				color: var(--muted);
-			}
-
-			.match-date-header {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.75rem;
-				text-transform: uppercase;
-				letter-spacing: 0.06em;
-				color: var(--muted);
-				padding: 8px 0 4px;
-			}
-
-			/* ---- MAIN TABS ---- */
-			.main-tabs {
-				display: flex;
-				gap: 0;
-				margin-bottom: 24px;
-				border-bottom: 2px solid rgba(255,255,255,0.06);
-			}
-
-			.main-tab {
-				font-family: 'Oswald', sans-serif;
-				font-size: 1rem;
-				text-transform: uppercase;
-				letter-spacing: 0.06em;
-				padding: 12px 24px;
-				background: none;
-				color: var(--muted);
-				border: none;
-				cursor: pointer;
-				position: relative;
-				transition: color 0.2s;
-			}
-
-			.main-tab:hover { color: var(--text); }
-
-			.main-tab.active {
-				color: var(--yellow);
-			}
-
-			.main-tab.active::after {
-				content: '';
-				position: absolute;
-				bottom: -2px;
-				left: 0;
-				right: 0;
-				height: 2px;
-				background: var(--yellow);
-			}
-
-			.main-tab-content {
-				display: none;
-			}
-
-			.main-tab-content.active {
-				display: block;
-			}
-
-			/* ---- TEAM PANEL TABS ---- */
-			.tp-tabs {
-				display: flex;
-				gap: 0;
-				border-bottom: 1px solid rgba(255,255,255,0.06);
-				margin: 0 -24px;
-				padding: 0 24px;
-			}
-
-			.tp-tab {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.75rem;
-				text-transform: uppercase;
-				letter-spacing: 0.08em;
-				padding: 10px 14px;
-				background: none;
-				color: var(--muted);
-				border: none;
-				cursor: pointer;
-				position: relative;
-				transition: color 0.2s;
-				white-space: nowrap;
-			}
-
-			.tp-tab:hover { color: var(--text); }
-
-			.tp-tab.active {
-				color: var(--celeste);
-			}
-
-			.tp-tab.active::after {
-				content: '';
-				position: absolute;
-				bottom: -1px;
-				left: 0;
-				right: 0;
-				height: 1px;
-				background: var(--celeste);
-			}
-
-			.tp-tab-content {
-				display: none;
-			}
-
-			.tp-tab-content.active {
-				display: block;
-			}
-
-			/* ---- LEADERBOARD ---- */
-			.section-wide {
-				max-width: 1200px;
-			}
-
-			.leaderboard-layout {
-				display: grid;
-				grid-template-columns: 1.1fr 1fr;
-				gap: 32px;
-				align-items: start;
-			}
-
+			/* ---- LEADERBOARD LOADING (reused) ---- */
 			.leaderboard-loading {
 				background: var(--card);
 				border-radius: 4px;
@@ -647,660 +469,1131 @@
 				border: 1px solid rgba(255,255,255,0.04);
 			}
 
-			/* Leaderboard rows — no table, div-based for full control */
-			.lb-header {
-				display: grid;
-				grid-template-columns: 48px 1fr 80px;
-				padding: 0 16px 12px;
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.7rem;
-				text-transform: uppercase;
-				letter-spacing: 0.14em;
-				color: var(--muted);
-				border-bottom: 1px solid rgba(255,255,255,0.06);
-				margin-bottom: 4px;
-			}
-
-			.lb-header span:last-child { text-align: right; }
-
-			.lb-row {
-				display: grid;
-				grid-template-columns: 48px 1fr 80px;
-				align-items: center;
-				margin-bottom: 2px;
-				cursor: pointer;
-				border-radius: 4px;
-				overflow: hidden;
-				background: var(--card);
-				transition: transform 0.15s ease, background 0.2s ease;
-			}
-
-			.lb-row:hover {
-				transform: scale(1.01);
-				background: #172033;
-			}
-
-			.lb-row.selected {
-				background: #172033;
-				border-left: 3px solid var(--yellow);
-			}
-
-			.lb-pos {
-				font-family: 'Oswald', sans-serif;
-				font-size: 1.3rem;
-				font-weight: 700;
-				text-align: center;
-				padding: 16px 0;
-				color: var(--muted);
-			}
-
-			.lb-row.top1 .lb-pos {
-				color: var(--bg);
-				background: var(--yellow);
-				font-size: 1.4rem;
-			}
-
-			.lb-row.top2 .lb-pos {
-				color: var(--bg);
-				background: var(--celeste);
-			}
-
-			.lb-row.top3 .lb-pos {
-				color: var(--bg);
-				background: #cd7f32;
-			}
-
-			.lb-team {
-				padding: 12px 16px;
-			}
-
-			.lb-team-name {
-				font-weight: 600;
-				font-size: 0.95rem;
-				transition: color 0.15s;
-				line-height: 1.3;
-			}
-
-			.lb-row:hover .lb-team-name,
-			.lb-row.selected .lb-team-name {
-				color: var(--yellow);
-			}
-
-			.lb-manager {
-				font-size: 0.75rem;
-				color: var(--muted);
-				margin-top: 1px;
-			}
-
-			.lb-score {
-				text-align: right;
-				padding: 12px 16px;
-				font-family: 'Oswald', sans-serif;
-				font-size: 1.15rem;
-				font-weight: 600;
-			}
-
-			.lb-score.positive { color: #22c55e; }
-			.lb-score.zero { color: var(--muted); }
-
-			.leaderboard-info {
-				margin-top: 16px;
-				font-size: 0.7rem;
-				color: var(--muted);
-				opacity: 0.4;
-				text-align: right;
-				font-family: 'Oswald', sans-serif;
-				letter-spacing: 0.08em;
-				text-transform: uppercase;
-			}
-
-			.leaderboard-pages {
-				display: flex;
-				justify-content: center;
-				gap: 6px;
-				margin-top: 20px;
-			}
-
-			.leaderboard-pages button {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.9rem;
-				padding: 6px 14px;
-				background: transparent;
-				color: var(--muted);
-				border: 1px solid rgba(255,255,255,0.08);
-				border-radius: 4px;
-				cursor: pointer;
-				transition: all 0.15s ease;
-			}
-
-			.leaderboard-pages button:hover {
-				color: var(--text);
-				border-color: var(--celeste);
-			}
-
-			.leaderboard-pages button.active {
-				color: var(--bg);
-				background: var(--yellow);
-				border-color: var(--yellow);
-				font-weight: 700;
-			}
-
-			/* ---- TEAM PANEL ---- */
-			.team-panel {
-				position: sticky;
-				top: 24px;
-				background: linear-gradient(165deg, #111825 0%, #0d1320 100%);
-				border: 1px solid rgba(255,255,255,0.05);
-				border-radius: 4px;
-				overflow: hidden;
-			}
-
-			.team-panel-empty {
-				text-align: center;
-				color: var(--muted);
-				padding: 64px 24px;
-				font-size: 0.85rem;
-				line-height: 1.7;
-			}
-
-			.team-panel-empty .arrow {
-				font-size: 1.8rem;
-				margin-bottom: 8px;
-				display: block;
-				opacity: 0.3;
-			}
-
-			.tp-header {
-				padding: 24px 24px 20px;
-				border-bottom: 1px solid rgba(255,255,255,0.06);
-				background: linear-gradient(135deg, rgba(254,204,2,0.04) 0%, transparent 60%);
-			}
-
-			.tp-header h3 {
-				font-size: 1.5rem;
-				margin-bottom: 2px;
-				letter-spacing: 0.02em;
-			}
-
-			.tp-header .tp-manager {
-				color: var(--muted);
-				font-size: 0.8rem;
-				font-family: 'Oswald', sans-serif;
-				letter-spacing: 0.04em;
-			}
-
-			.tp-section {
-				padding: 20px 24px;
-			}
-
-			.tp-section + .tp-section {
-				border-top: 1px solid rgba(255,255,255,0.04);
-			}
-
-			.tp-section-title {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.65rem;
-				text-transform: uppercase;
-				letter-spacing: 0.16em;
-				color: var(--celeste);
-				margin-bottom: 12px;
-			}
-
-			.tp-player {
-				display: grid;
-				grid-template-columns: auto 1fr auto;
-				gap: 10px;
-				align-items: center;
-				padding: 8px 0;
-				font-size: 0.9rem;
-				border-bottom: 1px solid rgba(255,255,255,0.03);
-			}
-
-			.tp-player:last-child { border-bottom: none; }
-
-			.tp-pos-badge {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.6rem;
-				font-weight: 700;
-				letter-spacing: 0.06em;
-				padding: 3px 6px;
-				border-radius: 3px;
-				text-align: center;
-				min-width: 36px;
-				color: var(--text);
-				background: rgba(255,255,255,0.06);
-			}
-
-			.tp-pos-badge.mv { background: rgba(117,170,219,0.2); color: var(--celeste); }
-			.tp-pos-badge.anf { background: rgba(254,204,2,0.15); color: var(--yellow); }
-
-			.tp-player-name {
-				font-weight: 500;
-			}
-
-			.tp-player .captain {
-				color: var(--bg);
-				background: var(--yellow);
-				font-size: 0.6rem;
-				font-weight: 700;
-				font-family: 'Oswald', sans-serif;
-				margin-left: 6px;
-				padding: 2px 5px;
-				border-radius: 3px;
-				vertical-align: 1px;
-			}
-
-			.tp-player-club {
-				color: var(--muted);
-				font-size: 0.75rem;
-				font-family: 'Oswald', sans-serif;
-				letter-spacing: 0.04em;
-				text-align: right;
-			}
-
-			.tp-round {
-				display: grid;
-				grid-template-columns: auto 1fr auto;
-				gap: 12px;
-				align-items: center;
-				padding: 6px 0;
-			}
-
-			.tp-round-num {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.8rem;
-				color: var(--muted);
-				min-width: 20px;
-			}
-
-			.tp-round-bar {
-				height: 6px;
-				border-radius: 3px;
-				background: rgba(255,255,255,0.04);
-				overflow: hidden;
-			}
-
-			.tp-round-bar-fill {
-				height: 100%;
-				border-radius: 3px;
-				transition: width 0.4s ease;
-			}
-
-			.tp-round-bar-fill.pos { background: linear-gradient(90deg, #22c55e, #4ade80); }
-			.tp-round-bar-fill.neg { background: linear-gradient(90deg, #ef4444, #f87171); }
-
-			.tp-round-val {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.85rem;
-				font-weight: 600;
-				min-width: 60px;
-				text-align: right;
-			}
-
-			.tp-round-val.pos { color: #22c55e; }
-			.tp-round-val.neg { color: #ef4444; }
-
-			.tp-loading {
-				text-align: center;
-				color: var(--muted);
-				padding: 64px 24px;
-				font-size: 0.85rem;
-			}
-
-			/* ---- STAT HIGHLIGHTS ---- */
-			.stat-cards {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-				gap: 8px;
-				margin-bottom: 32px;
-			}
-
-			.stat-card {
-				background: var(--card);
-				border-radius: 4px;
-				padding: 16px;
-				border-left: 3px solid var(--celeste);
-			}
-
-			.stat-card:nth-child(1) { border-left-color: var(--yellow); }
-			.stat-card:nth-child(2) { border-left-color: #ef4444; }
-			.stat-card:nth-child(3) { border-left-color: var(--celeste); }
-			.stat-card:nth-child(4) { border-left-color: #22c55e; }
-			.stat-card:nth-child(5) { border-left-color: #a855f7; }
-
-			.stat-card-label {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.6rem;
-				text-transform: uppercase;
-				letter-spacing: 0.14em;
-				color: var(--muted);
-				margin-bottom: 6px;
-			}
-
-			.stat-card-team {
-				font-weight: 600;
-				font-size: 0.95rem;
-				margin-bottom: 2px;
-			}
-
-			.stat-card-detail {
-				font-size: 0.8rem;
-				color: var(--muted);
-			}
-
-			.stat-card[onclick] {
-				transition: background 0.15s, transform 0.15s;
-			}
-
-			.stat-card[onclick]:hover {
-				background: #1e2d4a;
-				transform: translateY(-2px);
-			}
-
-			.stat-card-link {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.65rem;
-				text-transform: uppercase;
-				letter-spacing: 0.08em;
-				color: var(--celeste);
-				margin-top: 8px;
-				opacity: 0;
-				transition: opacity 0.15s;
-			}
-
-			.stat-card:hover .stat-card-link {
-				opacity: 1;
-			}
-
-			/* ---- HEAD TO HEAD ---- */
-			.h2h-bar {
-				margin-bottom: 24px;
-			}
-
-			.h2h-select {
-				display: flex;
-				gap: 12px;
-				align-items: center;
-				margin-bottom: 16px;
-				flex-wrap: wrap;
-			}
-
-			.h2h-select select {
-				font-family: 'Inter', sans-serif;
-				font-size: 0.9rem;
-				padding: 8px 12px;
-				background: var(--card);
-				color: var(--text);
-				border: 1px solid rgba(255,255,255,0.08);
-				border-radius: 4px;
-				flex: 1;
-				min-width: 140px;
-			}
-
-			.h2h-select .vs {
-				font-family: 'Oswald', sans-serif;
-				color: var(--muted);
-				font-size: 0.85rem;
-			}
-
-			.h2h-rounds {
-				display: flex;
-				flex-direction: column;
-				gap: 4px;
-			}
-
-			.h2h-round {
-				display: grid;
-				grid-template-columns: 80px 1fr 40px 1fr 80px;
-				align-items: center;
-				gap: 4px;
-				font-size: 0.8rem;
-			}
-
-			.h2h-round-label {
-				font-family: 'Oswald', sans-serif;
-				color: var(--muted);
-				font-size: 0.75rem;
-				text-align: center;
-			}
-
-			.h2h-val {
-				font-family: 'Oswald', sans-serif;
-				font-weight: 600;
-				font-size: 0.85rem;
-			}
-
-			.h2h-val.left { text-align: right; }
-			.h2h-val.right { text-align: left; }
-			.h2h-val.win { color: #22c55e; }
-			.h2h-val.lose { color: var(--muted); }
-
-			.h2h-bar-track {
-				height: 8px;
-				border-radius: 4px;
-				overflow: hidden;
-				background: rgba(255,255,255,0.04);
-			}
-
-			.h2h-bar-fill {
-				height: 100%;
-				border-radius: 4px;
-			}
-
-			.h2h-bar-fill.left { background: var(--yellow); float: right; }
-			.h2h-bar-fill.right { background: var(--celeste); }
-
-			.h2h-summary {
-				display: flex;
-				justify-content: space-between;
-				margin-top: 12px;
-				padding-top: 12px;
-				border-top: 1px solid rgba(255,255,255,0.06);
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.9rem;
-			}
-
-			.h2h-summary .total { font-weight: 700; font-size: 1.1rem; }
-			.h2h-summary .wins { color: var(--muted); font-size: 0.8rem; }
-
-			/* ---- LINE CHART ---- */
-			.line-chart-wrap {
-				margin-top: 8px;
-				margin-bottom: 8px;
-			}
-
-			.line-chart-wrap svg {
+			/* ---- PITCH VIEW ---- */
+			.pitch {
+				position: relative;
 				width: 100%;
-				height: auto;
+				aspect-ratio: 3/4;
+				background: linear-gradient(175deg, #1a5c1a 0%, #2a7a2a 40%, #1a5c1a 100%);
+				border-radius: 6px;
+				overflow: hidden;
+			}
+
+			.pitch-lines {
+				position: absolute;
+				inset: 0;
+				pointer-events: none;
+			}
+
+			.pitch-lines::before {
+				content: '';
+				position: absolute;
+				top: 50%;
+				left: 8%;
+				right: 8%;
+				height: 1px;
+				background: rgba(255,255,255,0.18);
+			}
+
+			.pitch-lines::after {
+				content: '';
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				width: 60px;
+				height: 60px;
+				border: 1px solid rgba(255,255,255,0.18);
+				border-radius: 50%;
+				transform: translate(-50%, -50%);
+			}
+
+			.pitch-box-top, .pitch-box-bottom {
+				position: absolute;
+				left: 25%;
+				right: 25%;
+				height: 14%;
+				border: 1px solid rgba(255,255,255,0.18);
+			}
+			.pitch-box-top { top: 0; border-top: none; }
+			.pitch-box-bottom { bottom: 0; border-bottom: none; }
+
+			.pitch-outline {
+				position: absolute;
+				top: 4%;
+				bottom: 4%;
+				left: 8%;
+				right: 8%;
+				border: 1px solid rgba(255,255,255,0.18);
+				border-radius: 2px;
+				pointer-events: none;
+			}
+
+			.pitch-player {
+				position: absolute;
+				transform: translate(-50%, -50%);
+				text-align: center;
+				cursor: pointer;
+				z-index: 2;
+				transition: transform 0.15s;
+			}
+
+			.pitch-player:hover {
+				transform: translate(-50%, -50%) scale(1.12);
+			}
+
+			.pitch-dot {
+				width: 34px;
+				height: 34px;
+				border-radius: 50%;
+				margin: 0 auto;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				overflow: hidden;
+				background: rgba(255,255,255,0.12);
+				border: 2px solid rgba(255,255,255,0.25);
+			}
+
+			.pitch-dot.mv { border-color: rgba(117,170,219,0.6); }
+			.pitch-dot.anf { border-color: rgba(254,204,2,0.5); }
+			.pitch-dot.captain { box-shadow: 0 0 0 2px var(--yellow), 0 0 8px rgba(254,204,2,0.4); }
+
+			.pitch-avatar {
+				width: 100%;
+				height: 100%;
 				display: block;
 			}
 
-			.line-chart-wrap .chart-line {
-				fill: none;
-				stroke-width: 2.5;
-				stroke-linecap: round;
-				stroke-linejoin: round;
+			.pitch-photo {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				display: block;
 			}
 
-			.line-chart-wrap .chart-dot {
-				stroke-width: 2;
-			}
-
-			.line-chart-wrap .chart-area {
-				opacity: 0.08;
-			}
-
-			.line-chart-wrap .chart-grid {
-				stroke: rgba(255,255,255,0.04);
-				stroke-width: 1;
-			}
-
-			.line-chart-wrap .chart-label {
-				fill: var(--muted);
+			.pitch-name {
+				font-size: 0.6rem;
 				font-family: 'Oswald', sans-serif;
-				font-size: 9px;
+				margin-top: 2px;
+				white-space: nowrap;
+				color: #fff;
+				text-shadow: 0 1px 4px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.5);
+				letter-spacing: 0.02em;
+				max-width: 72px;
+				overflow: hidden;
+				text-overflow: ellipsis;
 			}
 
-			.chart-legend {
-				display: flex;
-				gap: 16px;
-				justify-content: center;
-				margin-top: 8px;
-				font-size: 0.75rem;
-				color: var(--muted);
+			.pitch-fallback-list {
+				padding: 12px 0;
 			}
 
-			.chart-legend span::before {
-				content: '';
-				display: inline-block;
-				width: 12px;
-				height: 3px;
-				border-radius: 2px;
-				margin-right: 6px;
-				vertical-align: middle;
-			}
-
-			.chart-legend .leg-a::before { background: var(--yellow); }
-			.chart-legend .leg-b::before { background: var(--celeste); }
-			.chart-legend .leg-single::before { background: var(--yellow); }
-
-			.stat-chart-title {
+			/* ---- ADMIN ---- */
+			.admin-section-title {
 				font-family: 'Oswald', sans-serif;
 				font-size: 1rem;
 				text-transform: uppercase;
+				letter-spacing: 0.06em;
 				color: var(--yellow);
-				margin-bottom: 4px;
+				margin-bottom: 16px;
 			}
 
-			.stat-chart-sub {
+			.admin-form {
+				max-width: 400px;
+			}
+
+			.admin-label {
+				display: block;
 				font-size: 0.8rem;
 				color: var(--muted);
 				margin-bottom: 12px;
 			}
 
-			.bar-chart-wrap svg {
-				width: 100%;
-				height: auto;
+			.admin-input {
 				display: block;
+				width: 100%;
+				margin-top: 4px;
+				padding: 8px 12px;
+				background: rgba(255,255,255,0.06);
+				border: 1px solid rgba(255,255,255,0.12);
+				border-radius: 4px;
+				color: var(--text);
+				font-size: 0.9rem;
+				outline: none;
+				box-sizing: border-box;
 			}
 
-			.bar-chart-wrap .bar-positive { fill: #22c55e; }
-			.bar-chart-wrap .bar-negative { fill: #ef4444; }
-			.bar-chart-wrap .bar-neutral { fill: var(--celeste); opacity: 0.6; }
-			.bar-chart-wrap .bar-label { fill: var(--muted); font-family: 'Oswald', sans-serif; font-size: 10px; }
-			.bar-chart-wrap .bar-value { fill: var(--muted); font-family: 'Oswald', sans-serif; font-size: 9px; }
-			.bar-chart-wrap .bar-grid { stroke: rgba(255,255,255,0.04); stroke-width: 1; }
+			.admin-input:focus { border-color: var(--celeste); }
 
-			/* ---- TRADES ---- */
-			.tp-trade-group {
-				margin-bottom: 4px;
+			.admin-toggles {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				margin-bottom: 16px;
 			}
 
-			.tp-trade-group:last-child { margin-bottom: 0; }
+			.admin-toggle {
+				font-size: 0.85rem;
+				color: var(--text);
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				cursor: pointer;
+			}
 
-			.tp-trade-round-header {
+			.admin-toggle input { accent-color: var(--celeste); }
+
+			.admin-teams-list {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+
+			.admin-team-row {
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
 				padding: 10px 12px;
 				background: rgba(255,255,255,0.03);
 				border-radius: 4px;
+				border: 1px solid rgba(255,255,255,0.06);
+			}
+
+			.admin-team-info {
+				flex: 1;
+			}
+
+			.admin-team-name {
 				font-family: 'Oswald', sans-serif;
-				font-size: 0.85rem;
-				font-weight: 600;
+				font-size: 0.9rem;
+			}
+
+			.admin-team-meta {
+				font-size: 0.7rem;
+				color: var(--muted);
+			}
+
+			.admin-team-actions {
+				display: flex;
+				gap: 6px;
+			}
+
+			.admin-action-btn {
+				padding: 4px 12px;
+				border: 1px solid rgba(255,255,255,0.12);
+				border-radius: 3px;
+				background: rgba(255,255,255,0.04);
+				color: var(--text);
+				font-size: 0.75rem;
+				font-family: 'Oswald', sans-serif;
 				cursor: pointer;
-				transition: background 0.15s;
-				user-select: none;
-			}
-
-			.tp-trade-round-header:hover {
-				background: rgba(255,255,255,0.06);
-			}
-
-			.tp-trade-round-header .chevron {
-				font-size: 0.7rem;
-				transition: transform 0.2s;
-				color: var(--muted);
-				margin-right: 6px;
-			}
-
-			.tp-trade-group.open .chevron {
-				transform: rotate(90deg);
-			}
-
-			.tp-trade-list {
-				display: none;
-				padding: 4px 0 8px;
-			}
-
-			.tp-trade-group.open .tp-trade-list {
-				display: block;
-			}
-
-			.tp-trade-count {
-				font-size: 0.7rem;
-				font-weight: 400;
-				color: var(--muted);
+				text-transform: uppercase;
 				letter-spacing: 0.04em;
 			}
 
-			.tp-trade {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				padding: 5px 12px;
-				font-size: 0.85rem;
-			}
+			.admin-action-btn:hover { background: rgba(255,255,255,0.08); }
+			.admin-action-btn.approve { border-color: #22c55e; color: #22c55e; }
+			.admin-action-btn.reject { border-color: #ef4444; color: #ef4444; }
 
-			.tp-trade-type {
-				font-family: 'Oswald', sans-serif;
-				font-size: 0.6rem;
-				text-transform: uppercase;
-				letter-spacing: 0.06em;
-				padding: 2px 6px;
-				border-radius: 3px;
-				margin-right: 8px;
-				display: inline-block;
-				min-width: 24px;
-				text-align: center;
-			}
-
-			.tp-trade-type.buy { background: rgba(34,197,94,0.15); color: #22c55e; }
-			.tp-trade-type.sell { background: rgba(239,68,68,0.15); color: #ef4444; }
-
-			.tp-trade-summary {
+			.admin-team-status {
 				font-family: 'Oswald', sans-serif;
 				font-size: 0.75rem;
 				text-transform: uppercase;
-				letter-spacing: 0.08em;
+				letter-spacing: 0.04em;
+				padding: 4px 10px;
+			}
+
+			.admin-team-status.approved { color: #22c55e; }
+			.admin-team-status.pending { color: #f59e0b; }
+			.admin-team-status.rejected { color: #ef4444; }
+
+			/* ---- BYGG LAG: AUTH ---- */
+			.bygg-auth {
+				text-align: center;
+				padding: 32px 0;
+			}
+
+			.bygg-auth-title {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.6rem;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				color: var(--yellow);
+				margin-bottom: 4px;
+			}
+
+			.bygg-auth-subtitle {
 				color: var(--muted);
+				font-size: 0.85rem;
+				margin-bottom: 24px;
+			}
+
+			.bygg-auth-form {
+				max-width: 280px;
+				margin: 0 auto;
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+
+			.bygg-auth-form input {
+				padding: 10px 14px;
+				background: rgba(255,255,255,0.06);
+				border: 1px solid rgba(255,255,255,0.12);
+				border-radius: 4px;
+				color: var(--text);
+				font-size: 0.9rem;
+				outline: none;
+				text-align: center;
+			}
+
+			.bygg-auth-form input:focus { border-color: var(--celeste); }
+
+			.bygg-auth-buttons {
+				display: flex;
+				gap: 8px;
+			}
+
+			.bygg-auth-btn {
+				flex: 1;
+				padding: 10px;
+				border: 1px solid rgba(255,255,255,0.15);
+				border-radius: 4px;
+				background: rgba(255,255,255,0.04);
+				color: var(--text);
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.9rem;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				cursor: pointer;
+				transition: background 0.2s, border-color 0.2s;
+			}
+
+			.bygg-auth-btn:hover { background: rgba(255,255,255,0.08); }
+
+			.bygg-auth-btn.primary {
+				background: var(--celeste);
+				color: #111;
+				border-color: var(--celeste);
+			}
+
+			.bygg-auth-btn.primary:hover { opacity: 0.9; }
+
+			.bygg-auth-error {
+				color: #ef4444;
+				font-size: 0.8rem;
+				min-height: 1.2em;
+			}
+
+			/* User bar */
+			.bygg-user-bar {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 8px 0;
 				margin-bottom: 12px;
-				padding-bottom: 8px;
+				border-bottom: 1px solid rgba(255,255,255,0.06);
+			}
+
+			.bygg-user-bar span {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1rem;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+			}
+
+			.bygg-logout-btn {
+				background: none;
+				border: none;
+				color: var(--muted);
+				font-size: 0.75rem;
+				cursor: pointer;
+				text-decoration: underline;
+			}
+
+			.bygg-logout-btn:hover { color: var(--text); }
+
+			/* Captain hint */
+			.bygg-captain-hint {
+				font-size: 0.75rem;
+				color: var(--muted);
+				text-align: center;
+				margin-bottom: 8px;
+			}
+
+			/* Captain star on pitch */
+			.bygg-slot-captain {
+				position: absolute;
+				top: -6px;
+				left: -6px;
+				width: 16px;
+				height: 16px;
+				background: var(--yellow);
+				border-radius: 50%;
+				font-size: 0.55rem;
+				line-height: 16px;
+				text-align: center;
+				color: #111;
+				font-weight: bold;
+				z-index: 3;
+			}
+
+			/* Save row */
+			.bygg-save-row {
+				margin-top: 16px;
+				display: flex;
+				align-items: center;
+				gap: 12px;
+			}
+
+			.bygg-save-btn {
+				padding: 12px 32px;
+				background: var(--celeste);
+				color: #111;
+				border: none;
+				border-radius: 4px;
+				font-family: 'Oswald', sans-serif;
+				font-size: 1rem;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				cursor: pointer;
+				transition: opacity 0.2s;
+			}
+
+			.bygg-save-btn:hover { opacity: 0.9; }
+			.bygg-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+			.bygg-save-status {
+				font-size: 0.8rem;
+				color: var(--muted);
+			}
+
+			.bygg-save-status.success { color: #22c55e; }
+			.bygg-save-status.error { color: #ef4444; }
+
+			/* ---- BYGG LAG ---- */
+			.bygg-header {
+				margin-bottom: 16px;
+			}
+
+			.bygg-budget-row {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				margin-bottom: 12px;
+			}
+
+			.bygg-budget-bar {
+				flex: 1;
+				height: 8px;
+				background: rgba(255,255,255,0.08);
+				border-radius: 4px;
+				overflow: hidden;
+			}
+
+			.bygg-budget-fill {
+				height: 100%;
+				background: var(--celeste);
+				border-radius: 4px;
+				transition: width 0.3s, background 0.3s;
+				width: 0%;
+			}
+
+			.bygg-budget-fill.warning { background: #f59e0b; }
+			.bygg-budget-fill.over { background: #ef4444; }
+
+			.bygg-budget-text {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.85rem;
+				white-space: nowrap;
+				min-width: 100px;
+				text-align: right;
+			}
+
+			.bygg-controls {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+			}
+
+			.bygg-formation-select {
+				flex: 1;
+				padding: 8px 12px;
+				background: rgba(255,255,255,0.06);
+				border: 1px solid rgba(255,255,255,0.12);
+				border-radius: 4px;
+				color: var(--text);
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.9rem;
+			}
+
+			.bygg-reset-btn {
+				padding: 8px 16px;
+				background: rgba(255,255,255,0.06);
+				border: 1px solid rgba(255,255,255,0.12);
+				border-radius: 4px;
+				color: var(--muted);
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.85rem;
+				cursor: pointer;
+				transition: color 0.2s, border-color 0.2s;
+			}
+
+			.bygg-reset-btn:hover { color: #ef4444; border-color: #ef4444; }
+
+			.bygg-placeholder {
+				text-align: center;
+				padding: 48px 16px;
+				color: var(--muted);
+				font-size: 0.9rem;
+			}
+
+			/* Empty slot on pitch */
+			.bygg-slot {
+				position: absolute;
+				transform: translate(-50%, -50%);
+				text-align: center;
+				cursor: pointer;
+				z-index: 2;
+				transition: transform 0.15s;
+			}
+
+			.bygg-slot:hover {
+				transform: translate(-50%, -50%) scale(1.12);
+			}
+
+			.bygg-slot-dot {
+				width: 34px;
+				height: 34px;
+				border-radius: 50%;
+				margin: 0 auto;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border: 2px dashed rgba(255,255,255,0.3);
+				background: rgba(255,255,255,0.04);
+				transition: border-color 0.2s, background 0.2s;
+			}
+
+			.bygg-slot:hover .bygg-slot-dot {
+				border-color: var(--celeste);
+				background: rgba(255,255,255,0.08);
+			}
+
+			.bygg-slot-dot.filled {
+				border-style: solid;
+				background: rgba(255,255,255,0.12);
+				border-color: rgba(255,255,255,0.25);
+			}
+
+			.bygg-slot-dot.filled.mv { border-color: rgba(117,170,219,0.6); }
+			.bygg-slot-dot.filled.anf { border-color: rgba(254,204,2,0.5); }
+
+			.bygg-slot-plus {
+				font-size: 1rem;
+				color: rgba(255,255,255,0.3);
+				line-height: 1;
+			}
+
+			.bygg-slot-name {
+				font-size: 0.6rem;
+				font-family: 'Oswald', sans-serif;
+				margin-top: 2px;
+				white-space: nowrap;
+				color: #fff;
+				text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+				letter-spacing: 0.02em;
+				max-width: 72px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.bygg-slot-pos {
+				font-size: 0.55rem;
+				font-family: 'Oswald', sans-serif;
+				color: rgba(255,255,255,0.5);
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+			}
+
+			/* Remove badge on filled slot hover */
+			.bygg-slot-remove {
+				display: none;
+				position: absolute;
+				top: -4px;
+				right: -4px;
+				width: 16px;
+				height: 16px;
+				border-radius: 50%;
+				background: #ef4444;
+				color: #fff;
+				font-size: 0.6rem;
+				line-height: 16px;
+				text-align: center;
+				z-index: 3;
+			}
+
+			.bygg-slot:hover .bygg-slot-remove { display: block; }
+
+			/* Squad summary */
+			.bygg-squad-summary {
+				margin-top: 16px;
+				padding: 12px;
+				background: rgba(255,255,255,0.03);
+				border-radius: 6px;
+				font-size: 0.8rem;
+			}
+
+			.bygg-summary-row {
+				display: flex;
+				justify-content: space-between;
+				padding: 4px 0;
 				border-bottom: 1px solid rgba(255,255,255,0.04);
 			}
 
-			.tp-trade-empty-round {
-				opacity: 0.4;
-				cursor: default;
+			.bygg-summary-row:last-child { border-bottom: none; }
+
+			.bygg-summary-name { color: var(--text); }
+			.bygg-summary-value { color: var(--muted); font-family: 'Oswald', sans-serif; }
+
+			/* Player picker modal */
+			.bygg-picker-overlay {
+				display: none;
+				position: fixed;
+				inset: 0;
+				background: rgba(0,0,0,0.7);
+				z-index: 1000;
+				align-items: center;
+				justify-content: center;
+				padding: 16px;
 			}
 
-			@media (max-width: 768px) {
-				.leaderboard-layout { grid-template-columns: 1fr; }
-				.section-wide { max-width: 800px; }
-				.lb-row:hover { transform: none; }
-				.h2h-round { grid-template-columns: 60px 1fr 30px 1fr 60px; font-size: 0.7rem; }
-				.main-tab { padding: 10px 16px; font-size: 0.9rem; }
-				.tp-tab { padding: 8px 10px; font-size: 0.7rem; }
-				.team-panel-empty .arrow { display: none; }
-				.team-panel-empty { padding: 32px 16px; }
+			.bygg-picker-overlay.active { display: flex; }
+
+			.bygg-picker-modal {
+				background: var(--bg);
+				border: 1px solid rgba(255,255,255,0.1);
+				border-radius: 8px;
+				width: 100%;
+				max-width: 420px;
+				max-height: 80vh;
+				display: flex;
+				flex-direction: column;
+				overflow: hidden;
 			}
 
-			/* ---- TIKTOKS ---- */
-			.tiktoks {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-				gap: 1.5rem;
-				justify-items: center;
+			.bygg-picker-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 12px 16px;
+				border-bottom: 1px solid rgba(255,255,255,0.06);
+			}
+
+			.bygg-picker-title {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1rem;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+			}
+
+			.bygg-picker-close {
+				background: none;
+				border: none;
+				color: var(--muted);
+				font-size: 1.4rem;
+				cursor: pointer;
+				padding: 0 4px;
+				line-height: 1;
+			}
+
+			.bygg-picker-close:hover { color: var(--text); }
+
+			.bygg-picker-search {
+				padding: 8px 16px;
+			}
+
+			.bygg-picker-search input {
+				width: 100%;
+				padding: 8px 12px;
+				background: rgba(255,255,255,0.06);
+				border: 1px solid rgba(255,255,255,0.1);
+				border-radius: 4px;
+				color: var(--text);
+				font-size: 0.85rem;
+				outline: none;
+				box-sizing: border-box;
+			}
+
+			.bygg-picker-search input:focus {
+				border-color: var(--celeste);
+			}
+
+			.bygg-picker-sort-row {
+				display: flex;
+				gap: 0;
+				padding: 0 16px 8px;
+			}
+
+			.bygg-picker-sort {
+				flex: 1;
+				padding: 6px;
+				background: none;
+				border: 1px solid rgba(255,255,255,0.06);
+				color: var(--muted);
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.75rem;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				cursor: pointer;
+			}
+
+			.bygg-picker-sort:first-child { border-radius: 4px 0 0 4px; }
+			.bygg-picker-sort:last-child { border-radius: 0 4px 4px 0; }
+			.bygg-picker-sort.active { background: rgba(255,255,255,0.08); color: var(--text); }
+
+			.bygg-picker-list {
+				flex: 1;
+				overflow-y: auto;
+				padding: 0 16px 12px;
+			}
+
+			.bygg-picker-item {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 8px 4px;
+				border-bottom: 1px solid rgba(255,255,255,0.04);
+				cursor: pointer;
+				transition: background 0.15s;
+				border-radius: 4px;
+			}
+
+			.bygg-picker-item:hover { background: rgba(255,255,255,0.06); }
+
+			.bygg-picker-item-avatar {
+				width: 28px;
+				height: 28px;
+				border-radius: 50%;
+				overflow: hidden;
+				flex-shrink: 0;
+				background: rgba(255,255,255,0.08);
+			}
+
+			.bygg-picker-item-avatar svg {
+				width: 100%;
+				height: 100%;
+			}
+
+			.bygg-picker-item-info {
+				flex: 1;
+				min-width: 0;
+			}
+
+			.bygg-picker-item-name {
+				font-size: 0.85rem;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.bygg-picker-item-club {
+				font-size: 0.7rem;
+				color: var(--muted);
+			}
+
+			.bygg-picker-item-value {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.85rem;
+				text-align: right;
+				white-space: nowrap;
+			}
+
+			.bygg-picker-item-growth {
+				font-size: 0.7rem;
+				color: var(--muted);
+			}
+
+			.bygg-picker-item-growth.positive { color: #22c55e; }
+
+			/* ---- AUTH SECTION ---- */
+			.auth-form {
+				max-width: 320px;
+				margin: 0 auto;
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+				text-align: center;
+			}
+
+			.auth-form input {
+				padding: 12px 16px;
+				background: rgba(255,255,255,0.06);
+				border: 1px solid rgba(255,255,255,0.12);
+				border-radius: 6px;
+				color: var(--text);
+				font-size: 1rem;
+				outline: none;
+				text-align: center;
+			}
+
+			.auth-form input:focus { border-color: var(--celeste); }
+
+			.auth-buttons { display: flex; gap: 8px; }
+
+			.auth-btn {
+				flex: 1;
+				padding: 12px;
+				border: 1px solid rgba(255,255,255,0.15);
+				border-radius: 6px;
+				background: rgba(255,255,255,0.04);
+				color: var(--text);
+				font-family: 'Oswald', sans-serif;
+				font-size: 1rem;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				cursor: pointer;
+			}
+
+			.auth-btn.primary {
+				background: var(--celeste);
+				color: #111;
+				border-color: var(--celeste);
+			}
+
+			.auth-error { color: #ef4444; font-size: 0.8rem; min-height: 1.2em; }
+
+			.auth-user-bar {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				gap: 16px;
+				margin-bottom: 16px;
+			}
+
+			.auth-user-name {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.2rem;
+				text-transform: uppercase;
+			}
+
+			.auth-logout-btn {
+				background: none;
+				border: none;
+				color: var(--muted);
+				font-size: 0.8rem;
+				cursor: pointer;
+				text-decoration: underline;
+			}
+
+			.auth-team-btn {
+				display: block;
+				margin: 0 auto;
+				padding: 14px 32px;
+				background: var(--celeste);
+				color: #111;
+				border: none;
+				border-radius: 6px;
+				font-family: 'Oswald', sans-serif;
+				font-size: 1rem;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				cursor: pointer;
+			}
+
+			/* ---- LIGA STANDINGS ---- */
+			.liga-team-row {
+				display: flex;
+				align-items: center;
+				padding: 12px;
+				border-bottom: 1px solid rgba(255,255,255,0.04);
+				gap: 12px;
+				cursor: pointer;
+				transition: background 0.15s;
+			}
+
+			.liga-team-row:hover { background: rgba(255,255,255,0.03); }
+
+			.liga-pos {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1rem;
+				width: 28px;
+				text-align: center;
+				color: var(--muted);
+			}
+
+			.liga-pos.top3 { color: var(--yellow); font-weight: 600; }
+
+			.liga-team-info {
+				flex: 1;
+				min-width: 0;
+			}
+
+			.liga-team-name {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.9rem;
+				display: block;
+			}
+
+			.liga-team-pts {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.9rem;
+				color: var(--celeste);
+			}
+
+			.liga-team-players {
+				font-size: 0.7rem;
+				color: var(--muted);
+				display: block;
+			}
+
+			.liga-team-last {
+				font-size: 0.68rem;
+				color: var(--muted);
+				display: block;
+			}
+
+			.liga-team-last.pos { color: #22c55e; }
+			.liga-team-last.neg { color: #ef4444; }
+
+			.liga-team-detail {
+				display: none;
+				overflow: hidden;
+			}
+
+			.liga-team-detail.open {
+				display: block;
+				border-bottom: 1px solid rgba(255,255,255,0.06);
+				background: rgba(255,255,255,0.02);
+			}
+
+			.detail-content {
+				padding: 12px;
+			}
+
+			.detail-section {
+				margin-bottom: 16px;
+			}
+
+			.detail-section-title {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.75rem;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				color: var(--muted);
+				margin-bottom: 8px;
+			}
+
+			.detail-round-row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 3px 0;
+			}
+
+			.detail-round-num {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.72rem;
+				color: var(--muted);
+				width: 24px;
+				flex-shrink: 0;
+			}
+
+			.detail-round-bar-wrap {
+				flex: 1;
+				height: 6px;
+				background: rgba(255,255,255,0.04);
+				border-radius: 3px;
+				overflow: hidden;
+			}
+
+			.detail-round-bar {
+				height: 100%;
+				border-radius: 3px;
+				transition: width 0.3s;
+			}
+
+			.detail-round-val {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.72rem;
+				min-width: 55px;
+				text-align: right;
+				flex-shrink: 0;
+			}
+
+			.detail-round-val.pos { color: #22c55e; }
+			.detail-round-val.neg { color: #ef4444; }
+
+			/* ---- BOTTOM NAV ---- */
+			.bottom-nav {
+				position: fixed;
+				bottom: 0;
+				left: 0; right: 0;
+				display: flex;
+				justify-content: center;
+				gap: 0;
+				background: rgba(10, 14, 20, 0.95);
+				backdrop-filter: blur(12px);
+				border-top: 1px solid rgba(255,255,255,0.08);
+				padding: 6px 0;
+				padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+				z-index: 100;
+			}
+
+			.bottom-nav-btn {
+				flex: 1;
+				max-width: 120px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 2px;
+				padding: 6px 12px;
+				background: none;
+				border: none;
+				color: var(--muted);
+				cursor: pointer;
+				font-family: 'Oswald', sans-serif;
+				transition: color 0.2s;
+			}
+
+			.bottom-nav-btn:hover, .bottom-nav-btn.active { color: var(--yellow); }
+			.bottom-nav-icon { font-size: 1.2rem; }
+			.bottom-nav-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+			/* ---- FULLSCREEN VIEWS ---- */
+			/* fullview styles removed — using appview instead */
+
+			/* ---- RULES ---- */
+			.rules-content p {
+				font-size: 0.88rem;
+				color: var(--muted);
+				line-height: 1.6;
+				margin-bottom: 12px;
+			}
+
+			.rules-heading {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.2rem;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				color: var(--yellow);
+				margin-bottom: 8px;
+			}
+
+			.rules-section {
+				margin-bottom: 20px;
+			}
+
+			.rules-subheading {
+				font-family: 'Oswald', sans-serif;
+				font-size: 0.9rem;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				color: var(--text);
+				margin-bottom: 8px;
+				padding-bottom: 4px;
+				border-bottom: 1px solid rgba(255,255,255,0.06);
+			}
+
+			.rules-list {
+				list-style: none;
+				padding: 0;
+			}
+
+			.rules-list li {
+				font-size: 0.85rem;
+				padding: 6px 0;
+				padding-left: 16px;
+				position: relative;
+				color: var(--text);
+			}
+
+			.rules-list li::before {
+				content: '—';
+				position: absolute;
+				left: 0;
+				color: var(--muted);
+			}
+
+			.rules-table {
+				display: flex;
+				flex-direction: column;
+			}
+
+			.rules-row {
+				display: flex;
+				justify-content: space-between;
+				padding: 5px 0;
+				font-size: 0.85rem;
+				border-bottom: 1px solid rgba(255,255,255,0.03);
+			}
+
+			.rules-pts {
+				font-family: 'Oswald', sans-serif;
+				font-weight: 600;
+				min-width: 50px;
+				text-align: right;
+			}
+
+			.rules-pts.pos { color: #22c55e; }
+			.rules-pts.neg { color: #ef4444; }
+
+			.rules-prizes {
+				display: flex;
+				gap: 12px;
+				margin-bottom: 8px;
+			}
+
+			.rules-prize {
+				flex: 1;
+				text-align: center;
+				padding: 10px 8px;
+				background: rgba(255,255,255,0.03);
+				border-radius: 4px;
+				font-size: 0.8rem;
+			}
+
+			.rules-prize-pos {
+				display: block;
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.1rem;
+				color: var(--yellow);
+				margin-bottom: 2px;
+			}
+
+			.rules-note {
+				font-size: 0.78rem;
+				color: var(--muted);
+				font-style: italic;
+			}
+
+			/* ---- APP VIEWS ---- */
+			.appview {
+				display: none;
+				min-height: 100vh;
+				padding-bottom: 60px;
+			}
+
+			.appview.active { display: block; }
+
+			.appview-header {
+				padding: 16px;
+				border-bottom: 1px solid rgba(255,255,255,0.06);
+				position: sticky;
+				top: 0;
+				background: var(--bg);
+				z-index: 10;
+			}
+
+			.appview-title {
+				font-family: 'Oswald', sans-serif;
+				font-size: 1.2rem;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+			}
+
+			.appview-body {
+				padding: 16px;
 			}
 
 			/* ---- PHOTO BREAK ---- */
@@ -1359,11 +1652,23 @@
 
 			footer strong { color: var(--text); }
 
+			.admin-trigger {
+				background: none;
+				border: none;
+				color: rgba(255,255,255,0.1);
+				font-size: 1.2rem;
+				cursor: pointer;
+				padding: 8px;
+				margin-top: 8px;
+				transition: color 0.2s;
+			}
+
+			.admin-trigger:hover { color: rgba(255,255,255,0.4); }
+
 			@media (max-width: 640px) {
 				.prizes { grid-template-columns: 1fr; }
 				.step { flex-direction: column; gap: 0.5rem; }
 				.section { padding: 3rem 1.25rem; }
-				.tiktoks { grid-template-columns: 1fr; }
 			}
 		</style>
 	</head>
@@ -1375,196 +1680,328 @@
 			<button class="theme-btn" data-theme="tun" aria-label="Tunisien">&#x1f1f9;&#x1f1f3;</button>
 		</div>
 
-		<section class="hero">
-			<div class="hero-bg"></div>
-			<div class="hero-overlay"></div>
-			<div class="hero-content">
-				<h1>La Copa del Mundo 2026</h1>
-				<p class="sub" id="hero-sub">Uruguay nomaaa</p>
-				<a href="#how" class="cta">Gå med</a>
-				<a href="#leaderboard" class="cta" style="background: var(--celeste); margin-left: 12px;">Tabell</a>
-			</div>
-		</section>
+		<!-- All content lives in views, controlled by bottom nav -->
 
-		<section class="section" id="how">
-			<h2>Så funkar det</h2>
-			<p class="section-intro">Tre steg, sen är du med.</p>
-			<div class="steps">
-				<div class="step">
-					<div class="step-num">1</div>
-					<div>
-						<h3>Skapa ditt lag</h3>
-						<p>Gå till Aftonbladets <strong>VM-elvan</strong> och skapa ditt lag. Välj spelare, sätt din startelva, och tävla baserat på verklig matchstatistik.</p>
-					</div>
-				</div>
-				<div class="step">
-					<div class="step-num">2</div>
-					<div>
-						<h3>Swisha 300 kr</h3>
-						<p>Skicka <strong>300 kr</strong> till Ruy via Swish: <strong>+46 70 306 42 11</strong>. Skriv ditt VM-elvan-lagnamn i meddelandet.</p>
-					</div>
-				</div>
-				<div class="step">
-					<div class="step-num">3</div>
-					<div>
-						<h3>Du är med!</h3>
-						<p>När vi fått ditt lagnamn och betalning dyker du upp i deltagarlistan. Gå med i <a href="https://chat.whatsapp.com/LGL6yZKMdtl7GTJKZrEKeX" target="_blank" style="color: var(--celeste); text-decoration: underline;">WhatsApp-gruppen</a> för uppdateringar och snack. Avspark <strong>11 juni</strong>.</p>
-					</div>
-				</div>
-			</div>
-		</section>
+		<!-- View: Home -->
+		<div id="view-home" class="appview active">
+			<section class="hero" id="hero">
+				<div class="hero-bg"></div>
+				<div class="hero-overlay"></div>
+				<div class="hero-content">
+					<h1>La Copa del Mundo 2026</h1>
+					<p class="sub" id="hero-sub">Uruguay nomaaa</p>
 
-		<div class="photo-break">
-			<div class="photo-break-bg" data-img="break-1"></div>
-			<div class="photo-break-overlay"></div>
-		</div>
-
-		<section class="section" id="swish">
-			<h2>Betala</h2>
-			<p class="section-intro">Swisha insatsen direkt.</p>
-			<div class="swish-box">
-				<h3>Insats</h3>
-				<div class="amount">300 kr</div>
-
-				<a class="swish-btn"
-					href="swish://payment?data=%7B%22version%22%3A1%2C%22payee%22%3A%7B%22value%22%3A%22%2B46703064211%22%2C%22editable%22%3Afalse%7D%2C%22amount%22%3A%7B%22value%22%3A300%2C%22editable%22%3Afalse%7D%2C%22message%22%3A%7B%22value%22%3A%22La%20Copa%20del%20Mundo%202026%22%2C%22editable%22%3Atrue%7D%7D">
-					Öppna Swish
-				</a>
-
-				<p class="swish-or">eller skanna QR-koden</p>
-
-				<div class="swish-qr">
-					<img src="/api/swish-qr" alt="Swish QR-kod — 300 kr till Ruy" />
-				</div>
-				<p class="swish-hint">Till: Ruy (+46 70 306 42 11) &bull; Meddelande fylls i automatiskt</p>
-			</div>
-		</section>
-
-		<hr class="divider" />
-
-		<section class="section">
-			<h2>Potten</h2>
-			<p class="section-intro">Vinnaren tar nästan allt.</p>
-			<div class="prizes">
-				<div class="prize">
-					<div class="prize-place">1:a</div>
-					<div class="prize-pct">85%</div>
-					<div class="prize-label">av potten</div>
-				</div>
-				<div class="prize">
-					<div class="prize-place">2:a</div>
-					<div class="prize-pct">10%</div>
-					<div class="prize-label">av potten</div>
-				</div>
-				<div class="prize">
-					<div class="prize-place">3:a</div>
-					<div class="prize-pct">5%</div>
-					<div class="prize-label">av potten</div>
-				</div>
-			</div>
-			<div class="prize-example">
-				Med <strong>30 spelare</strong> = pott <strong>9 000 kr</strong>: 1:a &rarr; 7 650 kr &bull; 2:a &rarr; 900 kr &bull; 3:a &rarr; 450 kr
-			</div>
-		</section>
-
-		<hr class="divider" />
-
-		<section class="section">
-			<h2>Tidigare tävlingar</h2>
-			<p class="section-intro">Vi har gjort det förut.</p>
-
-			<div class="history-card">
-				<div class="history-card-header">
-					<div class="history-card-title">La Copa de Europa 2024</div>
-					<div class="history-card-meta">EM 2024 &bull; 42 spelare</div>
-				</div>
-				<div class="history-podium">
-					<div class="history-pos gold">1</div>
-					<div class="history-entry">
-						<span class="history-name">Ruy</span>
-						<span class="history-team">LaFackingLife</span>
-					</div>
-					<div class="history-pos silver">2</div>
-					<div class="history-entry">
-						<span class="history-name">Bershad Shadvari</span>
-						<span class="history-team">Salahärbäst</span>
-					</div>
-					<div class="history-pos bronze">3</div>
-					<div class="history-entry">
-						<span class="history-name">Kalim Khan</span>
-						<span class="history-team">Kobra Kaivertz</span>
-					</div>
-				</div>
-			</div>
-		</section>
-
-		<div class="photo-break">
-			<div class="photo-break-bg" data-img="break-2"></div>
-			<div class="photo-break-overlay"></div>
-		</div>
-
-		<section class="section">
-			<h2>Deltagare</h2>
-			<p class="section-intro">Betalda och bekräftade.</p>
-			<div class="participants-grid">
-				<div class="participant"><span class="num">01</span> Ruy</div>
-				<div class="participant empty"><span class="num">02</span> Din plats?</div>
-				<div class="participant empty"><span class="num">03</span> Din plats?</div>
-				<div class="participant empty"><span class="num">04</span> Din plats?</div>
-				<div class="participant empty"><span class="num">05</span> Din plats?</div>
-				<div class="participant empty"><span class="num">06</span> Din plats?</div>
-			</div>
-		</section>
-
-		<div class="photo-break">
-			<div class="photo-break-bg" data-img="break-3"></div>
-			<div class="photo-break-overlay"></div>
-		</div>
-
-		<section class="section section-wide" id="leaderboard">
-			<!-- Main tabs -->
-			<div class="main-tabs">
-				<button class="main-tab active" onclick="switchMainTab('tabell')">Tabell</button>
-				<button class="main-tab" onclick="switchMainTab('matcher')">Matcher</button>
-				<button class="main-tab" onclick="switchMainTab('statistik')">Statistik</button>
-				<button class="main-tab" onclick="switchMainTab('h2h')">Head to Head</button>
-			</div>
-
-			<div class="leaderboard-layout">
-				<!-- Left column: main tab content -->
-				<div>
-					<div id="main-tab-tabell" class="main-tab-content active">
-						<div id="leaderboard-container">
-							<div class="leaderboard-loading">Laddar ställning...</div>
+					<!-- Auth: guest -->
+					<div id="auth-guest" class="hero-auth">
+						<div class="auth-form">
+							<input type="text" id="auth-name" placeholder="Lagnamn" maxlength="30" autocomplete="off" />
+							<input type="text" id="auth-pin" placeholder="4-siffrig PIN" maxlength="4" inputmode="numeric" autocomplete="off" />
+							<div class="auth-buttons">
+								<button class="auth-btn primary" id="auth-register-btn">Skapa lag</button>
+								<button class="auth-btn" id="auth-login-btn">Logga in</button>
+							</div>
+							<div class="auth-error" id="auth-error"></div>
 						</div>
 					</div>
 
-					<div id="main-tab-matcher" class="main-tab-content">
-						<div id="matches-container">
-							<div class="leaderboard-loading">Laddar matcher...</div>
+					<!-- Auth: logged in -->
+					<div id="auth-user" style="display:none" class="hero-auth">
+						<div class="auth-user-bar">
+							<span class="auth-user-name" id="auth-user-name"></span>
+							<button class="auth-logout-btn" id="auth-logout-btn">Logga ut</button>
 						</div>
+						<button class="auth-team-btn" id="auth-open-team">Hantera mitt lag</button>
 					</div>
 
-					<div id="main-tab-statistik" class="main-tab-content">
-						<div id="stat-cards"></div>
-						<div id="stat-race-chart" style="margin-top: 32px;"></div>
-						<div id="stat-avg-chart" style="margin-top: 32px;"></div>
-					</div>
+				</div>
+			</section>
+			<footer>
+				<p>La Copa del Mundo 2026</p>
+				<button class="admin-trigger" id="admin-trigger" title="Admin">&#x2699;</button>
+			</footer>
+		</div>
 
-					<div id="main-tab-h2h" class="main-tab-content">
-						<div id="h2h-container"></div>
+		<!-- View: Tabell -->
+		<div id="view-tabell" class="appview">
+			<div class="appview-header">
+				<span class="appview-title">Tabell</span>
+			</div>
+			<div class="appview-body">
+				<div id="liga-standings">
+					<div class="leaderboard-loading">Laddar tabell...</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Bottom nav (always visible) -->
+		<nav id="bottom-nav" class="bottom-nav">
+			<button class="bottom-nav-btn active" data-view="home" id="nav-home">
+				<span class="bottom-nav-icon">&#x1f3e0;</span>
+				<span class="bottom-nav-label">Hem</span>
+			</button>
+			<button class="bottom-nav-btn" data-view="tabell" id="nav-tabell">
+				<span class="bottom-nav-icon">&#x1f4ca;</span>
+				<span class="bottom-nav-label">Tabell</span>
+			</button>
+			<button class="bottom-nav-btn" data-view="regler" id="nav-regler">
+				<span class="bottom-nav-icon">&#x1f4d6;</span>
+				<span class="bottom-nav-label">Regler</span>
+			</button>
+			<button class="bottom-nav-btn" data-view="mittlag" id="nav-mittlag">
+				<span class="bottom-nav-icon">&#x26bd;</span>
+				<span class="bottom-nav-label">Mitt lag</span>
+			</button>
+		</nav>
+
+		<!-- Fullscreen: Mitt lag view -->
+		<div id="view-mittlag" class="appview">
+			<div class="appview-header">
+				<button class="appview-back" style="display:none" id="mittlag-back">&larr; Tillbaka</button>
+				<span class="appview-title">Mitt lag</span>
+			</div>
+			<div class="appview-body">
+				<!-- Team builder content -->
+				<div class="bygg-header">
+					<div class="bygg-budget-row">
+						<div class="bygg-budget-bar">
+							<div class="bygg-budget-fill" id="copa-budget-fill"></div>
+						</div>
+						<span class="bygg-budget-text" id="copa-budget-text">100.00M kvar</span>
+					</div>
+					<div class="bygg-controls">
+						<select id="copa-formation-select" class="bygg-formation-select">
+							<option value="">Valj formation...</option>
+						</select>
+						<button class="bygg-reset-btn" id="copa-reset-btn" title="Rensa lag">Rensa</button>
+					</div>
+				</div>
+				<div class="bygg-captain-hint" id="copa-captain-hint" style="display:none">
+					Tryck och hall pa en spelare for att valja kapten.
+				</div>
+				<div id="copa-pitch-container">
+					<div class="bygg-placeholder">Valj en formation for att borja bygga ditt lag.</div>
+				</div>
+				<div id="copa-squad-summary" class="bygg-squad-summary"></div>
+				<div class="bygg-save-row" id="copa-save-row" style="display:none">
+					<button class="bygg-save-btn" id="copa-save-btn">Spara lag</button>
+					<span class="bygg-save-status" id="copa-save-status"></span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Fullscreen: Regler view -->
+		<div id="view-regler" class="appview">
+			<div class="appview-header">
+				<button class="appview-back" style="display:none" id="regler-back">&larr; Tillbaka</button>
+				<span class="appview-title">Regler</span>
+			</div>
+			<div class="appview-body rules-content">
+
+				<h3 class="rules-heading">Copa Liga</h3>
+				<p>Copa Liga är vår egen tävling inom kompiskretsen. Med 50 000 000 kr på fickan bygger du ett fotbollslag. Spelarnas prestationer i verkliga VM-matcher skapar tillväxt för ditt lag.</p>
+
+				<div class="rules-section">
+					<h4 class="rules-subheading">Ditt lag</h4>
+					<ul class="rules-list">
+						<li>Du har <strong>50M</strong> att bygga ett lag med <strong>11 spelare</strong></li>
+						<li>Välj en giltig formation (t.ex. 4-4-2, 4-3-3)</li>
+						<li>Max <strong>4 spelare</strong> från samma klubb</li>
+						<li>Pengar du inte använder sparas i banken</li>
+					</ul>
+				</div>
+
+				<div class="rules-section">
+					<h4 class="rules-subheading">Lagkapten</h4>
+					<ul class="rules-list">
+						<li>Välj en kapten bland dina 11 spelare</li>
+						<li>Kaptenen ger en <strong>bonus = 1x extra tillväxt</strong> om han ökar i värde</li>
+						<li>Du får <strong>inte</strong> extra minus om kaptenen faller i värde</li>
+						<li>Kaptensbonus går direkt till banken, visas inte vid spelaren</li>
+					</ul>
+				</div>
+
+				<div class="rules-section">
+					<h4 class="rules-subheading">Byten & Transfermarknad</h4>
+					<ul class="rules-list">
+						<li>Innan första omgången: <strong>fria byten</strong></li>
+						<li>Från omgång 2: varje byte kostar <strong>1%</strong> av den köpta spelarens värde</li>
+						<li>Handeln stänger vid omgångens första matchstart</li>
+						<li>Du kan ångra byten så länge transferfönstret är öppet</li>
+					</ul>
+				</div>
+
+				<div class="rules-section">
+					<h4 class="rules-subheading">Finans</h4>
+					<ul class="rules-list">
+						<li>Bankränta: <strong>1%</strong> på outnyttjade pengar per omgång</li>
+						<li>Den med högst total lagvärde-tillväxt efter turneringen vinner</li>
+					</ul>
+				</div>
+
+				<div class="rules-section">
+					<h4 class="rules-subheading">Priser</h4>
+					<div class="rules-prizes">
+						<div class="rules-prize"><span class="rules-prize-pos">1:a</span> 85% av potten</div>
+						<div class="rules-prize"><span class="rules-prize-pos">2:a</span> 10% av potten</div>
+						<div class="rules-prize"><span class="rules-prize-pos">3:a</span> 5% av potten</div>
+					</div>
+					<p class="rules-note">Insats: 300 kr via Swish till Ruy (+46 70 306 42 11)</p>
+				</div>
+
+				<h3 class="rules-heading" style="margin-top:32px">Poängsystem</h3>
+				<p>Spelarnas verkliga prestationer skapar tillväxt (eller minskning) av deras värde. Din totala lagvärde-tillväxt avgör din placering i Copa Liga.</p>
+
+				<div class="rules-section">
+					<h4 class="rules-subheading">Mål & Assist</h4>
+					<div class="rules-table">
+						<div class="rules-row"><span>Mål — Anfallare</span><span class="rules-pts pos">+125 000</span></div>
+						<div class="rules-row"><span>Mål — Mittfältare</span><span class="rules-pts pos">+150 000</span></div>
+						<div class="rules-row"><span>Mål — Försvarare</span><span class="rules-pts pos">+175 000</span></div>
+						<div class="rules-row"><span>Mål — Målvakt</span><span class="rules-pts pos">+250 000</span></div>
+						<div class="rules-row"><span>Självmål</span><span class="rules-pts neg">-50 000</span></div>
+						<div class="rules-row"><span>Assist</span><span class="rules-pts pos">+60 000</span></div>
+						<div class="rules-row"><span>Skott på mål</span><span class="rules-pts pos">+10 000</span></div>
 					</div>
 				</div>
 
-				<!-- Right column: team panel -->
-				<div class="team-panel" id="team-panel">
-					<div class="team-panel-empty">
-						<span class="arrow">&larr;</span>
-						Klicka på ett lag i tabellen
+				<div class="rules-section">
+					<h4 class="rules-subheading">Avgörande mål</h4>
+					<div class="rules-table">
+						<div class="rules-row"><span>Mål som leder till seger</span><span class="rules-pts pos">+40 000</span></div>
+						<div class="rules-row"><span>Mål som leder till oavgjort</span><span class="rules-pts pos">+20 000</span></div>
+					</div>
+					<p class="rules-note">Bara ett avgörande mål per match. Ges inte vid självmål.</p>
+				</div>
+
+				<div class="rules-section">
+					<h4 class="rules-subheading">Fairplay</h4>
+					<div class="rules-table">
+						<div class="rules-row"><span>Gult kort</span><span class="rules-pts neg">-20 000</span></div>
+						<div class="rules-row"><span>Andra gult kort</span><span class="rules-pts neg">-20 000</span></div>
+						<div class="rules-row"><span>Rött kort</span><span class="rules-pts neg">-50 000</span></div>
+					</div>
+				</div>
+
+				<div class="rules-section">
+					<h4 class="rules-subheading">Lagprestation</h4>
+					<div class="rules-table">
+						<div class="rules-row"><span>Vinst</span><span class="rules-pts pos">+25 000</span></div>
+						<div class="rules-row"><span>Oavgjort</span><span class="rules-pts pos">+5 000</span></div>
+						<div class="rules-row"><span>Förlust</span><span class="rules-pts neg">-8 000</span></div>
+						<div class="rules-row"><span>Lag gör mål</span><span class="rules-pts pos">+10 000</span></div>
+						<div class="rules-row"><span>Motståndaren gör mål</span><span class="rules-pts neg">-8 000</span></div>
+						<div class="rules-row"><span>Vinst på bortaplan</span><span class="rules-pts pos">+10 000</span></div>
+						<div class="rules-row"><span>Förlust på hemmaplan</span><span class="rules-pts neg">-5 000</span></div>
+					</div>
+					<p class="rules-note">Lag gör mål / insläppt mål ges bara till spelare på planen vid målet.</p>
+				</div>
+
+				<div class="rules-section">
+					<h4 class="rules-subheading">Special</h4>
+					<div class="rules-table">
+						<div class="rules-row"><span>På planen</span><span class="rules-pts pos">+7 000</span></div>
+						<div class="rules-row"><span>Ej på planen</span><span class="rules-pts neg">-5 000</span></div>
+						<div class="rules-row"><span>Hållen nolla — Försvarare</span><span class="rules-pts pos">+50 000</span></div>
+						<div class="rules-row"><span>Hållen nolla — Målvakt</span><span class="rules-pts pos">+75 000</span></div>
+						<div class="rules-row"><span>Målvaktsräddning</span><span class="rules-pts pos">+5 000</span></div>
+						<div class="rules-row"><span>Räddad straff</span><span class="rules-pts pos">+100 000</span></div>
+						<div class="rules-row"><span>Missad straff</span><span class="rules-pts neg">-30 000</span></div>
+						<div class="rules-row"><span>Hattrick</span><span class="rules-pts pos">+100 000</span></div>
+					</div>
+					<p class="rules-note">Hållen nolla kräver minst 60 min på planen. Hattrick ger bonus utöver målpoängen.</p>
+				</div>
+
+				<div class="rules-section">
+					<h4 class="rules-subheading">Finans</h4>
+					<div class="rules-table">
+						<div class="rules-row"><span>Kaptensbonus</span><span class="rules-pts pos">1x tillväxt</span></div>
+						<div class="rules-row"><span>Bankränta</span><span class="rules-pts pos">1%</span></div>
+					</div>
+					<p class="rules-note">Kaptensbonus ges bara vid positiv tillväxt. Bankränta räknas på outnyttjade pengar per omgång.</p>
+				</div>
+
+				<p class="rules-note" style="margin-top:24px">Poängsystemet följer Aftonbladet Manager (Swush-plattformen). Matcherna uppdateras live och verifieras efter varje omgång.</p>
+
+			</div>
+		</div>
+
+		<!-- Fullscreen: Admin view -->
+		<div id="view-admin" class="appview">
+			<div class="appview-header">
+				<button class="appview-back" style="display:none" id="admin-back">&larr; Tillbaka</button>
+				<span class="appview-title">Admin</span>
+			</div>
+			<div class="appview-body">
+				<!-- Admin PIN gate -->
+				<div id="admin-gate" class="bygg-auth">
+					<div class="bygg-auth-title">Admin</div>
+					<p class="bygg-auth-subtitle">Ange admin-PIN for att hantera ligan.</p>
+					<div class="bygg-auth-form">
+						<input type="text" id="admin-pin-input" placeholder="Admin PIN" maxlength="6" inputmode="numeric" autocomplete="off" />
+						<button class="bygg-auth-btn primary" id="admin-unlock-btn">Las upp</button>
+						<div class="bygg-auth-error" id="admin-error"></div>
+					</div>
+				</div>
+
+				<!-- Admin panel (hidden until unlocked) -->
+				<div id="admin-panel" style="display:none">
+					<h3 class="admin-section-title">Liga-installningar</h3>
+					<div class="admin-form">
+						<label class="admin-label">Liganamn
+							<input type="text" id="admin-league-name" class="admin-input" />
+						</label>
+						<label class="admin-label">Startbudget (M)
+							<input type="number" id="admin-budget" class="admin-input" step="1" />
+						</label>
+						<label class="admin-label">Transferavgift (%)
+							<input type="number" id="admin-transfer-fee" class="admin-input" step="0.5" min="0" />
+						</label>
+						<label class="admin-label">Bankränta (%)
+							<input type="number" id="admin-bank-interest" class="admin-input" step="0.5" min="0" />
+						</label>
+						<label class="admin-label">Max spelare per klubb
+							<input type="number" id="admin-max-per-club" class="admin-input" step="1" min="1" />
+						</label>
+						<label class="admin-label">Insats (kr)
+							<input type="number" id="admin-entry-fee" class="admin-input" step="50" min="0" />
+						</label>
+						<label class="admin-label">Game ID (Swush)
+							<input type="text" id="admin-game-id" class="admin-input" />
+						</label>
+						<div class="admin-toggles">
+							<label class="admin-toggle"><input type="checkbox" id="admin-reg-open" /> Registrering öppen</label>
+							<label class="admin-toggle"><input type="checkbox" id="admin-captain-positive" /> Kaptensbonus bara vid positiv tillväxt</label>
+						</div>
+						<button class="bygg-save-btn" id="admin-save-config">Spara installningar</button>
+						<span class="bygg-save-status" id="admin-config-status"></span>
+					</div>
+
+					<h3 class="admin-section-title" style="margin-top:32px">Registrerade lag</h3>
+					<div id="admin-teams-list" class="admin-teams-list">
+						<div class="leaderboard-loading">Laddar lag...</div>
 					</div>
 				</div>
 			</div>
-		</section>
+		</div>
+
+		<!-- Player picker modal (shared) -->
+		<div class="bygg-picker-overlay" id="bygg-picker-overlay">
+			<div class="bygg-picker-modal">
+				<div class="bygg-picker-header">
+					<span class="bygg-picker-title" id="bygg-picker-title">Valj spelare</span>
+					<button class="bygg-picker-close" id="bygg-picker-close">&times;</button>
+				</div>
+				<div class="bygg-picker-search">
+					<input type="text" id="bygg-picker-search-input" placeholder="Sok spelare eller klubb..." autocomplete="off" />
+				</div>
+				<div class="bygg-picker-sort-row">
+					<button class="bygg-picker-sort active" data-sort="value">Varde</button>
+					<button class="bygg-picker-sort" data-sort="totalGrowth">Tillvaxt</button>
+					<button class="bygg-picker-sort" data-sort="popularity">Popular</button>
+				</div>
+				<div class="bygg-picker-list" id="bygg-picker-list"></div>
+			</div>
+		</div>
 
 		<script is:inline>
 			// ---- THEME SWITCHER ----
@@ -1576,7 +2013,7 @@
 				document.documentElement.setAttribute('data-theme', current);
 
 				// Set subtitle for persisted theme
-				var SUBS_INIT = { uru: 'Uruguay nomaaa', swe: 'Kanna på kanna på!', tun: 'Ri ri Riahi!' };
+				var SUBS_INIT = { uru: 'Uruguay nomaaa', swe: 'Kanna pa kanna pa!', tun: 'Ri ri Riahi!' };
 				var subEl = document.getElementById('hero-sub');
 				if (subEl) subEl.textContent = SUBS_INIT[current] || SUBS_INIT.uru;
 
@@ -1587,7 +2024,7 @@
 						btn.classList.remove('active');
 					}
 
-					var SUBS = { uru: 'Uruguay nomaaa', swe: 'Kanna på kanna på!', tun: 'Ri ri Riahi!' };
+					var SUBS = { uru: 'Uruguay nomaaa', swe: 'Kanna pa kanna pa!', tun: 'Ri ri Riahi!' };
 
 					btn.addEventListener('click', function() {
 						var theme = this.getAttribute('data-theme');
@@ -1614,616 +2051,829 @@
 				});
 			})();
 
-			// ---- TAB SWITCHING ----
-			function switchMainTab(tab) {
-				document.querySelectorAll('.main-tab').forEach(function(t) { t.classList.remove('active'); });
-				document.querySelectorAll('.main-tab-content').forEach(function(c) { c.classList.remove('active'); });
-				document.querySelector('.main-tab-content#main-tab-' + tab).classList.add('active');
-				// Find the button by matching text
-				document.querySelectorAll('.main-tab').forEach(function(t) {
-					var map = { 'Tabell': 'tabell', 'Matcher': 'matcher', 'Statistik': 'statistik', 'Head to Head': 'h2h' };
-					if (map[t.textContent.trim()] === tab) t.classList.add('active');
-				});
-			}
-
-			function switchTeamTab(tab) {
-				document.querySelectorAll('.tp-tab').forEach(function(t) { t.classList.remove('active'); });
-				document.querySelectorAll('.tp-tab-content').forEach(function(c) { c.classList.remove('active'); });
-				var el = document.getElementById('tp-tab-' + tab);
-				if (el) el.classList.add('active');
-				document.querySelectorAll('.tp-tab').forEach(function(t) {
-					if (t.getAttribute('data-tab') === tab) t.classList.add('active');
-				});
-			}
-
-			var PAGE_SIZE = 10;
-			var currentPage = 1;
-			var leaderboardData = [];
-
-			async function loadLeaderboard() {
-				var container = document.getElementById('leaderboard-container');
-				try {
-					var res = await fetch('/api/leaderboard');
-					if (!res.ok) throw new Error('API error');
-					var data = await res.json();
-					leaderboardData = data.leaderboard || [];
-
-					if (leaderboardData.length === 0) {
-						container.innerHTML = '<div class="leaderboard-loading">Inga lag registrerade ännu.</div>';
-						return;
-					}
-
-					renderPage(1);
-				} catch (e) {
-					container.innerHTML = '<div class="leaderboard-loading">Kunde inte ladda ställningen.</div>';
-				}
-			}
-
-			function renderPage(page) {
-				currentPage = page;
-				var container = document.getElementById('leaderboard-container');
-				var totalPages = Math.ceil(leaderboardData.length / PAGE_SIZE);
-				var start = (page - 1) * PAGE_SIZE;
-				var pageData = leaderboardData.slice(start, start + PAGE_SIZE);
-
-				var rows = pageData.map(function(entry) {
-					var growthVal = entry.growth / 1000000;
-					var scoreClass = growthVal > 0 ? 'positive' : 'zero';
-					var scoreText = growthVal > 0 ? '+' + growthVal.toFixed(1) + 'M' : '0';
-					var topClass = '';
-					if (entry.position === 1) topClass = ' top1';
-					else if (entry.position === 2) topClass = ' top2';
-					else if (entry.position === 3) topClass = ' top3';
-					var sel = entry.teamId === selectedTeamId ? ' selected' : '';
-					return '<div class="lb-row' + topClass + sel + '" onclick="openTeam(' + entry.teamId + ')" data-id="' + entry.teamId + '">' +
-						'<div class="lb-pos">' + entry.position + '</div>' +
-						'<div class="lb-team"><div class="lb-team-name">' + escapeHtml(entry.teamName) + '</div>' +
-						'<div class="lb-manager">' + escapeHtml(entry.manager) + '</div></div>' +
-						'<div class="lb-score ' + scoreClass + '">' + scoreText + '</div>' +
-						'</div>';
-				}).join('');
-
-				var pageButtons = '';
-				for (var i = 1; i <= totalPages; i++) {
-					pageButtons += '<button onclick="renderPage(' + i + ')" class="' + (i === page ? 'active' : '') + '">' + i + '</button>';
-				}
-
-				container.innerHTML =
-					'<div class="lb-header"><span>#</span><span>Lag</span><span>Poäng</span></div>' +
-					rows +
-					(totalPages > 1 ? '<div class="leaderboard-pages">' + pageButtons + '</div>' : '') +
-					'<p class="leaderboard-info">' + leaderboardData.length + ' lag &bull; Sida ' + page + ' av ' + totalPages + '</p>';
-			}
-
-			var selectedTeamId = null;
-
-			async function openTeam(teamId) {
-				selectedTeamId = teamId;
-				var panel = document.getElementById('team-panel');
-				panel.innerHTML = '<div class="tp-loading">Laddar lag...</div>';
-
-				// Highlight selected row
-				var rows = document.querySelectorAll('.lb-row');
-				rows.forEach(function(r) { r.classList.remove('selected'); });
-				var selected = document.querySelector('.lb-row[data-id="' + teamId + '"]');
-				if (selected) selected.classList.add('selected');
-
-				try {
-					var res = await fetch('/api/team/' + teamId);
-					if (!res.ok) throw new Error('Failed');
-					var data = await res.json();
-
-					var posNames = { 6: 'MV', 7: 'BACK', 8: 'MITT', 9: 'ANF' };
-					var posCls = { 6: 'mv', 7: '', 8: '', 9: 'anf' };
-					var playersHtml = '';
-					if (data.players && data.players.length > 0) {
-						playersHtml = '<div class="tp-section"><div class="tp-section-title">Uppställning</div>' +
-							data.players.map(function(p) {
-								var pos = posNames[p.position] || '';
-								var cls = posCls[p.position] || '';
-								var captain = p.isCaptain ? '<span class="captain">C</span>' : '';
-								return '<div class="tp-player">' +
-									'<span class="tp-pos-badge ' + cls + '">' + pos + '</span>' +
-									'<span class="tp-player-name">' + escapeHtml(p.name) + captain + '</span>' +
-									'<span class="tp-player-club">' + escapeHtml(p.clubAbbr || p.club) + '</span>' +
-									'</div>';
-							}).join('') + '</div>';
-					} else {
-						playersHtml = '<div class="tp-section"><p style="color:var(--muted);font-size:0.85rem;">Ingen uppställning ännu.</p></div>';
-					}
-
-					var roundsHtml = '';
-					if (data.rounds && data.rounds.length > 0) {
-						var maxGrowth = Math.max.apply(null, data.rounds.map(function(r) { return Math.abs(r.growth); }));
-						roundsHtml = '<div class="tp-section"><div class="tp-section-title">Poäng per omgång</div>' +
-							data.rounds.map(function(r) {
-								var g = r.growth / 1000000;
-								var cls = g > 0 ? 'pos' : g < 0 ? 'neg' : '';
-								var text = g > 0 ? '+' + g.toFixed(2) + 'M' : g.toFixed(2) + 'M';
-								var pct = maxGrowth > 0 ? Math.round(Math.abs(r.growth) / maxGrowth * 100) : 0;
-								return '<div class="tp-round">' +
-									'<span class="tp-round-num">' + r.round + '</span>' +
-									'<div class="tp-round-bar"><div class="tp-round-bar-fill ' + cls + '" style="width:' + pct + '%"></div></div>' +
-									'<span class="tp-round-val ' + cls + '">' + text + '</span>' +
-									'</div>';
-							}).join('') + '</div>';
-					}
-
-					var tradesHtml = '';
-					if (data.rounds && data.rounds.length > 0) {
-						// Group trades by round, include empty rounds
-						var tradesByRound = {};
-						// Initialize all rounds
-						data.rounds.forEach(function(r) { tradesByRound[r.round] = []; });
-						if (data.trades) {
-							data.trades.forEach(function(t) {
-								var r = t.round || 0;
-								if (!tradesByRound[r]) tradesByRound[r] = [];
-								tradesByRound[r].push(t);
-							});
-						}
-						var roundKeys = Object.keys(tradesByRound).sort(function(a, b) { return b - a; });
-
-						var totalBuys = (data.trades || []).filter(function(t) { return t.type === 'purchase'; }).length;
-						var totalSells = (data.trades || []).filter(function(t) { return t.type === 'sale'; }).length;
-
-						tradesHtml = '<div class="tp-section">' +
-							'<div class="tp-trade-summary">' + totalBuys + ' köp, ' + totalSells + ' försäljningar totalt</div>' +
-							roundKeys.map(function(rk, idx) {
-								var trades = tradesByRound[rk];
-								var buys = trades.filter(function(t) { return t.type === 'purchase'; });
-								var sells = trades.filter(function(t) { return t.type === 'sale'; });
-								var isEmpty = trades.length === 0;
-
-								if (isEmpty) {
-									return '<div class="tp-trade-group">' +
-										'<div class="tp-trade-round-header tp-trade-empty-round">' +
-										'<span>Omgång ' + rk + '</span>' +
-										'<span class="tp-trade-count">inga byten</span>' +
-										'</div></div>';
-								}
-
-								var isOpen = idx === 0 ? ' open' : '';
-								var html = '<div class="tp-trade-group' + isOpen + '">' +
-									'<div class="tp-trade-round-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
-									'<span><span class="chevron">&#9654;</span>Omgång ' + rk + '</span>' +
-									'<span class="tp-trade-count">' + buys.length + ' in / ' + sells.length + ' ut</span>' +
-									'</div>' +
-									'<div class="tp-trade-list">';
-
-								if (buys.length > 0) {
-									html += buys.map(function(t) {
-										return '<div class="tp-trade">' +
-											'<span><span class="tp-trade-type buy">IN</span>' +
-											escapeHtml(t.player) + '</span>' +
-											'</div>';
-									}).join('');
-								}
-								if (sells.length > 0) {
-									html += sells.map(function(t) {
-										return '<div class="tp-trade">' +
-											'<span><span class="tp-trade-type sell">UT</span>' +
-											escapeHtml(t.player) + '</span>' +
-											'</div>';
-									}).join('');
-								}
-								return html + '</div></div>';
-							}).join('') + '</div>';
-					}
-
-					// Build cumulative growth chart
-					var chartHtml = '';
-					if (data.rounds && data.rounds.length > 1) {
-						var cumulative = 0;
-						var cumPoints = data.rounds.map(function(r) {
-							cumulative += r.growth;
-							return { x: r.round, y: cumulative };
-						});
-						chartHtml = '<div class="tp-section"><div class="tp-section-title">Utveckling</div>' +
-							'<div class="line-chart-wrap">' +
-							buildLineChart([{ label: data.name, color: '#fecc02', points: cumPoints }], { width: 400, height: 140 }) +
-							'</div></div>';
-					}
-
-					panel.innerHTML =
-						'<div class="tp-header"><h3>' + escapeHtml(data.name) + '</h3>' +
-						'<div class="tp-manager">' + escapeHtml(data.manager) + '</div></div>' +
-						'<div class="tp-tabs">' +
-						'<button class="tp-tab active" data-tab="laget" onclick="switchTeamTab(\'laget\')">Laget</button>' +
-						'<button class="tp-tab" data-tab="stats" onclick="switchTeamTab(\'stats\')">Stats</button>' +
-						'<button class="tp-tab" data-tab="transfers" onclick="switchTeamTab(\'transfers\')">Transfers</button>' +
-						'</div>' +
-						'<div class="tp-tab-content active" id="tp-tab-laget">' + playersHtml + '</div>' +
-						'<div class="tp-tab-content" id="tp-tab-stats">' + chartHtml + roundsHtml + '</div>' +
-						'<div class="tp-tab-content" id="tp-tab-transfers">' + tradesHtml + '</div>';
-				} catch (e) {
-					panel.innerHTML = '<div class="tp-loading">Kunde inte ladda laget.</div>';
-				}
-			}
-
-			function buildLineChart(series, opts) {
-				// series: [{label, color, points: [{x, y}]}]
-				// opts: {width, height, padX, padY}
-				var W = opts.width || 400;
-				var H = opts.height || 150;
-				var pX = opts.padX || 36;
-				var pY = opts.padY || 20;
-				var chartW = W - pX * 2;
-				var chartH = H - pY * 2;
-
-				var allPoints = [];
-				series.forEach(function(s) { allPoints = allPoints.concat(s.points); });
-				if (allPoints.length === 0) return '';
-
-				var minX = Math.min.apply(null, allPoints.map(function(p) { return p.x; }));
-				var maxX = Math.max.apply(null, allPoints.map(function(p) { return p.x; }));
-				var minY = Math.min.apply(null, allPoints.map(function(p) { return p.y; }));
-				var maxY = Math.max.apply(null, allPoints.map(function(p) { return p.y; }));
-				if (minY === maxY) { minY -= 1; maxY += 1; }
-				var rangeX = maxX - minX || 1;
-				var rangeY = maxY - minY;
-
-				function sx(v) { return pX + ((v - minX) / rangeX) * chartW; }
-				function sy(v) { return pY + chartH - ((v - minY) / rangeY) * chartH; }
-
-				var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
-
-				// Grid lines (horizontal)
-				var gridSteps = 4;
-				for (var g = 0; g <= gridSteps; g++) {
-					var gy = pY + (g / gridSteps) * chartH;
-					var gVal = maxY - (g / gridSteps) * rangeY;
-					svg += '<line class="chart-grid" x1="' + pX + '" y1="' + gy + '" x2="' + (W - pX) + '" y2="' + gy + '"/>';
-					svg += '<text class="chart-label" x="' + (pX - 4) + '" y="' + (gy + 3) + '" text-anchor="end">' + (gVal / 1000000).toFixed(1) + '</text>';
-				}
-
-				// X labels
-				series[0].points.forEach(function(p) {
-					svg += '<text class="chart-label" x="' + sx(p.x) + '" y="' + (H - 4) + '" text-anchor="middle">' + p.x + '</text>';
-				});
-
-				// Lines + areas + dots
-				series.forEach(function(s) {
-					if (s.points.length < 2) return;
-					var sorted = s.points.slice().sort(function(a, b) { return a.x - b.x; });
-					var pathD = sorted.map(function(p, i) { return (i === 0 ? 'M' : 'L') + sx(p.x).toFixed(1) + ',' + sy(p.y).toFixed(1); }).join(' ');
-
-					// Area fill
-					var areaD = pathD + ' L' + sx(sorted[sorted.length-1].x).toFixed(1) + ',' + sy(minY).toFixed(1) +
-						' L' + sx(sorted[0].x).toFixed(1) + ',' + sy(minY).toFixed(1) + ' Z';
-					svg += '<path class="chart-area" d="' + areaD + '" fill="' + s.color + '"/>';
-
-					// Line
-					svg += '<path class="chart-line" d="' + pathD + '" stroke="' + s.color + '"/>';
-
-					// Dots
-					sorted.forEach(function(p) {
-						svg += '<circle class="chart-dot" cx="' + sx(p.x).toFixed(1) + '" cy="' + sy(p.y).toFixed(1) + '" r="3" fill="' + s.color + '" stroke="var(--bg)"/>';
-					});
-				});
-
-				svg += '</svg>';
-				return svg;
-			}
-
+			// ---- UTILITIES ----
 			function escapeHtml(text) {
 				var div = document.createElement('div');
 				div.textContent = text;
 				return div.innerHTML;
 			}
 
-			// ---- STATS & H2H ----
-			var statsData = null;
+			function buildPlayerAvatar(skin, hair) {
+				var s = skin || '#C68642';
+				var h = hair || '#1a1a1a';
+				return '<svg class="pitch-avatar" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">' +
+					'<circle cx="18" cy="20" r="14" fill="' + s + '"/>' +
+					'<ellipse cx="18" cy="10" rx="13" ry="9" fill="' + h + '"/>' +
+					'<circle cx="12" cy="20" r="1.5" fill="#111"/>' +
+					'<circle cx="24" cy="20" r="1.5" fill="#111"/>' +
+					'</svg>';
+			}
 
-			async function loadStats() {
+			var cachedRuleset = null;
+
+			async function getRuleset() {
+				if (cachedRuleset) return cachedRuleset;
 				try {
-					var res = await fetch('/api/stats');
-					if (!res.ok) return;
-					statsData = await res.json();
-					renderStatCards(statsData.highlights);
-					renderRaceChart(statsData.teams);
-					renderAvgChart(statsData.teams);
-					renderH2H(statsData.teams);
-				} catch (e) {}
+					var res = await fetch('/api/ruleset');
+					if (!res.ok) return null;
+					cachedRuleset = await res.json();
+					return cachedRuleset;
+				} catch { return null; }
 			}
 
-			function renderRaceChart(teams) {
-				var container = document.getElementById('stat-race-chart');
-				if (!teams || teams.length === 0) return;
+			// ---- PLAYER DATA ----
+			var allPlayers = [];
+			var playersLoaded = false;
 
-				// Sort by total growth, take top 5
-				var sorted = teams.slice().sort(function(a, b) { return b.totalGrowth - a.totalGrowth; });
-				var top5 = sorted.slice(0, 5);
-				var colors = ['#ffffff', '#75aadb', '#22c55e', '#f0b429', '#a855f7'];
+			async function loadPlayers() {
+				if (playersLoaded) return;
+				try {
+					var res = await fetch('/api/players');
+					if (!res.ok) throw new Error('Failed');
+					allPlayers = await res.json();
+					playersLoaded = true;
+				} catch (e) {
+					console.error('Could not load players', e);
+				}
+			}
 
-				// Build cumulative series for each team
-				var series = top5.map(function(team, idx) {
-					var cum = 0;
-					var points = team.rounds.map(function(r) {
-						cum += r.growth;
-						return { x: r.round, y: cum };
+			// ---- AUTH ----
+			var currentUser = null;
+
+			async function checkSession() {
+				try {
+					var res = await fetch('/api/fantasy/me', { credentials: 'same-origin' });
+					if (!res.ok) return null;
+					var data = await res.json();
+					return data.authenticated ? data : null;
+				} catch { return null; }
+			}
+
+			async function doRegister() {
+				var name = document.getElementById('auth-name').value.trim();
+				var pin = document.getElementById('auth-pin').value.trim();
+				var errEl = document.getElementById('auth-error');
+				errEl.textContent = '';
+				if (!name || name.length < 2) { errEl.textContent = 'Lagnamnet maste vara minst 2 tecken'; return; }
+				if (!/^\d{4}$/.test(pin)) { errEl.textContent = 'PIN maste vara exakt 4 siffror'; return; }
+				try {
+					var res = await fetch('/api/fantasy/register', {
+						method: 'POST', headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin', body: JSON.stringify({ teamName: name, pin: pin }),
 					});
-					return { label: team.name, color: colors[idx], points: points };
-				});
-
-				var legend = top5.map(function(team, idx) {
-					return '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:14px;font-size:0.75rem;color:var(--muted)">' +
-						'<span style="width:10px;height:3px;border-radius:2px;background:' + colors[idx] + ';display:inline-block"></span>' +
-						escapeHtml(team.name) + '</span>';
-				}).join('');
-
-				container.innerHTML =
-					'<div class="stat-chart-title">Toppstriden</div>' +
-					'<div class="stat-chart-sub">Topp 5 — kumulativ poäng per omgång</div>' +
-					'<div class="line-chart-wrap">' +
-					buildLineChart(series, { width: 500, height: 200, padX: 40, padY: 24 }) +
-					'<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">' + legend + '</div>' +
-					'</div>';
+					var data = await res.json();
+					if (!res.ok) { errEl.textContent = data.error || 'Nagot gick fel'; return; }
+					var me = await checkSession();
+					if (me) {
+						onLoginSuccess(me);
+					}
+				} catch (e) { errEl.textContent = 'Natverksfel'; }
 			}
 
-			function renderAvgChart(teams) {
-				var container = document.getElementById('stat-avg-chart');
-				if (!teams || teams.length === 0) return;
-
-				// Compute average growth per round across all teams
-				var roundData = {};
-				teams.forEach(function(team) {
-					team.rounds.forEach(function(r) {
-						if (!roundData[r.round]) roundData[r.round] = { total: 0, count: 0 };
-						roundData[r.round].total += r.growth;
-						roundData[r.round].count++;
+			async function doLogin() {
+				var name = document.getElementById('auth-name').value.trim();
+				var pin = document.getElementById('auth-pin').value.trim();
+				var errEl = document.getElementById('auth-error');
+				errEl.textContent = '';
+				if (!name) { errEl.textContent = 'Ange ditt lagnamn'; return; }
+				if (!pin) { errEl.textContent = 'Ange din PIN'; return; }
+				try {
+					var res = await fetch('/api/fantasy/login', {
+						method: 'POST', headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin', body: JSON.stringify({ teamName: name, pin: pin }),
 					});
-				});
-
-				var rounds = Object.keys(roundData).sort(function(a, b) { return a - b; });
-				if (rounds.length === 0) return;
-
-				var avgs = rounds.map(function(r) {
-					return { round: Number(r), avg: roundData[r].total / roundData[r].count };
-				});
-
-				var maxAbs = Math.max.apply(null, avgs.map(function(a) { return Math.abs(a.avg); }));
-				if (maxAbs === 0) maxAbs = 1;
-
-				// Build SVG bar chart
-				var W = 500, H = 160, pX = 40, pY = 20;
-				var chartW = W - pX * 2;
-				var chartH = H - pY * 2;
-				var barW = Math.min(30, (chartW / avgs.length) * 0.7);
-				var gap = chartW / avgs.length;
-				var zeroY = pY + chartH / 2;
-
-				var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
-
-				// Zero line
-				svg += '<line class="bar-grid" x1="' + pX + '" y1="' + zeroY + '" x2="' + (W - pX) + '" y2="' + zeroY + '" stroke-dasharray="4,4"/>';
-
-				avgs.forEach(function(a, i) {
-					var x = pX + i * gap + (gap - barW) / 2;
-					var barH = Math.abs(a.avg) / maxAbs * (chartH / 2 - 4);
-					var y = a.avg >= 0 ? zeroY - barH : zeroY;
-					var cls = a.avg > 0 ? 'bar-positive' : a.avg < 0 ? 'bar-negative' : 'bar-neutral';
-
-					svg += '<rect class="' + cls + '" x="' + x + '" y="' + y + '" width="' + barW + '" height="' + Math.max(barH, 1) + '" rx="2"/>';
-
-					// Round label
-					svg += '<text class="bar-label" x="' + (x + barW / 2) + '" y="' + (H - 4) + '" text-anchor="middle">' + a.round + '</text>';
-
-					// Value label
-					var valY = a.avg >= 0 ? y - 4 : y + barH + 12;
-					var valText = (a.avg / 1000000).toFixed(2);
-					if (a.avg > 0) valText = '+' + valText;
-					svg += '<text class="bar-value" x="' + (x + barW / 2) + '" y="' + valY + '" text-anchor="middle">' + valText + '</text>';
-				});
-
-				svg += '</svg>';
-
-				container.innerHTML =
-					'<div class="stat-chart-title">Omgångssnitt</div>' +
-					'<div class="stat-chart-sub">Genomsnittlig poäng per omgång — alla lag</div>' +
-					'<div class="bar-chart-wrap">' + svg + '</div>';
+					var data = await res.json();
+					if (!res.ok) { errEl.textContent = data.error || 'Nagot gick fel'; return; }
+					var me = await checkSession();
+					if (me) {
+						onLoginSuccess(me);
+					}
+				} catch (e) { errEl.textContent = 'Natverksfel'; }
 			}
 
-			function renderStatCards(cards) {
-				var container = document.getElementById('stat-cards');
-				container.innerHTML = '<div class="stat-cards">' + cards.map(function(c) {
-					var clickAttr = c.teamId ? ' onclick="openTeam(' + c.teamId + ')" style="cursor:pointer"' : '';
-					return '<div class="stat-card"' + clickAttr + '>' +
-						'<div class="stat-card-label">' + escapeHtml(c.label) + '</div>' +
-						'<div class="stat-card-team">' + escapeHtml(c.team) + '</div>' +
-						'<div class="stat-card-detail">' + escapeHtml(c.detail) + '</div>' +
-						(c.teamId ? '<div class="stat-card-link">Visa lag &rarr;</div>' : '') +
-						'</div>';
-				}).join('') + '</div>';
+			async function doLogout() {
+				await fetch('/api/fantasy/logout', { method: 'POST', credentials: 'same-origin' });
+				currentUser = null;
+				document.getElementById('auth-guest').style.display = '';
+				document.getElementById('auth-user').style.display = 'none';
+				switchView('home');
 			}
 
-			function renderH2H(teams) {
-				var container = document.getElementById('h2h-container');
-				var options = teams.map(function(t) {
-					return '<option value="' + t.id + '">' + escapeHtml(t.name) + '</option>';
-				}).join('');
-
-				container.innerHTML =
-					'<h3 style="font-family:Oswald;text-transform:uppercase;font-size:1.2rem;color:var(--yellow);margin-bottom:12px;">Head to Head</h3>' +
-					'<div class="h2h-select">' +
-					'<select id="h2h-a">' + options + '</select>' +
-					'<span class="vs">VS</span>' +
-					'<select id="h2h-b">' + options + '</select>' +
-					'</div>' +
-					'<div id="h2h-result"></div>';
-
-				var selA = document.getElementById('h2h-a');
-				var selB = document.getElementById('h2h-b');
-				if (teams.length > 1) selB.selectedIndex = 1;
-				selA.onchange = function() { updateH2H(teams); };
-				selB.onchange = function() { updateH2H(teams); };
-				updateH2H(teams);
+			function onLoginSuccess(session) {
+				currentUser = session;
+				document.getElementById('auth-guest').style.display = 'none';
+				document.getElementById('auth-user').style.display = '';
+				document.getElementById('auth-user-name').textContent = session.teamName;
+				showMittlagNav();
+				switchView('mittlag');
+				if (window.initCopaBuilder) window.initCopaBuilder(session);
 			}
 
-			function updateH2H(teams) {
-				var idA = parseInt(document.getElementById('h2h-a').value);
-				var idB = parseInt(document.getElementById('h2h-b').value);
-				var teamA = teams.find(function(t) { return t.id === idA; });
-				var teamB = teams.find(function(t) { return t.id === idB; });
-				if (!teamA || !teamB) return;
+			// Wire auth buttons
+			document.getElementById('auth-register-btn').addEventListener('click', doRegister);
+			document.getElementById('auth-login-btn').addEventListener('click', doLogin);
+			document.getElementById('auth-logout-btn').addEventListener('click', doLogout);
+			document.getElementById('auth-pin').addEventListener('keydown', function(e) { if (e.key === 'Enter') doRegister(); });
+			document.getElementById('auth-open-team').addEventListener('click', function() {
+				switchView('mittlag');
+			});
 
-				var result = document.getElementById('h2h-result');
-				var maxRounds = Math.max(teamA.rounds.length, teamB.rounds.length);
-				var winsA = 0, winsB = 0;
+			// ---- BOTTOM NAV ----
+			function showMittlagNav() {
+				document.getElementById('nav-mittlag').style.display = '';
+			}
 
-				var rows = '';
-				for (var i = 0; i < maxRounds; i++) {
-					var rA = teamA.rounds[i] || { round: i + 1, growth: 0 };
-					var rB = teamB.rounds[i] || { round: i + 1, growth: 0 };
-					var gA = rA.growth / 1000000;
-					var gB = rB.growth / 1000000;
-					var maxG = Math.max(Math.abs(rA.growth), Math.abs(rB.growth)) || 1;
-					var pctA = Math.round(Math.abs(rA.growth) / maxG * 100);
-					var pctB = Math.round(Math.abs(rB.growth) / maxG * 100);
-					var clsA = rA.growth >= rB.growth ? 'win' : 'lose';
-					var clsB = rB.growth >= rA.growth ? 'win' : 'lose';
-					if (rA.growth > rB.growth) winsA++;
-					else if (rB.growth > rA.growth) winsB++;
-
-					rows += '<div class="h2h-round">' +
-						'<span class="h2h-val left ' + clsA + '">' + (gA > 0 ? '+' : '') + gA.toFixed(2) + 'M</span>' +
-						'<div class="h2h-bar-track"><div class="h2h-bar-fill left" style="width:' + pctA + '%"></div></div>' +
-						'<span class="h2h-round-label">' + rA.round + '</span>' +
-						'<div class="h2h-bar-track"><div class="h2h-bar-fill right" style="width:' + pctB + '%"></div></div>' +
-						'<span class="h2h-val right ' + clsB + '">' + (gB > 0 ? '+' : '') + gB.toFixed(2) + 'M</span>' +
-						'</div>';
+			function switchView(view) {
+				// If not logged in and trying to access Mitt lag, redirect to Home with error
+				if (view === 'mittlag' && !currentUser) {
+					view = 'home';
+					var errEl = document.getElementById('auth-error');
+					if (errEl) {
+						errEl.textContent = 'Du måste logga in för att se ditt lag';
+						errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					}
 				}
 
-				var totalA = (teamA.totalGrowth / 1000000).toFixed(2);
-				var totalB = (teamB.totalGrowth / 1000000).toFixed(2);
+				document.querySelectorAll('.appview').forEach(function(v) { v.classList.remove('active'); });
 
-				// Build cumulative H2H chart
-				var cumA = 0, cumB = 0;
-				var ptsA = [], ptsB = [];
-				for (var ci = 0; ci < maxRounds; ci++) {
-					var crA = teamA.rounds[ci] || { round: ci + 1, growth: 0 };
-					var crB = teamB.rounds[ci] || { round: ci + 1, growth: 0 };
-					cumA += crA.growth; cumB += crB.growth;
-					ptsA.push({ x: crA.round, y: cumA });
-					ptsB.push({ x: crB.round, y: cumB });
+				document.querySelectorAll('.bottom-nav-btn').forEach(function(btn) {
+					btn.classList.toggle('active', btn.getAttribute('data-view') === view);
+				});
+
+				var target = document.getElementById('view-' + view);
+				if (target) {
+					target.classList.add('active');
+					window.scrollTo(0, 0);
 				}
 
-				var h2hChart = '<div class="line-chart-wrap">' +
-					buildLineChart([
-						{ label: teamA.name, color: '#fecc02', points: ptsA },
-						{ label: teamB.name, color: '#75aadb', points: ptsB }
-					], { width: 500, height: 180 }) +
-					'<div class="chart-legend"><span class="leg-a">' + escapeHtml(teamA.name) + '</span><span class="leg-b">' + escapeHtml(teamB.name) + '</span></div>' +
-					'</div>';
-
-				result.innerHTML =
-					h2hChart +
-					'<div class="h2h-rounds">' + rows + '</div>' +
-					'<div class="h2h-summary">' +
-					'<div><div class="total">+' + totalA + 'M</div><div class="wins">' + winsA + ' vunna omgångar</div></div>' +
-					'<div style="text-align:right"><div class="total">+' + totalB + 'M</div><div class="wins">' + winsB + ' vunna omgångar</div></div>' +
-					'</div>';
+				if (view === 'tabell') loadStandings();
+				if (view === 'admin' && window.initAdmin) window.initAdmin();
 			}
 
-			async function loadMatches() {
-				var container = document.getElementById('matches-container');
+			// Nav button clicks
+			document.querySelectorAll('.bottom-nav-btn').forEach(function(btn) {
+				btn.addEventListener('click', function() {
+					switchView(btn.getAttribute('data-view'));
+				});
+			});
+
+			// Back buttons
+			document.getElementById('mittlag-back').addEventListener('click', function() {
+				switchView('home');
+			});
+			document.getElementById('admin-back').addEventListener('click', function() {
+				switchView('home');
+			});
+			document.getElementById('regler-back').addEventListener('click', function() {
+				switchView('home');
+			});
+
+			// Admin trigger (hidden gear in footer)
+			document.getElementById('admin-trigger').addEventListener('click', function() {
+				switchView('admin');
+			});
+
+			// ---- TEAM BUILDER (Copa Liga) ----
+			(function() {
+				var BUDGET = 50000000; // default 50M, updated from league config
+				var copaFormations = [];
+				var copaSelectedFormation = null;
+				var copaSlots = [];
+				var copaLoaded = false;
+				var copaPickerSlotIndex = -1;
+				var copaPickerSort = { key: 'value', dir: -1 };
+				var copaUser = null;
+				var copaInited = false;
+
+				function $(id) { return document.getElementById(id); }
+
+				// ---- Pre-populate from saved team ----
+				async function populateFromSaved(savedData) {
+					if (!savedData || !savedData.players || savedData.players.length === 0) return;
+					await ensureCopaData();
+					if (savedData.formationId) {
+						$('copa-formation-select').value = savedData.formationId;
+						copaSelectedFormation = copaFormations.find(function(f) { return f.id === savedData.formationId; }) || null;
+						if (copaSelectedFormation) {
+							copaSlots = copaSelectedFormation.slots.map(function(s) {
+								return { positionId: s.positionId, x: s.x, y: s.y, player: null, isCaptain: false };
+							});
+						}
+					}
+					if (copaSlots.length > 0 && allPlayers.length > 0) {
+						var slotsByPos = {};
+						copaSlots.forEach(function(s, idx) {
+							if (!slotsByPos[s.positionId]) slotsByPos[s.positionId] = [];
+							slotsByPos[s.positionId].push(idx);
+						});
+						savedData.players.forEach(function(sp) {
+							var pd = allPlayers.find(function(p) { return p.playerId === sp.playerId; });
+							if (!pd) return;
+							var slots = slotsByPos[pd.position];
+							if (!slots) return;
+							for (var i = 0; i < slots.length; i++) {
+								if (!copaSlots[slots[i]].player) {
+									copaSlots[slots[i]].player = pd;
+									copaSlots[slots[i]].isCaptain = sp.isCaptain;
+									break;
+								}
+							}
+						});
+					}
+					renderPitch();
+					updateBudget();
+					updateSaveRow();
+				}
+
+				// ---- Data loading ----
+				async function ensureCopaData() {
+					if (!playersLoaded) await loadPlayers();
+					if (!copaLoaded) {
+						var ruleset = await getRuleset();
+						if (ruleset && ruleset.formations) {
+							copaFormations = ruleset.formations;
+							var sel = $('copa-formation-select');
+							copaFormations.forEach(function(f) {
+								var opt = document.createElement('option');
+								opt.value = f.id;
+								opt.textContent = f.name.trim();
+								sel.appendChild(opt);
+							});
+						}
+						// Load league config for budget
+						try {
+							var cfgRes = await fetch('/api/fantasy/admin/config');
+							if (cfgRes.ok) {
+								var cfg = await cfgRes.json();
+								if (cfg.startingBudget) BUDGET = cfg.startingBudget;
+							}
+						} catch {}
+						copaLoaded = true;
+					}
+				}
+
+				async function initBuilder(session) {
+					copaUser = { teamId: session.teamId, teamName: session.teamName };
+					await ensureCopaData();
+					await populateFromSaved(session);
+				}
+
+				// ---- Budget ----
+				function copaSpent() {
+					var t = 0; copaSlots.forEach(function(s) { if (s.player) t += s.player.value; }); return t;
+				}
+
+				function updateBudget() {
+					var spent = copaSpent();
+					var remaining = BUDGET - spent;
+					var pct = Math.min(100, (spent / BUDGET) * 100);
+					var fill = $('copa-budget-fill');
+					var text = $('copa-budget-text');
+					fill.style.width = pct + '%';
+					fill.classList.remove('warning', 'over');
+					if (remaining < 0) fill.classList.add('over');
+					else if (pct > 80) fill.classList.add('warning');
+					text.textContent = (remaining / 1000000).toFixed(2) + 'M kvar';
+					text.style.color = remaining < 0 ? '#ef4444' : '';
+				}
+
+				// ---- Pitch rendering ----
+				function renderPitch() {
+					var container = $('copa-pitch-container');
+					if (!copaSelectedFormation) {
+						container.innerHTML = '<div class="bygg-placeholder">Valj en formation for att borja bygga ditt lag.</div>';
+						$('copa-squad-summary').innerHTML = '';
+						updateSaveRow();
+						return;
+					}
+					var posNames = { 6: 'MV', 7: 'Back', 8: 'Mitt', 9: 'Anf' };
+					var posCls = { 6: 'mv', 7: '', 8: '', 9: 'anf' };
+					var html = copaSlots.map(function(slot, idx) {
+						var left = slot.x, top = 100 - slot.y;
+						var pLeft = 10 + (left / 100) * 80, pTop = 6 + (top / 100) * 88;
+						if (slot.player) {
+							var p = slot.player, cls = posCls[slot.positionId] || '';
+							var lastName = p.name.split(' ').slice(-1)[0];
+							var cap = slot.isCaptain ? '<div class="bygg-slot-captain">C</div>' : '';
+							return '<div class="bygg-slot" style="left:' + pLeft + '%;top:' + pTop + '%" data-slot="' + idx + '">' +
+								cap + '<div class="bygg-slot-remove">&times;</div>' +
+								'<div class="bygg-slot-dot filled ' + cls + (slot.isCaptain ? ' captain' : '') + '">' + buildPlayerAvatar(p.skinColor, p.hairColor) + '</div>' +
+								'<div class="bygg-slot-name">' + escapeHtml(lastName) + '</div></div>';
+						}
+						return '<div class="bygg-slot" style="left:' + pLeft + '%;top:' + pTop + '%" data-slot="' + idx + '">' +
+							'<div class="bygg-slot-dot"><span class="bygg-slot-plus">+</span></div>' +
+							'<div class="bygg-slot-pos">' + (posNames[slot.positionId] || '') + '</div></div>';
+					}).join('');
+
+					container.innerHTML = '<div class="pitch"><div class="pitch-outline"></div><div class="pitch-lines"></div><div class="pitch-box-top"></div><div class="pitch-box-bottom"></div>' + html + '</div>';
+
+					container.querySelectorAll('.bygg-slot').forEach(function(el) {
+						el.addEventListener('click', function(e) {
+							var idx = parseInt(el.getAttribute('data-slot'));
+							var slot = copaSlots[idx];
+							if (slot.player && e.target.closest('.bygg-slot-remove')) {
+								// X button — remove player
+								slot.player = null; slot.isCaptain = false; renderPitch(); updateBudget();
+							} else if (slot.player) {
+								// Tap player — toggle captain
+								toggleCaptain(idx);
+							} else {
+								// Empty slot — open picker
+								openPicker(idx);
+							}
+						});
+					});
+
+					var filled = copaSlots.filter(function(s) { return s.player; }).length;
+					var hasCap = copaSlots.some(function(s) { return s.isCaptain; });
+					$('copa-captain-hint').style.display = (filled > 0 && !hasCap) ? '' : 'none';
+					renderSummary();
+					updateSaveRow();
+				}
+
+				function toggleCaptain(idx) {
+					copaSlots.forEach(function(s) { s.isCaptain = false; });
+					copaSlots[idx].isCaptain = true;
+					renderPitch();
+				}
+
+				function updateSaveRow() {
+					var row = $('copa-save-row');
+					var btn = $('copa-save-btn');
+					var status = $('copa-save-status');
+					if (!copaUser || !copaSelectedFormation) { row.style.display = 'none'; return; }
+					var filled = copaSlots.filter(function(s) { return s.player; }).length;
+					var hasCap = copaSlots.some(function(s) { return s.isCaptain; });
+					var withinBudget = copaSpent() <= BUDGET;
+
+					if (filled === 0) { row.style.display = 'none'; return; }
+					row.style.display = 'flex';
+
+					if (filled < 11) {
+						btn.disabled = true;
+						status.textContent = filled + '/11 spelare valda';
+						status.className = 'bygg-save-status';
+					} else if (!hasCap) {
+						btn.disabled = true;
+						status.textContent = 'Tryck på en spelare för att välja kapten';
+						status.className = 'bygg-save-status';
+					} else if (!withinBudget) {
+						btn.disabled = true;
+						status.textContent = 'Över budget';
+						status.className = 'bygg-save-status error';
+					} else {
+						btn.disabled = false;
+						status.textContent = '';
+					}
+				}
+
+				function renderSummary() {
+					var el = $('copa-squad-summary');
+					var picked = copaSlots.filter(function(s) { return s.player; });
+					if (picked.length === 0) { el.innerHTML = ''; return; }
+					var posNames = { 6: 'MV', 7: 'Back', 8: 'Mitt', 9: 'Anf' };
+					var rows = picked.map(function(s) {
+						var p = s.player, cap = s.isCaptain ? ' <span style="color:var(--yellow)">C</span>' : '';
+						return '<div class="bygg-summary-row"><span class="bygg-summary-name">' + escapeHtml(p.name) + cap +
+							' <span style="color:var(--muted);font-size:0.7rem">' + (posNames[s.positionId] || '') + ' \u00b7 ' + escapeHtml(p.clubAbbr || p.club) +
+							'</span></span><span class="bygg-summary-value">' + (p.value / 1000000).toFixed(2) + 'M</span></div>';
+					});
+					var spent = copaSpent();
+					rows.push('<div class="bygg-summary-row" style="margin-top:4px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08)">' +
+						'<span class="bygg-summary-name" style="font-family:Oswald,sans-serif;text-transform:uppercase;letter-spacing:0.04em">Totalt</span>' +
+						'<span class="bygg-summary-value">' + (spent / 1000000).toFixed(2) + 'M / ' + (BUDGET / 1000000).toFixed(0) + 'M</span></div>');
+					el.innerHTML = rows.join('');
+				}
+
+				// ---- Player picker ----
+				function openPicker(slotIdx) {
+					copaPickerSlotIndex = slotIdx;
+					var posNames = { 6: 'Malvakt', 7: 'Back', 8: 'Mittfaltare', 9: 'Anfallare' };
+					$('bygg-picker-title').textContent = 'Valj ' + (posNames[copaSlots[slotIdx].positionId] || 'spelare');
+					$('bygg-picker-search-input').value = '';
+					$('bygg-picker-overlay').classList.add('active');
+					renderPickerList();
+					$('bygg-picker-search-input').focus();
+				}
+
+				function closePicker() {
+					$('bygg-picker-overlay').classList.remove('active');
+					copaPickerSlotIndex = -1;
+				}
+
+				function renderPickerList() {
+					var list = $('bygg-picker-list');
+					if (copaPickerSlotIndex < 0) return;
+					var slot = copaSlots[copaPickerSlotIndex];
+					var query = $('bygg-picker-search-input').value.toLowerCase().trim();
+					var pickedIds = {};
+					copaSlots.forEach(function(s) { if (s.player) pickedIds[s.player.playerId] = true; });
+					var filtered = allPlayers.filter(function(p) {
+						if (p.position !== slot.positionId) return false;
+						if (pickedIds[p.playerId]) return false;
+						if (query && p.name.toLowerCase().indexOf(query) < 0 && p.club.toLowerCase().indexOf(query) < 0 && (p.clubAbbr || '').toLowerCase().indexOf(query) < 0) return false;
+						return true;
+					});
+					filtered.sort(function(a, b) { return ((a[copaPickerSort.key] || 0) - (b[copaPickerSort.key] || 0)) * copaPickerSort.dir; });
+					if (!filtered.length) { list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted)">Inga spelare hittades</div>'; return; }
+					list.innerHTML = filtered.slice(0, 100).map(function(p) {
+						var gc = p.totalGrowth > 0 ? ' positive' : '';
+						var gs = (p.totalGrowth >= 0 ? '+' : '') + (p.totalGrowth / 1000000).toFixed(2) + 'M';
+						return '<div class="bygg-picker-item" data-pid="' + p.playerId + '"><div class="bygg-picker-item-avatar">' +
+							buildPlayerAvatar(p.skinColor, p.hairColor) + '</div><div class="bygg-picker-item-info"><div class="bygg-picker-item-name">' +
+							escapeHtml(p.name) + '</div><div class="bygg-picker-item-club">' + escapeHtml(p.clubAbbr || p.club) +
+							'</div></div><div style="text-align:right"><div class="bygg-picker-item-value">' + (p.value / 1000000).toFixed(2) +
+							'M</div><div class="bygg-picker-item-growth' + gc + '">' + gs + '</div></div></div>';
+					}).join('');
+					list.querySelectorAll('.bygg-picker-item').forEach(function(el) {
+						el.addEventListener('click', function() {
+							var pid = parseInt(el.getAttribute('data-pid'));
+							var player = allPlayers.find(function(p) { return p.playerId === pid; });
+							if (player && copaPickerSlotIndex >= 0) {
+								copaSlots[copaPickerSlotIndex].player = player;
+								closePicker();
+								renderPitch();
+								updateBudget();
+							}
+						});
+					});
+				}
+
+				// ---- Save team ----
+				async function saveTeam() {
+					if (!copaUser || !copaSelectedFormation) return;
+					var btn = $('copa-save-btn'), status = $('copa-save-status');
+					btn.disabled = true; status.textContent = 'Sparar...'; status.className = 'bygg-save-status';
+					var players = [];
+					copaSlots.forEach(function(s, idx) {
+						if (s.player) players.push({ playerId: s.player.playerId, slotIndex: idx, isCaptain: s.isCaptain });
+					});
+					try {
+						var res = await fetch('/api/fantasy/team/save', {
+							method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+							body: JSON.stringify({ formationId: copaSelectedFormation.id, players: players }),
+						});
+						var data = await res.json();
+						if (!res.ok) { status.textContent = data.error || 'Kunde inte spara'; status.className = 'bygg-save-status error'; }
+						else { status.textContent = 'Sparat!'; status.className = 'bygg-save-status success'; }
+					} catch (e) { status.textContent = 'Natverksfel'; status.className = 'bygg-save-status error'; }
+					btn.disabled = false;
+				}
+
+				// ---- Event bindings ----
+				$('copa-save-btn').addEventListener('click', saveTeam);
+
+				$('copa-formation-select').addEventListener('change', function() {
+					var id = parseInt(this.value);
+					copaSelectedFormation = copaFormations.find(function(f) { return f.id === id; }) || null;
+					if (copaSelectedFormation) {
+						copaSlots = copaSelectedFormation.slots.map(function(s) {
+							return { positionId: s.positionId, x: s.x, y: s.y, player: null, isCaptain: false };
+						});
+					} else { copaSlots = []; }
+					renderPitch(); updateBudget();
+				});
+
+				$('copa-reset-btn').addEventListener('click', function() {
+					copaSlots.forEach(function(s) { s.player = null; s.isCaptain = false; });
+					renderPitch(); updateBudget();
+				});
+
+				$('bygg-picker-close').addEventListener('click', closePicker);
+				$('bygg-picker-overlay').addEventListener('click', function(e) { if (e.target === this) closePicker(); });
+				$('bygg-picker-search-input').addEventListener('input', renderPickerList);
+
+				document.querySelectorAll('.bygg-picker-sort').forEach(function(btn) {
+					btn.addEventListener('click', function() {
+						var key = btn.getAttribute('data-sort');
+						if (copaPickerSort.key === key) copaPickerSort.dir *= -1;
+						else { copaPickerSort.key = key; copaPickerSort.dir = -1; }
+						document.querySelectorAll('.bygg-picker-sort').forEach(function(b) { b.classList.remove('active'); });
+						btn.classList.add('active');
+						renderPickerList();
+					});
+				});
+
+				window.initCopaBuilder = initBuilder;
+			})();
+
+			// ---- ADMIN PANEL ----
+			(function() {
+				var adminPin = '';
+
+				function $(id) { return document.getElementById(id); }
+
+				async function unlockAdmin() {
+					var pin = $('admin-pin-input').value.trim();
+					var errEl = $('admin-error');
+					errEl.textContent = '';
+					if (!pin) { errEl.textContent = 'Ange PIN'; return; }
+					try {
+						var res = await fetch('/api/fantasy/admin/verify', {
+							method: 'POST', headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ pin: pin }),
+						});
+						var data = await res.json();
+						if (!res.ok) { errEl.textContent = data.error || 'Fel PIN'; return; }
+						adminPin = pin;
+						$('admin-gate').style.display = 'none';
+						$('admin-panel').style.display = '';
+						loadAdminData();
+					} catch (e) { errEl.textContent = 'Natverksfel'; }
+				}
+
+				async function loadAdminData() {
+					// Load config
+					try {
+						var res = await fetch('/api/fantasy/admin/config');
+						if (res.ok) {
+							var cfg = await res.json();
+							$('admin-league-name').value = cfg.leagueName || '';
+							$('admin-budget').value = (cfg.startingBudget || 50000000) / 1000000;
+							$('admin-transfer-fee').value = cfg.transferFeePercent != null ? cfg.transferFeePercent : 1;
+							$('admin-bank-interest').value = cfg.bankInterestPercent != null ? cfg.bankInterestPercent : 1;
+							$('admin-max-per-club').value = cfg.maxPlayersPerClub || 4;
+							$('admin-entry-fee').value = cfg.entryFee || 300;
+							$('admin-game-id').value = cfg.currentGameId || '731';
+							$('admin-reg-open').checked = cfg.registrationOpen !== false;
+							$('admin-captain-positive').checked = cfg.captainBonusOnlyPositive !== false;
+						}
+					} catch {}
+
+					// Load teams
+					try {
+						var res = await fetch('/api/fantasy/admin/teams?pin=' + encodeURIComponent(adminPin));
+						if (res.ok) {
+							var teams = await res.json();
+							renderAdminTeams(teams);
+						}
+					} catch {}
+				}
+
+				function renderAdminTeams(teams) {
+					var el = $('admin-teams-list');
+					if (!teams.length) { el.innerHTML = '<div style="color:var(--muted);font-size:0.85rem">Inga lag registrerade annu.</div>'; return; }
+					el.innerHTML = teams.map(function(t) {
+						var statusCls = t.status || 'pending';
+						var actions = '';
+						if (statusCls === 'pending') {
+							actions = '<div class="admin-team-actions">' +
+								'<button class="admin-action-btn approve" data-team="' + t.teamId + '" data-action="approved">Godkann</button>' +
+								'<button class="admin-action-btn reject" data-team="' + t.teamId + '" data-action="rejected">Neka</button>' +
+								'</div>';
+						} else {
+							actions = '<span class="admin-team-status ' + statusCls + '">' +
+								(statusCls === 'approved' ? 'Godkand' : 'Nekad') + '</span>';
+						}
+						return '<div class="admin-team-row">' +
+							'<div class="admin-team-info"><div class="admin-team-name">' + escapeHtml(t.teamName) + '</div>' +
+							'<div class="admin-team-meta">' + t.playerCount + ' spelare \u00b7 ' + new Date(t.createdAt).toLocaleDateString('sv-SE') + '</div></div>' +
+							actions + '</div>';
+					}).join('');
+
+					el.querySelectorAll('.admin-action-btn').forEach(function(btn) {
+						btn.addEventListener('click', async function() {
+							var teamId = btn.getAttribute('data-team');
+							var action = btn.getAttribute('data-action');
+							try {
+								var res = await fetch('/api/fantasy/admin/approve', {
+									method: 'POST', headers: { 'Content-Type': 'application/json' },
+									body: JSON.stringify({ pin: adminPin, teamId: teamId, status: action }),
+								});
+								if (res.ok) loadAdminData();
+							} catch {}
+						});
+					});
+				}
+
+				async function saveConfig() {
+					var status = $('admin-config-status');
+					status.textContent = 'Sparar...'; status.className = 'bygg-save-status';
+					var config = {
+						leagueName: $('admin-league-name').value,
+						startingBudget: parseFloat($('admin-budget').value) * 1000000,
+						transferFeePercent: parseFloat($('admin-transfer-fee').value),
+						bankInterestPercent: parseFloat($('admin-bank-interest').value),
+						maxPlayersPerClub: parseInt($('admin-max-per-club').value),
+						entryFee: parseInt($('admin-entry-fee').value),
+						currentGameId: $('admin-game-id').value,
+						registrationOpen: $('admin-reg-open').checked,
+						captainBonusOnlyPositive: $('admin-captain-positive').checked,
+					};
+					try {
+						var res = await fetch('/api/fantasy/admin/config', {
+							method: 'POST', headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ pin: adminPin, config: config }),
+						});
+						if (res.ok) { status.textContent = 'Sparat!'; status.className = 'bygg-save-status success'; }
+						else { var d = await res.json(); status.textContent = d.error || 'Fel'; status.className = 'bygg-save-status error'; }
+					} catch { status.textContent = 'Natverksfel'; status.className = 'bygg-save-status error'; }
+				}
+
+				$('admin-unlock-btn').addEventListener('click', unlockAdmin);
+				$('admin-pin-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') unlockAdmin(); });
+				$('admin-save-config').addEventListener('click', saveConfig);
+
+				window.initAdmin = function() {
+					if (adminPin) loadAdminData(); // refresh data when switching to admin tab
+				};
+			})();
+
+			// ---- LIGA STANDINGS ----
+			var standingsData = [];
+
+			async function loadStandings() {
+				var container = document.getElementById('liga-standings');
 				try {
-					var res = await fetch('/api/matches');
+					var res = await fetch('/api/fantasy/league/standings');
 					if (!res.ok) throw new Error('API error');
 					var data = await res.json();
+					standingsData = data.standings || data || [];
 
-					var html = '';
-
-					// Round info
-					if (data.currentRound) {
-						var dl = data.deadline ? new Date(data.deadline) : null;
-						var dlStr = dl ? dl.getDate() + '/' + (dl.getMonth() + 1) + ' ' + dl.getHours().toString().padStart(2,'0') + ':' + dl.getMinutes().toString().padStart(2,'0') : '';
-						html += '<div class="match-round-info">' +
-							'<span class="match-round-label">Omgång ' + data.currentRound + '</span>' +
-							(dlStr ? '<span class="match-deadline">Deadline: <strong>' + dlStr + '</strong></span>' : '') +
-							'</div>';
+					if (!standingsData.length) {
+						container.innerHTML = '<div class="leaderboard-loading">Inga lag har registrerats ännu.</div>';
+						return;
 					}
 
-					// Upcoming
-					if (data.upcoming && data.upcoming.length > 0) {
-						html += '<div class="matches-section-title">Kommande matcher</div>';
-						var lastDate = '';
-						data.upcoming.forEach(function(m) {
-							var d = new Date(m.start);
-							var dateStr = d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' });
-							if (dateStr !== lastDate) {
-								html += '<div class="match-date-header">' + dateStr + '</div>';
-								lastDate = dateStr;
-							}
-							var timeStr = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
-							var parts = m.name.split(' - ');
-							var home = parts[0] || m.name;
-							var away = parts[1] || '';
-							html += '<div class="match-row">' +
-								'<span class="match-home">' + escapeHtml(home) + '</span>' +
-								'<span class="match-time">' + timeStr + '</span>' +
-								'<span class="match-away">' + escapeHtml(away) + '</span>' +
-								'</div>';
+					var html = standingsData.map(function(t, i) {
+						var pos = i + 1;
+						var posClass = pos <= 3 ? ' top3' : '';
+						var totalStr = t.totalGrowth ? (t.totalGrowth / 1000000).toFixed(2) + 'M' : '--';
+						var lastRound = t.rounds && t.rounds.length > 0 ? t.rounds[t.rounds.length - 1] : null;
+						var lastStr = lastRound ? (lastRound.total / 1000000).toFixed(2) + 'M' : '';
+						var lastClass = lastRound && lastRound.total > 0 ? 'pos' : lastRound && lastRound.total < 0 ? 'neg' : '';
+						return '<div class="liga-team-row" data-team-idx="' + i + '">' +
+							'<span class="liga-pos' + posClass + '">' + pos + '</span>' +
+							'<div class="liga-team-info"><span class="liga-team-name">' + escapeHtml(t.teamName || '') + '</span>' +
+							(lastStr ? '<span class="liga-team-last ' + lastClass + '">Senaste: ' + lastStr + '</span>' : '') + '</div>' +
+							'<span class="liga-team-pts">' + totalStr + '</span>' +
+							'</div>' +
+							'<div class="liga-team-detail" id="liga-detail-' + i + '"></div>';
+					}).join('');
+
+					container.innerHTML = html;
+
+					// Bind row clicks
+					container.querySelectorAll('.liga-team-row').forEach(function(row) {
+						row.addEventListener('click', function() {
+							var idx = parseInt(row.getAttribute('data-team-idx'));
+							toggleTeamDetail(idx);
 						});
-					}
-
-					// Recent results
-					if (data.recent && data.recent.length > 0) {
-						html += '<div class="matches-section-title" style="margin-top:32px">Senaste resultat</div>';
-						var lastDate2 = '';
-						data.recent.forEach(function(m) {
-							var d = new Date(m.start);
-							var dateStr = d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' });
-							if (dateStr !== lastDate2) {
-								html += '<div class="match-date-header">' + dateStr + '</div>';
-								lastDate2 = dateStr;
-							}
-							var parts = m.name.split(' - ');
-							var home = parts[0] || m.name;
-							var away = parts[1] || '';
-							var score = m.homeScore + ' - ' + m.awayScore;
-							html += '<div class="match-row">' +
-								'<span class="match-home">' + escapeHtml(home) + '</span>' +
-								'<span class="match-score">' + score + '</span>' +
-								'<span class="match-away">' + escapeHtml(away) + '</span>' +
-								'</div>';
-						});
-					}
-
-					container.innerHTML = html || '<div class="leaderboard-loading">Inga matcher att visa.</div>';
+					});
 				} catch (e) {
-					container.innerHTML = '<div class="leaderboard-loading">Kunde inte ladda matcher.</div>';
+					container.innerHTML = '<div class="leaderboard-loading">Kunde inte ladda tabell.</div>';
 				}
 			}
 
-			loadLeaderboard();
-			loadMatches();
-			loadStats();
+			async function toggleTeamDetail(idx) {
+				var detail = document.getElementById('liga-detail-' + idx);
+				if (!detail) return;
+
+				if (detail.classList.contains('open')) {
+					detail.classList.remove('open');
+					detail.innerHTML = '';
+					return;
+				}
+
+				document.querySelectorAll('.liga-team-detail.open').forEach(function(d) {
+					d.classList.remove('open'); d.innerHTML = '';
+				});
+
+				var team = standingsData[idx];
+				if (!team || !team.players || team.players.length === 0) {
+					detail.classList.add('open');
+					detail.innerHTML = '<div style="padding:16px;color:var(--muted);font-size:0.85rem">Laget har inte valt spelare ännu.</div>';
+					return;
+				}
+
+				var sections = [];
+
+				// ---- Round history with bars ----
+				if (team.rounds && team.rounds.length > 0) {
+					var maxAbs = 0;
+					team.rounds.forEach(function(r) { maxAbs = Math.max(maxAbs, Math.abs(r.total)); });
+
+					var cumulative = 0;
+					var barsHtml = team.rounds.map(function(r) {
+						cumulative += r.total;
+						var pct = maxAbs > 0 ? Math.abs(r.total) / maxAbs * 100 : 0;
+						var isPos = r.total >= 0;
+						var barColor = isPos ? '#22c55e' : '#ef4444';
+						var totalStr = (r.total / 1e6).toFixed(2);
+						var cumStr = (cumulative / 1e6).toFixed(2);
+						var capStr = r.captainBonus > 0 ? ' (C: +' + (r.captainBonus / 1e6).toFixed(2) + ')' : '';
+						return '<div class="detail-round-row">' +
+							'<span class="detail-round-num">R' + r.round + '</span>' +
+							'<div class="detail-round-bar-wrap">' +
+								'<div class="detail-round-bar" style="width:' + pct + '%;background:' + barColor + '"></div>' +
+							'</div>' +
+							'<span class="detail-round-val ' + (isPos ? 'pos' : 'neg') + '">' + (isPos ? '+' : '') + totalStr + 'M</span>' +
+							'</div>';
+					}).join('');
+
+					var totalStr = (team.totalGrowth / 1e6).toFixed(2);
+					sections.push(
+						'<div class="detail-section">' +
+						'<div class="detail-section-title">Omgångar</div>' +
+						barsHtml +
+						'<div class="detail-round-row" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.08)">' +
+							'<span class="detail-round-num" style="font-weight:600">Tot</span>' +
+							'<div class="detail-round-bar-wrap"></div>' +
+							'<span class="detail-round-val" style="color:var(--celeste);font-weight:600">' + totalStr + 'M</span>' +
+						'</div>' +
+						'</div>'
+					);
+				}
+
+				// ---- Pitch ----
+				if (!playersLoaded) await loadPlayers();
+				var ruleset = await getRuleset();
+				var formation = null;
+				if (ruleset && ruleset.formations && team.formationId) {
+					formation = ruleset.formations.find(function(f) { return f.id === team.formationId; });
+				}
+
+				var posNames = { 6: 'MV', 7: 'Back', 8: 'Mitt', 9: 'Anf' };
+				var posCls = { 6: 'mv', 7: '', 8: '', 9: 'anf' };
+
+				if (formation) {
+					var byPos = {};
+					team.players.forEach(function(tp) {
+						var pd = allPlayers.find(function(p) { return p.playerId === tp.playerId; });
+						if (!pd) return;
+						if (!byPos[pd.position]) byPos[pd.position] = [];
+						byPos[pd.position].push({ data: pd, isCaptain: tp.isCaptain });
+					});
+
+					var slotsByPos = {};
+					formation.slots.forEach(function(s) {
+						var pid = s.positionId;
+						if (!slotsByPos[pid]) slotsByPos[pid] = [];
+						slotsByPos[pid].push(s);
+					});
+					for (var p in slotsByPos) slotsByPos[p].sort(function(a, b) { return a.x - b.x; });
+
+					var playersHtml = '';
+					for (var pos in byPos) {
+						var posPlayers = byPos[pos];
+						var posSlots = slotsByPos[pos] || [];
+						for (var j = 0; j < posPlayers.length; j++) {
+							var slot = posSlots[j] || posSlots[posSlots.length - 1];
+							if (!slot) continue;
+							var pd = posPlayers[j].data;
+							var isCap = posPlayers[j].isCaptain;
+							var left = 10 + (slot.x / 100) * 80;
+							var top = 6 + ((100 - slot.y) / 100) * 88;
+							var cls = posCls[pd.position] || '';
+							var lastName = pd.name.split(' ').slice(-1)[0];
+							var capBadge = isCap ? '<div class="bygg-slot-captain">C</div>' : '';
+							playersHtml += '<div class="pitch-player" style="left:' + left + '%;top:' + top + '%">' +
+								capBadge +
+								'<div class="pitch-dot ' + cls + (isCap ? ' captain' : '') + '">' + buildPlayerAvatar(pd.skinColor, pd.hairColor) + '</div>' +
+								'<div class="pitch-name">' + escapeHtml(lastName) + '</div></div>';
+						}
+					}
+
+					sections.push(
+						'<div class="detail-section">' +
+						'<div class="detail-section-title">Uppställning</div>' +
+						'<div class="pitch">' +
+						'<div class="pitch-outline"></div><div class="pitch-lines"></div>' +
+						'<div class="pitch-box-top"></div><div class="pitch-box-bottom"></div>' +
+						playersHtml + '</div></div>'
+					);
+				} else {
+					var listHtml = team.players.map(function(tp) {
+						var pd = allPlayers.find(function(p) { return p.playerId === tp.playerId; });
+						if (!pd) return '';
+						var cap = tp.isCaptain ? ' <span style="color:var(--yellow)">C</span>' : '';
+						return '<div style="padding:4px 0;font-size:0.85rem">' + escapeHtml(pd.name) + cap +
+							' <span style="color:var(--muted);font-size:0.75rem">' + (posNames[pd.position] || '') + '</span></div>';
+					}).join('');
+					sections.push('<div class="detail-section"><div class="detail-section-title">Spelare</div>' + listHtml + '</div>');
+				}
+
+				detail.innerHTML = '<div class="detail-content">' + sections.join('') + '</div>';
+				detail.classList.add('open');
+			}
+
+			// ---- INIT ON PAGE LOAD ----
+			(async function() {
+				// Check session
+				var session = await checkSession();
+				if (session && session.authenticated) {
+					var status = session.status || 'approved';
+					if (status === 'approved') {
+						currentUser = session;
+						document.getElementById('auth-guest').style.display = 'none';
+						document.getElementById('auth-user').style.display = '';
+						document.getElementById('auth-user-name').textContent = session.teamName;
+						showMittlagNav();
+						if (window.initCopaBuilder) window.initCopaBuilder(session);
+					}
+				}
+
+			})();
 		</script>
-
-		<hr class="divider" />
-
-		<section class="section">
-			<h2>VM-hype</h2>
-			<p class="section-intro">Stämningen inför turneringen.</p>
-			<div class="tiktoks">
-				<blockquote class="tiktok-embed" cite="https://www.tiktok.com/@antonyg02/video/7623206243003370773" data-video-id="7623206243003370773" data-embed-from="oembed" style="max-width:605px; min-width:300px;">
-					<section><a target="_blank" href="https://www.tiktok.com/@antonyg02?refer=embed">@antonyg02</a></section>
-				</blockquote>
-				<blockquote class="tiktok-embed" cite="https://www.tiktok.com/@classicftbal/video/7623764887390424342" data-video-id="7623764887390424342" data-embed-from="oembed" style="max-width:605px; min-width:300px;">
-					<section><a target="_blank" href="https://www.tiktok.com/@classicftbal?refer=embed">@classicftbal</a></section>
-				</blockquote>
-				<blockquote class="tiktok-embed" cite="https://www.tiktok.com/@rk.teamsport/video/7620575248575941910" data-video-id="7620575248575941910" data-embed-from="oembed" style="max-width:605px; min-width:300px;">
-					<section><a target="_blank" href="https://www.tiktok.com/@rk.teamsport?refer=embed">@rk.teamsport</a></section>
-				</blockquote>
-			</div>
-		</section>
-
-		<footer>
-			<p style="margin-bottom: 0.5rem;">Swish <strong>300 kr</strong> till <strong>+46 70 306 42 11</strong> (Ruy)</p>
-			<p>La Copa del Mundo 2026</p>
-		</footer>
-
-		<script async src="https://www.tiktok.com/embed.js"></script>
 	</body>
 </html>
