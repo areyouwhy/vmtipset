@@ -12,6 +12,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vercel build/dev artifacts.
+    ".vercel/**",
+    // Drizzle generated SQL migrations.
+    "drizzle/**",
+    // Playwright artifacts.
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 

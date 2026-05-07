@@ -45,11 +45,15 @@ The previous Astro/Blob/PIN-auth prototype was thrown away. This is the current 
 
 - `npm run dev` — dev server (Turbopack)
 - `npm run build` — production build
-- `npm run db:push` — sync `src/db/schema.ts` to Neon (no migration files yet)
-- `npm run db:studio` — Drizzle Studio
 - `npm run lint` — ESLint
-
-No tests yet.
+- `npm run typecheck` — `tsc --noEmit`
+- `npm test` — Vitest unit/integration tests, single run
+- `npm run test:watch` — Vitest in watch mode
+- `npm run test:e2e` — Playwright E2E (boots a dev server on port 3100; run `npx playwright install chromium` once before first use)
+- `npm run db:generate` — generate a new SQL migration from `src/db/schema.ts`
+- `npm run db:migrate` — apply pending migrations to the DB pointed at by `DATABASE_URL`
+- `npm run db:push` — bypass migrations and shove the schema into the DB (prototyping only)
+- `npm run db:studio` — Drizzle Studio
 
 ## Environment
 
@@ -101,6 +105,20 @@ vercel.json                  — pins framework: nextjs (overrides leftover Astr
 - **Text-TV 8-color palette** on black background: yellow `#ffff00`, cyan `#00ffff`, green `#00ff00`, red `#ff0000`. White text. Dim `#888` for labels.
 - ALL CAPS headers, wide letter-spacing, square brackets in button labels (`[ SKAPA LAG → ]`).
 - Scanlines + subtle CRT vignette via `body::before` / `body::after` in `globals.css`.
+
+## Migrations
+
+- Schema lives in `src/db/schema.ts`.
+- Generated SQL migrations live in `drizzle/` and are checked into git.
+- Local dev still uses `db:push` for fast iteration. Don't push to prod — generate a migration file and use `db:migrate` for any change that needs to land on the live DB.
+- **Open issue:** the production Neon DB was bootstrapped with `db:push`, so the `__drizzle_migrations` tracking table is empty even though the schema matches `0000_absent_terrax.sql`. Before the first prod migration goes out, manually seed a row into `__drizzle_migrations` for the baseline so `db:migrate` doesn't try to recreate tables. (Or just drop & recreate the DB while we have no real users.)
+
+## Testing
+
+- **Vitest** for unit + component tests. Files: `src/**/*.test.ts(x)`.
+- **Playwright** for E2E. Files: `e2e/*.spec.ts`. Boots `next dev` on port 3100.
+- **CI** (`.github/workflows/ci.yml`) runs lint + typecheck + Vitest on every push to `main` and on PRs. Playwright stays local for now (no DB in CI yet).
+- **Money-math rule:** every scoring / prize-distribution / transfer-fee function gets a golden-master test with hand-calculated expected values **before** it ships.
 
 ## Conventions & gotchas
 
