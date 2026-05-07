@@ -1,4 +1,10 @@
 {
   "framework": "nextjs",
-  "regions": ["arn1"]
+  "regions": ["arn1"],
+  "crons": [
+    {
+      "path": "/api/cron/lock-deadlines",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

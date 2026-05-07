@@ -145,10 +145,10 @@ Each default above is what I'll implement unless you push back.
 - [x] Picker save banner shows `N BYTEN · K FRITT · AVGIFT Y kr` when transfers were recorded.
 - [x] 7 transfer-math tests (82 total).
 
-**Phase D — deadline lock ✓ (partial)**
+**Phase D — deadline lock ✓**
 - [x] Server enforcement: `saveSquadAction` refuses save if `now > round.deadline`.
 - [x] UI countdown banner on `/app/squad`: yellow if <1 day left, red if past, cyan otherwise.
-- **Deferred:** auto-flip `squads.lockedAt` when deadline passes (currently `lockedAt` is set during round scoring; for stricter audit we'd want a cron or on-load check that locks at the deadline moment, not at scoring time).
+- [x] Hourly cron `GET /api/cron/lock-deadlines` (configured in `vercel.json#crons`) flips `squads.lockedAt` for any squad in a past-deadline round, and bumps the round status from `open` → `locked` if not already scored. Idempotent. Optional `CRON_SECRET` env enforced when set.
 
 ### Epic 6 — Daily/round bets (mode B) ✓
 
