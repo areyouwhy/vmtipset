@@ -150,22 +150,30 @@ export function SquadPicker({
         clubs={clubsInOrder}
       />
 
-      <ul className="divide-y divide-border border border-border">
-        {visiblePlayers.map((p) => (
-          <PlayerRow
-            key={p.id}
-            player={p}
-            selected={selected.has(p.id)}
-            isCaptain={captainId === p.id}
-            disabled={locked}
-            onToggle={() => toggle(p.id)}
-            onCaptain={() => setCaptain(p.id)}
-          />
-        ))}
-        {visiblePlayers.length === 0 && (
-          <li className="p-4 text-center text-sm text-dim">— inga matcher —</li>
-        )}
-      </ul>
+      <div className="mt-2 flex items-baseline justify-between text-[10px] uppercase tracking-widest text-dim">
+        <span>{visiblePlayers.length} SPELARE</span>
+        <span>SCROLL ↓</span>
+      </div>
+      <div className="max-h-[60vh] overflow-y-auto overscroll-contain border border-border">
+        <ul className="divide-y divide-border">
+          {visiblePlayers.map((p) => (
+            <PlayerRow
+              key={p.id}
+              player={p}
+              selected={selected.has(p.id)}
+              isCaptain={captainId === p.id}
+              disabled={locked}
+              onToggle={() => toggle(p.id)}
+              onCaptain={() => setCaptain(p.id)}
+            />
+          ))}
+          {visiblePlayers.length === 0 && (
+            <li className="p-4 text-center text-sm text-dim">
+              — inga matcher —
+            </li>
+          )}
+        </ul>
+      </div>
 
       {errors.length > 0 && (
         <ul className="mt-4 space-y-1 border border-red bg-red/10 px-3 py-2 text-sm text-red">
@@ -181,22 +189,20 @@ export function SquadPicker({
         </p>
       )}
 
-      <div className="sticky bottom-4 mt-6">
-        <button
-          type="button"
-          onClick={save}
-          disabled={pending || locked || liveErrors.length > 0}
-          className="w-full border border-yellow bg-yellow px-6 py-3 text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-border disabled:text-dim disabled:opacity-100"
-        >
-          {locked
-            ? "[ TRUPPEN ÄR LÅST ]"
-            : pending
-              ? "[ SPARAR... ]"
-              : liveErrors.length > 0
-                ? `[ ${liveErrors.length} FEL KVAR ]`
-                : "[ SPARA TRUPP → ]"}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={save}
+        disabled={pending || locked || liveErrors.length > 0}
+        className="mt-6 w-full border border-yellow bg-yellow px-6 py-3 text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-border disabled:text-dim disabled:opacity-100"
+      >
+        {locked
+          ? "[ TRUPPEN ÄR LÅST ]"
+          : pending
+            ? "[ SPARAR... ]"
+            : liveErrors.length > 0
+              ? `[ ${liveErrors.length} FEL KVAR ]`
+              : "[ SPARA TRUPP → ]"}
+      </button>
     </div>
   );
 }
