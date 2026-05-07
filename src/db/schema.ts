@@ -131,6 +131,75 @@ export const playerRoundSnapshots = pgTable(
   ],
 );
 
+// ─── Squads ─────────────────────────────────────────────────────────────────
+
+/**
+ * A squad is a team's lineup for a specific round. Round 1 is the initial
+ * pick; subsequent rounds inherit the previous squad and apply transfers.
+ * Locked once the round deadline passes; unique per (team, round).
+ */
+export const squads = pgTable(
+  "squads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    roundId: uuid("round_id")
+      .notNull()
+      .references(() => rounds.id, { onDelete: "cascade" }),
+    captainPlayerId: uuid("captain_player_id").references(() => players.id, {
+      onDelete: "restrict",
+    }),
+    lockedAt: timestamp("locked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [unique("squad_team_round_unique").on(t.teamId, t.roundId)],
+);
+
+export const squadPlayers = pgTable(
+  "squad_players",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    squadId: uuid("squad_id")
+      .notNull()
+      .references(() => squads.id, { onDelete: "cascade" }),
+    playerId: uuid("player_id")
+      .notNull()
+      .references(() => players.id, { onDelete: "restrict" }),
+  },
+  (t) => [unique("squad_player_unique").on(t.squadId, t.playerId)],
+);
+
+/**
+ * Append-only log of every transfer between rounds. Each row reduces the
+ * team's round score by `feeSek`.
+ */
+export const transfers = pgTable("transfers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  teamId: uuid("team_id")
+    .notNull()
+    .references(() => teams.id, { onDelete: "cascade" }),
+  roundId: uuid("round_id")
+    .notNull()
+    .references(() => rounds.id, { onDelete: "cascade" }),
+  playerInId: uuid("player_in_id")
+    .notNull()
+    .references(() => players.id, { onDelete: "restrict" }),
+  playerOutId: uuid("player_out_id")
+    .notNull()
+    .references(() => players.id, { onDelete: "restrict" }),
+  feeSek: integer("fee_sek").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 // ─── Prize pools ────────────────────────────────────────────────────────────
 
 /**
@@ -187,6 +256,12 @@ export type PrizePool = typeof prizePools.$inferSelect;
 export type NewPrizePool = typeof prizePools.$inferInsert;
 export type PrizePlace = typeof prizePlaces.$inferSelect;
 export type NewPrizePlace = typeof prizePlaces.$inferInsert;
+export type Squad = typeof squads.$inferSelect;
+export type NewSquad = typeof squads.$inferInsert;
+export type SquadPlayer = typeof squadPlayers.$inferSelect;
+export type NewSquadPlayer = typeof squadPlayers.$inferInsert;
+export type Transfer = typeof transfers.$inferSelect;
+export type NewTransfer = typeof transfers.$inferInsert;
 
 export type Position = (typeof playerPosition.enumValues)[number];
 export type RoundStatus = (typeof roundStatus.enumValues)[number];

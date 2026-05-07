@@ -117,12 +117,28 @@ Each default above is what I'll implement unless you push back.
 
 ### Epic 5 — Squad picking + transfers (mode A)
 
-- [ ] Schema: `squads` (team_id, round_id, captain_player_id), `squad_players` (squad_id, player_id, is_captain), `transfers` (team_id, round_id, player_in, player_out, fee).
-- [ ] Mobile-first picker UI: list players filterable by club / position / price; running budget; running formation count; "save squad" enabled only when valid.
-- [ ] Validation (server-side authoritative): exact 11 players, formation legal, budget ≤ cap, captain selected, same-club limit respected.
-- [ ] Transfer flow: between rounds only; transfer fee deducted; transfer log row written.
-- [ ] Squad locked at round deadline (server-side check, not just UI).
-- [ ] Tests for every rule, valid + invalid path each.
+**Phase A — schema + validation + tests ✓**
+- [x] Schema: `squads` (team, round, captain, lockedAt), `squad_players`, `transfers`.
+- [x] `validateSquad` covers: size, duplicates, position min/max, formation, budget, same-club, same-country, captain.
+- [x] 16 squad-validation tests (61 total across 5 files).
+- [x] Mock dataset bumped to 4 clubs × 10 players = 40 with prices that allow a legal 50M squad.
+
+**Phase B — squad picker UI ✓**
+- [x] `/app/squad`: position-pill filter, club dropdown, sticky save bar.
+- [x] Live summary: count / formation / budget remaining / captain / per-position bounds.
+- [x] Per-row checkbox + captain `C` toggle; selecting captain auto-adds player.
+- [x] Server action re-validates with the same `validateSquad` and refuses on locked.
+- [x] `/app` CTA flips between BYGG / REDIGERA / VISA based on squad state.
+
+**Phase C — transfers between rounds (next)**
+- [ ] When admin opens round N+1, inherit squad from round N.
+- [ ] Transfer flow: out + in; fee = `transferFeePct × outgoing.price`; logged in `transfers`.
+- [ ] Honor `freeTransfersPerRound` once it's > 0.
+
+**Phase D — deadline lock**
+- [ ] Server enforcement: refuse save if `now > round.deadline`.
+- [ ] Auto-flip `squads.lockedAt` when deadline passes.
+- [ ] UI countdown.
 
 ### Epic 6 — Daily/round bets (mode B)
 
