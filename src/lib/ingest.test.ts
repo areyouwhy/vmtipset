@@ -84,10 +84,10 @@ describe("planIngest — change detection", () => {
     const existing: ExistingState = {
       clubs: [
         {
-          externalId: "club:liv",
-          name: "Liverpool FC", // was "Liverpool"
-          shortName: "LIV",
-          countryCode: "ENG",
+          externalId: "club:arg",
+          name: "Argentina FC", // was "Argentina"
+          shortName: "ARG",
+          countryCode: "ARG",
         },
       ],
       players: [],
@@ -97,8 +97,8 @@ describe("planIngest — change detection", () => {
     const plan = planIngest(mockDataset, existing);
     const livOps = plan.clubs.filter(
       (op) =>
-        (op.kind === "update-club" && op.externalId === "club:liv") ||
-        (op.kind === "insert-club" && op.club.externalId === "club:liv"),
+        (op.kind === "update-club" && op.externalId === "club:arg") ||
+        (op.kind === "insert-club" && op.club.externalId === "club:arg"),
     );
     expect(livOps).toHaveLength(1);
     expect(livOps[0]?.kind).toBe("update-club");
@@ -109,9 +109,9 @@ describe("planIngest — change detection", () => {
       clubs: [],
       players: [
         {
-          externalId: "p:liv-fwd1",
+          externalId: "p:arg-8",
           name: "Salah",
-          clubExternalId: "club:ars", // was liv
+          clubExternalId: "club:bra", // was liv
           position: "FWD",
           active: true,
         },
@@ -122,7 +122,7 @@ describe("planIngest — change detection", () => {
     const plan = planIngest(mockDataset, existing);
     const op = plan.players.find(
       (op) =>
-        op.kind === "update-player" && op.externalId === "p:liv-fwd1",
+        op.kind === "update-player" && op.externalId === "p:arg-8",
     );
     expect(op).toBeDefined();
   });
@@ -157,7 +157,7 @@ describe("planIngest — snapshots are append-only", () => {
       rounds: [],
       snapshots: [
         {
-          playerExternalId: "p:liv-fwd1",
+          playerExternalId: "p:arg-8",
           roundExternalId: "r:1",
           priceSek: 99_999, // wildly different from incoming
           growthSek: 0,
@@ -168,7 +168,7 @@ describe("planIngest — snapshots are append-only", () => {
     const plan = planIngest(mockDataset, existing);
     const conflict = plan.snapshots.find(
       (op) =>
-        op.snapshot.playerExternalId === "p:liv-fwd1" &&
+        op.snapshot.playerExternalId === "p:arg-8" &&
         op.snapshot.roundExternalId === "r:1",
     );
     expect(conflict).toBeUndefined();
@@ -181,7 +181,7 @@ describe("planIngest — snapshots are append-only", () => {
       rounds: [],
       snapshots: [
         {
-          playerExternalId: "p:liv-fwd1",
+          playerExternalId: "p:arg-8",
           roundExternalId: "r:1",
           priceSek: 12_345,
           growthSek: 0,
@@ -192,7 +192,7 @@ describe("planIngest — snapshots are append-only", () => {
     const plan = planIngest(mockDataset, existing);
     const apiOp = plan.snapshots.find(
       (op) =>
-        op.snapshot.playerExternalId === "p:liv-fwd1" &&
+        op.snapshot.playerExternalId === "p:arg-8" &&
         op.snapshot.roundExternalId === "r:1",
     );
     expect(apiOp).toBeDefined();
@@ -215,7 +215,7 @@ describe("planIngest — orphans", () => {
         {
           externalId: "p:retired-1",
           name: "Old Player",
-          clubExternalId: "club:liv",
+          clubExternalId: "club:arg",
           position: "FWD",
           active: true,
         },

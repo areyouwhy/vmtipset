@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { IngestSummary } from "@/lib/ingest-apply";
-import { runMockIngestAction } from "./actions";
+import { runMockIngestAction, wipeAndReingestAction } from "./actions";
 
 export function IngestPanel() {
   const [pending, startTransition] = useTransition();
@@ -18,28 +18,54 @@ export function IngestPanel() {
         MOCK-KÄLLA
       </h2>
       <p className="mt-2 text-sm text-dim">
-        Skickar in 3 klubbar, 12 spelare och 2 ronder. Idempotent — andra
+        Mock-datasetet: 8 klubbar, 80 spelare, 2 ronder. Idempotent — andra
         körningen ska inte ge några nya rader.
       </p>
 
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() =>
-          startTransition(async () => {
-            setError(null);
-            try {
-              const result = await runMockIngestAction();
-              setSummary(result);
-            } catch (e) {
-              setError(e instanceof Error ? e.message : "Okänt fel");
-            }
-          })
-        }
-        className="mt-5 w-full border border-yellow bg-yellow px-6 py-3 text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90 disabled:opacity-40 sm:w-auto"
-      >
-        {pending ? "[ KÖR... ]" : "[ KÖR MOCK INGEST → ]"}
-      </button>
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              setError(null);
+              try {
+                const result = await runMockIngestAction();
+                setSummary(result);
+              } catch (e) {
+                setError(e instanceof Error ? e.message : "Okänt fel");
+              }
+            })
+          }
+          className="border border-yellow bg-yellow px-6 py-3 text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90 disabled:opacity-40 sm:w-auto"
+        >
+          {pending ? "[ KÖR... ]" : "[ KÖR MOCK INGEST → ]"}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => {
+            if (
+              !confirm(
+                "RENSA OCH RE-INGEST?\n\nDetta tar bort alla klubbar, spelare, ronder, snapshots, trupper och byten. Bara mock-datat återstår.",
+              )
+            )
+              return;
+            startTransition(async () => {
+              setError(null);
+              try {
+                const result = await wipeAndReingestAction();
+                setSummary(result);
+              } catch (e) {
+                setError(e instanceof Error ? e.message : "Okänt fel");
+              }
+            });
+          }}
+          className="border border-red px-6 py-3 text-sm font-bold uppercase tracking-widest text-red transition hover:bg-red hover:text-black disabled:opacity-40 sm:w-auto"
+        >
+          {pending ? "[ KÖR... ]" : "[ ! RENSA & RE-INGEST ]"}
+        </button>
+      </div>
 
       {error && (
         <p className="mt-4 border border-red bg-red/10 px-3 py-2 text-sm text-red">

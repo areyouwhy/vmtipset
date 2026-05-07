@@ -124,11 +124,19 @@ Each default above is what I'll implement unless you push back.
 - [x] Mock dataset bumped to 4 clubs × 10 players = 40 with prices that allow a legal 50M squad.
 
 **Phase B — squad picker UI ✓**
-- [x] `/app/squad`: position-pill filter, club dropdown, sticky save bar.
-- [x] Live summary: count / formation / budget remaining / captain / per-position bounds.
-- [x] Per-row checkbox + captain `C` toggle; selecting captain auto-adds player.
+- [x] `/app/squad` with `PLAN` (pitch) and `LISTA` (filterable list) tabs.
+- [x] **PLAN view**: formation selector pills (legal formations from rules), pitch rows GK→FWD, dashed `+ POS` empty slots that flip to LISTA filtered by that position and auto-return on pick. Player chips show country code, position badge, captain `C`, remove `×`.
+- [x] **LISTA view**: position pills + LAG (country) pills (48 nations), `BARA RÅD` (only affordable) and `BARA PLATS` (only fits all rules) toggles. Greys out unpickable players with reason badge (`EJ RÅD`, `POSITION FULL`, `KLUBB MAX`, `LAND MAX`).
+- [x] Sticky compact summary at top: TRUPP/FORM/KVAR/©, position bounds, expandable error list.
+- [x] Fixed save bar at bottom of viewport. Live error count next to label.
 - [x] Server action re-validates with the same `validateSquad` and refuses on locked.
 - [x] `/app` CTA flips between BYGG / REDIGERA / VISA based on squad state.
+
+**Mock data tuned for testing:**
+- 48 WC 2026 nations (CONMEBOL/UEFA/CONCACAF/AFC/CAF/OFC).
+- 480 players (1 GK + 3 DEF + 3 MID + 3 FWD per nation), prices tiered by position rank × nation strength so a cheapest legal 4-3-3 ≈ 42.5M.
+- 3 group-stage rounds with deterministic pseudo-random growth (fixed seed → reproducible scenarios).
+- Admin `[ ! RENSA & RE-INGEST ]` button at `/admin/data` for clean iteration.
 
 **Phase C — transfers between rounds (next)**
 - [ ] When admin opens round N+1, inherit squad from round N.
