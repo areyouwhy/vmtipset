@@ -26,7 +26,7 @@ The previous Astro/Blob/PIN-auth prototype was thrown away. This is the current 
 - Round lifecycle (open/close, recompute).
 
 ### Open Phase 1 polish
-- Deploy region is `iad1` (Washington DC); should be `fra1` or `arn1` (Stockholm) — DB is in Frankfurt so every call crosses the Atlantic.
+- Deploy region pinned to `arn1` (Stockholm) via `vercel.json`. DB still in Frankfurt — small same-continent hop instead of transatlantic.
 - Clerk is on **test keys** in production (`pk_test_…` / `sk_test_…`). Works fine, has a "Development mode" badge and a 500-user cap. Real Production keys + real Google OAuth credentials are a future task.
 - Preview env doesn't have Clerk keys — only Production and Development do.
 

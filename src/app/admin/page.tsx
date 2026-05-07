@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users, teams } from "@/db/schema";
@@ -33,24 +34,27 @@ export default async function AdminPage() {
         <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
           <span className="text-yellow">COPA / ADMIN</span>
           <div className="flex flex-wrap items-center gap-4">
-            <a href="/admin/rounds" className="text-cyan">
+            <Link href="/admin/rounds" className="text-cyan">
               RONDER
-            </a>
-            <a href="/admin/bets" className="text-cyan">
+            </Link>
+            <Link href="/admin/bets" className="text-cyan">
               BET
-            </a>
-            <a href="/admin/side-bets" className="text-cyan">
+            </Link>
+            <Link href="/admin/side-bets" className="text-cyan">
               SIDOSPEL
-            </a>
-            <a href="/admin/config" className="text-cyan">
+            </Link>
+            <Link href="/admin/players" className="text-cyan">
+              SPELARE
+            </Link>
+            <Link href="/admin/config" className="text-cyan">
               CONFIG
-            </a>
-            <a href="/admin/data" className="text-cyan">
+            </Link>
+            <Link href="/admin/data" className="text-cyan">
               DATA
-            </a>
-            <a href="/app" className="text-cyan">
+            </Link>
+            <Link href="/app" className="text-cyan">
               ← APP
-            </a>
+            </Link>
           </div>
         </header>
 

@@ -91,10 +91,10 @@ Each default above is what I'll implement unless you push back.
 - [x] Admin `/admin/data` page with "RUN MOCK INGEST" button + counts + summary panel.
 - [x] 13 tests covering insert, idempotency, club/player/round updates, snapshot append-only, orphan detection.
 
-**Phase B — manual-override UI (next)**
-- [ ] `/admin/players` page: searchable/filterable list with current-price column.
-- [ ] Per-player edit drawer/page: write a `manual` snapshot for a chosen round (price + growth + notes). Never deletes the `api` snapshot.
-- [ ] Tests for the manual-override path.
+**Phase B — manual-override UI ✓**
+- [x] `/admin/players`: searchable list with name search + position pills + country pills. Shows base-round price and a `M{n}` badge per player with manual overrides.
+- [x] `/admin/players/[id]`: per-round panels showing API and Manual snapshots side-by-side. Inline form to upsert a manual snapshot (price in M, growth in k, optional notes) or delete an existing manual override.
+- [x] Manual snapshots win over API at scoring time (already enforced by `score-runner` from Epic 7).
 
 **Phase C — real Aftonbladet client + cron**
 - [ ] Implement `aftonbladetSource.fetchAll()` against the real WC 2026 endpoints.
@@ -193,12 +193,12 @@ Each default above is what I'll implement unless you push back.
 
 ### Epic 10 — Polish + production readiness
 
-- [ ] Deploy region: change Vercel project from `iad1` → `arn1` or `fra1`.
+- [x] Deploy region: pinned to `arn1` (Stockholm) via `vercel.json#regions`. DB stays in Frankfurt — same continent.
 - [ ] Switch Clerk from test keys to live keys + real Google OAuth credentials.
 - [ ] Add Clerk keys to Preview env so PR previews work.
 - [ ] Mobile-bottom-nav for `/app` if it gets dense (deferred decision).
 - [ ] Performance pass: query plans, N+1 audits.
-- [ ] CRON cadence finalized for player ingest.
+- [ ] CRON cadence finalized for player ingest (depends on Epic 3 Phase C).
 - [ ] Final pre-launch run-through with a friend on a fresh account.
 
 ---
