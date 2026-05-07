@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import type { Position } from "@/db/schema";
 import {
+  autoPickSquad,
   summarize,
   validateSquad,
   type SquadCandidate,
@@ -162,6 +163,38 @@ export function SquadPicker({
     setView("lista");
   }
 
+  function autoPick() {
+    if (locked) return;
+    setSavedAt(null);
+    setErrors([]);
+    const result = autoPickSquad(
+      players.map((p) => ({
+        id: p.id,
+        position: p.position,
+        clubExternalId: p.clubExternalId,
+        countryCode: p.countryCode,
+        priceSek: p.priceSek,
+      })),
+      formation,
+    );
+    if (!result.ok) {
+      setErrors([result.reason ?? "Auto-val misslyckades."]);
+      return;
+    }
+    setSelected(new Set(result.playerIds));
+    setCaptainId(result.captainPlayerId);
+    setPickedSlotPosition(null);
+    setView("plan");
+  }
+
+  function clearSquad() {
+    if (locked) return;
+    setSavedAt(null);
+    setErrors([]);
+    setSelected(new Set());
+    setCaptainId(null);
+  }
+
   function setCaptain(id: string) {
     if (locked) return;
     setSavedAt(null);
@@ -257,8 +290,29 @@ export function SquadPicker({
         )}
       </section>
 
+      {/* Auto-pick / clear */}
+      {!locked && (
+        <div className="mt-4 flex flex-wrap gap-2 border border-border p-2">
+          <button
+            type="button"
+            onClick={autoPick}
+            className="border border-cyan px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-cyan transition hover:bg-cyan hover:text-black"
+          >
+            [ AUTO-VÄLJ TRUPP ]
+          </button>
+          <button
+            type="button"
+            onClick={clearSquad}
+            disabled={selected.size === 0}
+            className="border border-border px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-dim transition hover:border-red hover:text-red disabled:opacity-40"
+          >
+            [ × RENSA ]
+          </button>
+        </div>
+      )}
+
       {/* View tabs */}
-      <div className="mt-4 grid grid-cols-2 border border-border">
+      <div className="mt-2 grid grid-cols-2 border border-border">
         <button
           type="button"
           onClick={() => {
