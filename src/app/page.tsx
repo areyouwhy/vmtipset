@@ -98,6 +98,9 @@ export default async function Home() {
           <Link href="/leaderboard" className="text-cyan">
             [ TABELL ]
           </Link>
+          <Link href="/side-bets" className="text-cyan">
+            [ SIDOSPEL ]
+          </Link>
           <Link href="/how" className="text-cyan">
             [ HUR FUNKAR DET? ]
           </Link>

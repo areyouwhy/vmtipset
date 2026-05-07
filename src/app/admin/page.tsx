@@ -39,6 +39,9 @@ export default async function AdminPage() {
             <a href="/admin/bets" className="text-cyan">
               BET
             </a>
+            <a href="/admin/side-bets" className="text-cyan">
+              SIDOSPEL
+            </a>
             <a href="/admin/config" className="text-cyan">
               CONFIG
             </a>

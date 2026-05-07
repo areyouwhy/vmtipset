@@ -110,6 +110,48 @@ export default async function LeaderboardPage() {
           </ul>
         )}
 
+        <section className="mt-10">
+          <h2 className="text-xs uppercase tracking-widest text-yellow">
+            DAGENS BET — POOL
+          </h2>
+          <p className="mt-1 text-xs text-dim">
+            Egen pott (20% av totalpotten enligt standardkonfig). Endast lag
+            som vunnit poäng visas.
+          </p>
+          {lb.dailyBets.length === 0 ? (
+            <p className="mt-3 border border-border p-3 text-sm text-dim">
+              Inga poängsatta bet ännu.
+            </p>
+          ) : (
+            <ul className="mt-3 divide-y divide-border border border-border">
+              {lb.dailyBets.map((row) => (
+                <li
+                  key={row.teamId}
+                  className="grid grid-cols-[3rem_1fr_auto] items-baseline gap-3 p-3 text-sm"
+                >
+                  <span className="tabular-nums text-yellow">
+                    {String(row.rank).padStart(2, "0")}
+                  </span>
+                  <span className="min-w-0">
+                    <Link
+                      href={`/team/${row.teamId}`}
+                      className="block truncate text-foreground hover:text-cyan"
+                    >
+                      {row.teamName}
+                    </Link>
+                    <span className="text-[10px] uppercase tracking-widest text-dim">
+                      {row.ownerHandle}
+                    </span>
+                  </span>
+                  <span className="tabular-nums text-yellow">
+                    {row.pointsTotal}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         <p className="mt-8 text-center text-[10px] uppercase tracking-widest text-dim">
           ──── EOF ────
         </p>

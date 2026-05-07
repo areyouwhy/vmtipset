@@ -13,6 +13,7 @@ import {
   type Round,
   type TeamRoundScore,
 } from "@/db/schema";
+import { getBetTotalsByTeam } from "./bets-data";
 
 export type LeaderboardPerRound = {
   roundId: string;
@@ -30,11 +31,22 @@ export type LeaderboardRow = {
   ownerHandle: string;
   totalPointsSek: number;
   perRound: LeaderboardPerRound[];
+  /** Sum of awarded points across all scored daily bets — separate pool. */
+  dailyBetsPoints: number;
+};
+
+export type DailyBetsRow = {
+  rank: number;
+  teamId: string;
+  teamName: string;
+  ownerHandle: string;
+  pointsTotal: number;
 };
 
 export type Leaderboard = {
   rounds: { id: string; number: number; name: string; isScored: boolean }[];
   rows: LeaderboardRow[];
+  dailyBets: DailyBetsRow[];
   latestScoredRoundId: string | null;
 };
 
@@ -44,12 +56,14 @@ export type Leaderboard = {
  * lower numeric rank (`1, 2, 2, 4`).
  */
 export async function getLeaderboard(): Promise<Leaderboard> {
-  const [allRounds, allScores, allTeams, allUsers] = await Promise.all([
-    db.select().from(rounds).orderBy(asc(rounds.number)),
-    db.select().from(teamRoundScores),
-    db.select().from(teams),
-    db.select().from(users),
-  ]);
+  const [allRounds, allScores, allTeams, allUsers, dailyBetsByTeam] =
+    await Promise.all([
+      db.select().from(rounds).orderBy(asc(rounds.number)),
+      db.select().from(teamRoundScores),
+      db.select().from(teams),
+      db.select().from(users),
+      getBetTotalsByTeam(),
+    ]);
 
   const userById = new Map(allUsers.map((u) => [u.id, u]));
   const teamById = new Map(allTeams.map((t) => [t.id, t]));
@@ -133,10 +147,37 @@ export async function getLeaderboard(): Promise<Leaderboard> {
       ownerHandle: handle,
       totalPointsSek: total,
       perRound,
+      dailyBetsPoints: dailyBetsByTeam.get(t.id) ?? 0,
     };
   });
 
   rows.sort((a, b) => a.rank - b.rank || b.totalPointsSek - a.totalPointsSek);
+
+  // Separate daily-bets ranking — only tied to the bets pool.
+  const dailyBets: DailyBetsRow[] = allTeams
+    .map((t) => {
+      const owner = userById.get(t.ownerUserId);
+      const handle = owner?.displayName || owner?.email.split("@")[0] || "okänd";
+      return {
+        rank: 0,
+        teamId: t.id,
+        teamName: t.name,
+        ownerHandle: handle,
+        pointsTotal: dailyBetsByTeam.get(t.id) ?? 0,
+      };
+    })
+    .filter((r) => r.pointsTotal > 0)
+    .sort((a, b) => b.pointsTotal - a.pointsTotal);
+  // Assign tied ranks
+  let lastPts: number | null = null;
+  let lastRank = 0;
+  for (let i = 0; i < dailyBets.length; i++) {
+    if (dailyBets[i].pointsTotal !== lastPts) {
+      lastRank = i + 1;
+      lastPts = dailyBets[i].pointsTotal;
+    }
+    dailyBets[i].rank = lastRank;
+  }
 
   return {
     rounds: allRounds.map((r) => ({
@@ -146,6 +187,7 @@ export async function getLeaderboard(): Promise<Leaderboard> {
       isScored: r.status === "scored",
     })),
     rows,
+    dailyBets,
     latestScoredRoundId: latestScored?.id ?? null,
   };
 }

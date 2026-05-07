@@ -145,10 +145,10 @@ Each default above is what I'll implement unless you push back.
 - [x] Picker save banner shows `N BYTEN · K FRITT · AVGIFT Y kr` when transfers were recorded.
 - [x] 7 transfer-math tests (82 total).
 
-**Phase D — deadline lock (deferred)**
-- [ ] Server enforcement: refuse save if `now > round.deadline`.
-- [ ] Auto-flip `squads.lockedAt` when deadline passes.
-- [ ] UI countdown.
+**Phase D — deadline lock ✓ (partial)**
+- [x] Server enforcement: `saveSquadAction` refuses save if `now > round.deadline`.
+- [x] UI countdown banner on `/app/squad`: yellow if <1 day left, red if past, cyan otherwise.
+- **Deferred:** auto-flip `squads.lockedAt` when deadline passes (currently `lockedAt` is set during round scoring; for stricter audit we'd want a cron or on-load check that locks at the deadline moment, not at scoring time).
 
 ### Epic 6 — Daily/round bets (mode B) ✓
 
@@ -184,11 +184,12 @@ Each default above is what I'll implement unless you push back.
 - **Deferred:** daily-bets leaderboard column. Lands with Epic 6.
 - [ ] Tests: leaderboard ordering with ties; rank-change-arrow logic.
 
-### Epic 9 — Side bets (mode C, no money)
+### Epic 9 — Side bets (mode C, no money) ✓
 
-- [ ] Schema: `side_bets` (similar shape to `bets` but no money + no enforced scoring).
-- [ ] Admin posts; users see; results displayed manually.
-- [ ] No scoring engine here. Pure display.
+- [x] Schema: `side_bets` (id, question, resolution text, resolvedAt). No answer table, no scoring.
+- [x] `/admin/side-bets`: create form + list with inline resolution textarea + delete.
+- [x] `/side-bets` (public): two sections — Öppna (no resolution) and Avgjorda (with resolution shown as quoted text).
+- [x] Linked from landing footer.
 
 ### Epic 10 — Polish + production readiness
 

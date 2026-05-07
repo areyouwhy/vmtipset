@@ -244,6 +244,23 @@ export const bets = pgTable("bets", {
 });
 
 /**
+ * Side bets (mode C) — display-only, no scoring, no money. Admin posts a
+ * question and later fills in the resolution as plain text. Pure social.
+ */
+export const sideBets = pgTable("side_bets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  question: text("question").notNull(),
+  resolution: text("resolution"),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
  * One answer per (bet, team). `pointsAwarded` is filled by the scoring step
  * once admin sets the correct answer; until then it's 0.
  */
@@ -369,6 +386,8 @@ export type Bet = typeof bets.$inferSelect;
 export type NewBet = typeof bets.$inferInsert;
 export type BetAnswer = typeof betAnswers.$inferSelect;
 export type NewBetAnswer = typeof betAnswers.$inferInsert;
+export type SideBet = typeof sideBets.$inferSelect;
+export type NewSideBet = typeof sideBets.$inferInsert;
 export type BetAnswerType = (typeof betAnswerType.enumValues)[number];
 export type BetStatus = (typeof betStatus.enumValues)[number];
 

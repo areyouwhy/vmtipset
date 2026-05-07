@@ -43,6 +43,13 @@
       "when": 1778189704591,
       "tag": "0005_wide_jetstream",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778191138019,
+      "tag": "0006_pale_whirlwind",
+      "breakpoints": true
     }
   ]
 }
