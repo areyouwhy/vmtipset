@@ -32,9 +32,12 @@ export default async function AdminPage() {
       <div className="mx-auto w-full max-w-3xl">
         <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
           <span className="text-yellow">COPA / ADMIN</span>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <a href="/admin/rounds" className="text-cyan">
               RONDER
+            </a>
+            <a href="/admin/bets" className="text-cyan">
+              BET
             </a>
             <a href="/admin/config" className="text-cyan">
               CONFIG

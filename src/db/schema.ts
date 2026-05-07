@@ -65,6 +65,17 @@ export const prizePoolKey = pgEnum("prize_pool_key", [
   "daily_bets",
 ]);
 
+export const betAnswerType = pgEnum("bet_answer_type", [
+  "player_ref",
+  "numeric",
+]);
+
+export const betStatus = pgEnum("bet_status", [
+  "open",
+  "closed",
+  "scored",
+]);
+
 export const clubs = pgTable("clubs", {
   id: uuid("id").primaryKey().defaultRandom(),
   externalId: text("external_id").unique(),
@@ -201,6 +212,66 @@ export const transfers = pgTable("transfers", {
     .defaultNow(),
 });
 
+// ─── Daily / round bets (game mode B) ────────────────────────────────────────
+
+/**
+ * A single bet posted by admin. Answer type determines whether the truth and
+ * each user's answer are a player ref (uuid) or a plain integer.
+ *
+ * `roundId` is optional grouping — convenient for "MD1 bets" but not required.
+ */
+export const bets = pgTable("bets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  roundId: uuid("round_id").references(() => rounds.id, {
+    onDelete: "set null",
+  }),
+  question: text("question").notNull(),
+  answerType: betAnswerType("answer_type").notNull(),
+  deadline: timestamp("deadline", { withTimezone: true }),
+  correctAnswerPlayerId: uuid("correct_answer_player_id").references(
+    () => players.id,
+    { onDelete: "set null" },
+  ),
+  correctAnswerNumeric: integer("correct_answer_numeric"),
+  pointsValue: integer("points_value").notNull().default(100),
+  status: betStatus("status").notNull().default("open"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * One answer per (bet, team). `pointsAwarded` is filled by the scoring step
+ * once admin sets the correct answer; until then it's 0.
+ */
+export const betAnswers = pgTable(
+  "bet_answers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    betId: uuid("bet_id")
+      .notNull()
+      .references(() => bets.id, { onDelete: "cascade" }),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    answerPlayerId: uuid("answer_player_id").references(() => players.id, {
+      onDelete: "set null",
+    }),
+    answerNumeric: integer("answer_numeric"),
+    pointsAwarded: integer("points_awarded").notNull().default(0),
+    submittedAt: timestamp("submitted_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [unique("bet_answer_unique").on(t.betId, t.teamId)],
+);
+
 /**
  * Computed score per (team, round). Re-running scoring for a round is allowed
  * and produces identical output for the same inputs — we wipe + reinsert.
@@ -294,6 +365,12 @@ export type Transfer = typeof transfers.$inferSelect;
 export type NewTransfer = typeof transfers.$inferInsert;
 export type TeamRoundScore = typeof teamRoundScores.$inferSelect;
 export type NewTeamRoundScore = typeof teamRoundScores.$inferInsert;
+export type Bet = typeof bets.$inferSelect;
+export type NewBet = typeof bets.$inferInsert;
+export type BetAnswer = typeof betAnswers.$inferSelect;
+export type NewBetAnswer = typeof betAnswers.$inferInsert;
+export type BetAnswerType = (typeof betAnswerType.enumValues)[number];
+export type BetStatus = (typeof betStatus.enumValues)[number];
 
 export type Position = (typeof playerPosition.enumValues)[number];
 export type RoundStatus = (typeof roundStatus.enumValues)[number];

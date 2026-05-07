@@ -36,6 +36,13 @@
       "when": 1778186652991,
       "tag": "0004_colorful_garia",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778189704591,
+      "tag": "0005_wide_jetstream",
+      "breakpoints": true
     }
   ]
 }

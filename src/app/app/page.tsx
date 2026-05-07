@@ -6,7 +6,9 @@ import { db } from "@/db";
 import { teams } from "@/db/schema";
 import { getOrCreateDbUser, isAdmin } from "@/lib/auth";
 import { getLeaderboard } from "@/lib/leaderboard";
+import { getOpenBetsForUser } from "@/lib/bets-data";
 import { getActiveRound, getCurrentSquad } from "@/lib/squad-data";
+import { BetsSection } from "./bets-section";
 import { CreateTeamForm } from "./create-team-form";
 import { PendingPanel } from "./pending-panel";
 
@@ -40,6 +42,12 @@ export default async function AppPage() {
         me.perRound.find((p) => p.roundId === lastScored.id)?.pointsSek ?? null;
       myStanding = { rank: me.rank, total: me.totalPointsSek, lastRoundPoints: lastPoints };
     }
+  }
+
+  // Open bets for this team (if approved)
+  let openBets: Awaited<ReturnType<typeof getOpenBetsForUser>> | null = null;
+  if (team && user.status === "approved") {
+    openBets = await getOpenBetsForUser(team.id);
   }
 
   return (
@@ -88,6 +96,14 @@ export default async function AppPage() {
                 activeRoundName={activeRound?.name ?? null}
                 locked={squad?.lockedAt != null}
               />
+              {openBets && (
+                <BetsSection
+                  bets={openBets.bets}
+                  myAnswers={Array.from(openBets.myAnswersByBet.entries()).map(
+                    ([betId, answer]) => ({ betId, answer }),
+                  )}
+                />
+              )}
             </>
           )}
           {user.status === "rejected" && <RejectedPanel />}

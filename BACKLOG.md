@@ -150,14 +150,17 @@ Each default above is what I'll implement unless you push back.
 - [ ] Auto-flip `squads.lockedAt` when deadline passes.
 - [ ] UI countdown.
 
-### Epic 6 — Daily/round bets (mode B)
+### Epic 6 — Daily/round bets (mode B) ✓
 
-- [ ] Schema: `bets` (id, round_id, question_text, answer_type: `player_ref` | `numeric`, deadline, correct_answer_player_id?, correct_answer_numeric?, points_value, status: `open` | `closed` | `scored`), `bet_answers` (bet_id, user_id, answer_player_id?, answer_numeric?, submitted_at).
-- [ ] Admin UI: create bet (question + type + deadline + points). Reveal correct answer when ready.
-- [ ] User UI: see open bets on `/app`; submit/edit answer until deadline.
-- [ ] Scoring: when admin sets correct answer, mark bet `scored`, award points to matching answers.
-- [ ] Numeric scoring: exact match only for v1.
-- [ ] Tests: scoring under correct/wrong/null answers; double-submit prevention; deadline enforcement.
+- [x] Schema: `bets` (round_id optional, question, answer_type, deadline, correct_answer_player_id, correct_answer_numeric, points_value, status), `bet_answers` (bet_id, team_id unique, answer_player_id, answer_numeric, points_awarded, timestamps).
+- [x] Pure `scoreBet` in `src/lib/bets.ts` — exact-match for both types. 7 tests covering correct/wrong/null answers + cross-type guards + determinism.
+- [x] `/admin/bets` page: create form (question + type + points + optional deadline + optional round) and bet list with inline answer table. Action buttons gated by status: STÄNG / ÅTERÖPPNA / SÄTT RÄTT SVAR & POÄNGSÄTT / ÅTERSTÄLL / × TA BORT.
+- [x] `PlayerPicker` component (country dropdown + player dropdown) reused for both admin "set correct answer" and user "submit answer" flows.
+- [x] `/app` shows a `DAGENS BET` section listing open bets with inline submit forms; existing answers prefill so users can update before deadline.
+- [x] `submitBetAnswerAction` enforces approved + open + not-past-deadline; upserts answer per `(bet, team)`.
+- [x] `setCorrectAnswerAndScoreAction` re-scores all answers via the pure fn and persists `pointsAwarded`.
+- [x] Total tests: **89** across 9 files.
+- **Deferred:** daily-bets leaderboard column on `/leaderboard` — schema + math is ready (`getBetTotalsByTeam`), needs a UI pass when we want to show it.
 
 ### Epic 7 — Round lifecycle + scoring (mode A) ✓
 
