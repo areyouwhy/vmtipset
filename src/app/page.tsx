@@ -93,6 +93,12 @@ export default async function Home() {
           </p>
           <p>──────────────────────────────────</p>
         </section>
+
+        <p className="mt-6 text-center text-xs">
+          <Link href="/how" className="text-cyan">
+            [ HUR FUNKAR DET? ]
+          </Link>
+        </p>
       </div>
     </main>
   );

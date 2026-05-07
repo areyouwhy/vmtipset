@@ -64,20 +64,21 @@ Each default above is what I'll implement unless you push back.
 
 ## Epics
 
-### Epic 1 — Test infra + migrations *(blocking, do first)*
+### Epic 1 — Test infra + migrations *(blocking, do first)* ✓
 
-- [ ] Add Vitest + `@testing-library/react` + `vitest-config-next` (or whatever the current convention is). One smoke test passes.
-- [ ] Add Playwright with one E2E (loads `/`).
-- [ ] GitHub Actions: run `lint`, `tsc --noEmit`, `vitest run`, `playwright test` on every push to `main` and on PRs. Block merge on red.
-- [ ] Switch Drizzle to migration files. Generate baseline migration from current schema. Update `db:push` script → `db:migrate`. Document in CLAUDE.md.
-- [ ] First test for `buildSwishPayload` (regression baseline).
+- [x] Vitest + `@testing-library/react` + jsdom installed. Smoke test for `buildSwishPayload`.
+- [x] Playwright config + landing-page smoke test (E2E runs locally).
+- [x] GitHub Actions: lint + typecheck + Vitest on every push to `main` and on PRs.
+- [x] Drizzle migration files: baseline `0000_absent_terrax.sql` checked in. `db:generate` and `db:migrate` scripts. (Open: prod DB needs `__drizzle_migrations` baseline seed before first prod migration — handled inline in Epic 3.)
+- [x] `buildSwishPayload` regression tests.
 
-### Epic 2 — Aftonbladet ruleset documentation
+### Epic 2 — Aftonbladet ruleset documentation ✓
 
-- [ ] Read & summarize Aftonbladet Manager 2026 ruleset (squad size, formation rules, budget, transfers, captain, scoring).
-- [ ] Create `RULES.md`: every rule, with status `IMPLEMENTED` / `SKIPPED` / `DEVIATED`.
-- [ ] Where it differs from prior Aftonbladet seasons (e.g. ruleset 193), call it out.
-- [ ] First-pass `/how` page renders these rules from a typed config (not from RULES.md text — config is source of truth).
+- [~] Read & summarize Aftonbladet Manager 2026 ruleset — **WC ruleset not yet published**. Inheriting PL ruleset 193 as placeholder; values flagged `IMPLEMENTED-UNVERIFIED`.
+- [x] `RULES.md` with status per rule + deviation log + skip-with-reason list.
+- [x] PL inheritance and unverified values clearly called out.
+- [x] `/how` page renders directly from `src/lib/rules.ts` (typed config = source of truth, not the markdown).
+- [x] Sanity tests for `currentRules` (formations, position bounds, multipliers).
 
 ### Epic 3 — Player data foundation
 
