@@ -54,6 +54,11 @@ export function SquadPicker({
   const [pending, startTransition] = useTransition();
   const [errors, setErrors] = useState<string[]>([]);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [savedTransfers, setSavedTransfers] = useState<{
+    count: number;
+    totalFeeSek: number;
+    freeUsed: number;
+  } | null>(null);
 
   const playersById = useMemo(
     () => new Map(players.map((p) => [p.id, p])),
@@ -207,10 +212,12 @@ export function SquadPicker({
   function save() {
     setErrors([]);
     setSavedAt(null);
+    setSavedTransfers(null);
     startTransition(async () => {
       const result = await saveSquadAction(Array.from(selected), captainId);
       if (result.ok) {
         setSavedAt(Date.now());
+        if (result.transfers) setSavedTransfers(result.transfers);
       } else {
         setErrors(result.errors);
       }
@@ -437,9 +444,18 @@ export function SquadPicker({
         </ul>
       )}
       {savedAt && (
-        <p className="mt-4 border border-green bg-green/10 px-3 py-2 text-sm text-green">
-          ✓ TRUPPEN SPARAD
-        </p>
+        <div className="mt-4 border border-green bg-green/10 px-3 py-2 text-sm text-green">
+          <p>✓ TRUPPEN SPARAD</p>
+          {savedTransfers && savedTransfers.count > 0 && (
+            <p className="mt-1 text-[11px] text-foreground">
+              {savedTransfers.count} BYTEN ·{" "}
+              {savedTransfers.freeUsed > 0
+                ? `${savedTransfers.freeUsed} FRITT, `
+                : ""}
+              AVGIFT {(savedTransfers.totalFeeSek / 1_000).toFixed(0)}k SEK
+            </p>
+          )}
+        </div>
       )}
 
       {/* Sticky save bar at viewport bottom */}

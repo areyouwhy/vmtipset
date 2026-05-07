@@ -1,4 +1,4 @@
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
   playerRoundSnapshots,
@@ -172,6 +172,11 @@ export async function scoreRound(roundId: string): Promise<ScoringSummary> {
     .set({ status: "scored" })
     .where(eq(rounds.id, roundId));
 
+  // Auto-inherit squads to the next round so users don't have to rebuild
+  // from scratch each round. Only copies if no squad exists yet for the
+  // next round (idempotent).
+  await inheritSquadsForNextRound(round.number, squadRows, playersBySquad);
+
   return {
     roundId,
     roundName: round.name,
@@ -179,6 +184,41 @@ export async function scoreRound(roundId: string): Promise<ScoringSummary> {
     results: results.sort((a, b) => b.totalPointsSek - a.totalPointsSek),
     warnings,
   };
+}
+
+async function inheritSquadsForNextRound(
+  currentNumber: number,
+  scoredSquads: { id: string; teamId: string; captainPlayerId: string | null }[],
+  playersBySquad: Map<string, string[]>,
+): Promise<void> {
+  const allRounds = await db.select().from(rounds).orderBy(asc(rounds.number));
+  const next = allRounds.find((r) => r.number === currentNumber + 1);
+  if (!next) return;
+
+  for (const sq of scoredSquads) {
+    const [exists] = await db
+      .select()
+      .from(squads)
+      .where(and(eq(squads.teamId, sq.teamId), eq(squads.roundId, next.id)))
+      .limit(1);
+    if (exists) continue;
+
+    const [created] = await db
+      .insert(squads)
+      .values({
+        teamId: sq.teamId,
+        roundId: next.id,
+        captainPlayerId: sq.captainPlayerId,
+      })
+      .returning();
+
+    const ids = playersBySquad.get(sq.id) ?? [];
+    if (ids.length > 0) {
+      await db.insert(squadPlayers).values(
+        ids.map((pid) => ({ squadId: created.id, playerId: pid })),
+      );
+    }
+  }
 }
 
 export async function setRoundStatus(

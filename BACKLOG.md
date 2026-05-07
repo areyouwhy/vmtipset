@@ -138,12 +138,14 @@ Each default above is what I'll implement unless you push back.
 - 3 group-stage rounds with deterministic pseudo-random growth (fixed seed → reproducible scenarios).
 - Admin `[ ! RENSA & RE-INGEST ]` button at `/admin/data` for clean iteration.
 
-**Phase C — transfers between rounds (next)**
-- [ ] When admin opens round N+1, inherit squad from round N.
-- [ ] Transfer flow: out + in; fee = `transferFeePct × outgoing.price`; logged in `transfers`.
-- [ ] Honor `freeTransfersPerRound` once it's > 0.
+**Phase C — transfers between rounds ✓**
+- [x] After scoring round N, `scoreRound` auto-inherits squads to round N+1 (if no squad already exists there).
+- [x] `saveSquadAction` diffs new squad vs. previous round's squad and writes paired transfer rows.
+- [x] Pure `computeTransfers` helper: pair out↔in by iteration order, fee = floor(sellPrice × transferFeePct), respects `freeTransfersPerRound` (currently 0 from rules).
+- [x] Picker save banner shows `N BYTEN · K FRITT · AVGIFT Y kr` when transfers were recorded.
+- [x] 7 transfer-math tests (82 total).
 
-**Phase D — deadline lock**
+**Phase D — deadline lock (deferred)**
 - [ ] Server enforcement: refuse save if `now > round.deadline`.
 - [ ] Auto-flip `squads.lockedAt` when deadline passes.
 - [ ] UI countdown.
