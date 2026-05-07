@@ -168,12 +168,15 @@ Each default above is what I'll implement unless you push back.
 - [x] Total tests: **70** across 6 files.
 - **Deferred:** purchase price tracking on `squad_players` (need this once Phase 5C transfers land — then bank interest reflects what users actually paid, not current snapshot). For now, purchase prices = round-1 snapshot prices.
 
-### Epic 8 — Leaderboards, detail views, audit
+### Epic 8 — Leaderboards, detail views, audit ✓
 
-- [ ] `/leaderboard` for each pool: total points + per-round position arrows.
-- [ ] `/team/[id]`: squad per round, transfers, score breakdown, bet answers + bet score breakdown.
-- [ ] `/player/[id]`: price + points history line chart.
-- [ ] `/audit` (or `/how/audit`): per round, every input snapshot used for scoring is listed. Anyone can manually recompute.
+- [x] `/leaderboard` (public): rank, ↑/↓ arrows vs previous scored round, per-team totals, per-round chip strip.
+- [x] `/team/[id]` (public): squad per round (sorted GK→FWD, captain first), score breakdown, growth per player.
+- [x] `/how/audit` (public): per-round audit with snapshot ids, prices, growth, captain markers — enough to hand-recompute any score.
+- [x] `/app` shows the user's own rank + total + last round points; links to /leaderboard and /team/[id].
+- [x] Landing page links to /leaderboard.
+- **Deferred:** `/player/[id]` price/points history chart. Not blocking; can ship later.
+- **Deferred:** daily-bets leaderboard column. Lands with Epic 6.
 - [ ] Tests: leaderboard ordering with ties; rank-change-arrow logic.
 
 ### Epic 9 — Side bets (mode C, no money)

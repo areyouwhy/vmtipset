@@ -94,7 +94,10 @@ export default async function Home() {
           <p>──────────────────────────────────</p>
         </section>
 
-        <p className="mt-6 text-center text-xs">
+        <p className="mt-6 flex flex-wrap justify-center gap-4 text-center text-xs">
+          <Link href="/leaderboard" className="text-cyan">
+            [ TABELL ]
+          </Link>
           <Link href="/how" className="text-cyan">
             [ HUR FUNKAR DET? ]
           </Link>
