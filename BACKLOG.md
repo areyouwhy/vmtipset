@@ -82,12 +82,25 @@ Each default above is what I'll implement unless you push back.
 
 ### Epic 3 — Player data foundation
 
-- [ ] Schema: `clubs` (id, name, country code), `players` (id, name, club_id, position, current_price, current_points), `player_round_snapshots` (player_id, round_id, price, points, growth) — snapshots are immutable.
-- [ ] Aftonbladet API client (typed, mockable).
-- [ ] Ingest job: callable manually + via Vercel cron. Idempotent.
-- [ ] Admin UI: list players, manually edit price/points/growth (writes a snapshot, never overwrites past).
-- [ ] Bootstrap seed: PL data so we can develop + test before WC players are available.
-- [ ] Tests: ingest from mocked API → expected DB rows; ingest twice → no duplicates; manual override produces an admin-tagged snapshot.
+**Phase A — schema, types, ingest pipeline, mock source ✓**
+- [x] Schema: `clubs`, `players`, `rounds`, `player_round_snapshots`. Snapshots immutable, unique on `(player, round, source)`.
+- [x] `DataSource` interface + `mockSource` (3 PL clubs, 12 players, 2 rounds) for tests + dev.
+- [x] `aftonbladetSource` stub — typed shape ready, real fetch deferred to Phase C.
+- [x] Pure `planIngest()` with idempotency, change detection, and orphan flagging.
+- [x] `applyPlan()` + `runIngest()` apply layer.
+- [x] Admin `/admin/data` page with "RUN MOCK INGEST" button + counts + summary panel.
+- [x] 13 tests covering insert, idempotency, club/player/round updates, snapshot append-only, orphan detection.
+
+**Phase B — manual-override UI (next)**
+- [ ] `/admin/players` page: searchable/filterable list with current-price column.
+- [ ] Per-player edit drawer/page: write a `manual` snapshot for a chosen round (price + growth + notes). Never deletes the `api` snapshot.
+- [ ] Tests for the manual-override path.
+
+**Phase C — real Aftonbladet client + cron**
+- [ ] Implement `aftonbladetSource.fetchAll()` against the real WC 2026 endpoints.
+- [ ] Vercel cron (daily during tournament) to call `runIngest(aftonbladetSource)`.
+- [ ] Backoff/retry + alerting if the source 5xxs.
+- [ ] Once ingest is live, flip `RULES.md` `meta.lastVerifiedAt` and confirm the 7 `IMPLEMENTED-UNVERIFIED` rules.
 
 ### Epic 4 — Game config + rounds + prize pool
 
