@@ -157,13 +157,16 @@ Each default above is what I'll implement unless you push back.
 - [ ] Numeric scoring: exact match only for v1.
 - [ ] Tests: scoring under correct/wrong/null answers; double-submit prevention; deadline enforcement.
 
-### Epic 7 — Round lifecycle + scoring (mode A)
+### Epic 7 — Round lifecycle + scoring (mode A) ✓
 
-- [ ] Server action `closeRound(roundId)` (admin-only): locks squads, runs scoring, persists `team_round_scores` (with snapshot ids referenced), marks round `scored`.
-- [ ] Scoring fn lives in `src/lib/scoring.ts`. Pure function: inputs in, score out. No DB calls inside it.
-- [ ] Re-runnable: re-running on the same round produces identical scores.
-- [ ] Captain bonus, transfer fee, bank interest (if Aftonbladet uses it) — every component is a separate small function with its own test.
-- [ ] Golden-master tests: 5 hand-calculated scenarios (single-player, mixed, captain-not-played, all-zero growth, transfer fees + interest).
+- [x] Schema: `team_round_scores` (team, round, components, total, `snapshotIdsUsed` audit array, computedAt). Unique per (team, round) so re-runs upsert cleanly.
+- [x] Pure `scoreSquadForRound` in `src/lib/scoring.ts`. No DB calls. Components: sumGrowth, captainBonus (positive-only flag), bankInterest (floor of leftover × rate), transferFees deduction.
+- [x] DB-coupled `scoreRound` in `src/lib/score-runner.ts`: loads squads, snapshots, transfers; calls pure fn per team; wipes + persists; locks squads; flips round status to `scored`. Idempotent.
+- [x] `setRoundStatus`, `reopenRound` helpers.
+- [x] `/admin/rounds` page: per-round status, deadline, squad/score counts, action buttons (ÖPPNA / LÅS / LÅS & POÄNGSÄTT / POÄNGSÄTT / KÖR OM POÄNG / ÅTERSTÄLL). Live result table after scoring.
+- [x] 9 golden-master tests for scoring (zero growth + bank interest, mixed + captain × 2, captain-loss-not-doubled flag, captain-loss-doubled (flag off), transfer fees, over-budget, snapshot audit list, missing-snapshot warning, determinism).
+- [x] Total tests: **70** across 6 files.
+- **Deferred:** purchase price tracking on `squad_players` (need this once Phase 5C transfers land — then bank interest reflects what users actually paid, not current snapshot). For now, purchase prices = round-1 snapshot prices.
 
 ### Epic 8 — Leaderboards, detail views, audit
 

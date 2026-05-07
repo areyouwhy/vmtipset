@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -200,6 +201,35 @@ export const transfers = pgTable("transfers", {
     .defaultNow(),
 });
 
+/**
+ * Computed score per (team, round). Re-running scoring for a round is allowed
+ * and produces identical output for the same inputs — we wipe + reinsert.
+ * `snapshotIdsUsed` is the audit trail: which snapshot rows actually fed into
+ * the score, so anyone can recompute by hand.
+ */
+export const teamRoundScores = pgTable(
+  "team_round_scores",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    roundId: uuid("round_id")
+      .notNull()
+      .references(() => rounds.id, { onDelete: "cascade" }),
+    sumGrowthSek: integer("sum_growth_sek").notNull(),
+    captainBonusSek: integer("captain_bonus_sek").notNull(),
+    bankInterestSek: integer("bank_interest_sek").notNull(),
+    transferFeesSek: integer("transfer_fees_sek").notNull(),
+    totalPointsSek: integer("total_points_sek").notNull(),
+    snapshotIdsUsed: jsonb("snapshot_ids_used").notNull().$type<string[]>(),
+    computedAt: timestamp("computed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [unique("team_round_score_unique").on(t.teamId, t.roundId)],
+);
+
 // ─── Prize pools ────────────────────────────────────────────────────────────
 
 /**
@@ -262,6 +292,8 @@ export type SquadPlayer = typeof squadPlayers.$inferSelect;
 export type NewSquadPlayer = typeof squadPlayers.$inferInsert;
 export type Transfer = typeof transfers.$inferSelect;
 export type NewTransfer = typeof transfers.$inferInsert;
+export type TeamRoundScore = typeof teamRoundScores.$inferSelect;
+export type NewTeamRoundScore = typeof teamRoundScores.$inferInsert;
 
 export type Position = (typeof playerPosition.enumValues)[number];
 export type RoundStatus = (typeof roundStatus.enumValues)[number];
