@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #000000;
+  --fg: #ffffff;
+  --dim: #888888;
+  --border: #2a2a2a;
+  --yellow: #ffff00;
+  --cyan: #00ffff;
+  --green: #00ff00;
+  --red: #ff0000;
+  --magenta: #ff00ff;
+  --blue: #0000ff;
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-dim: var(--dim);
+  --color-border: var(--border);
+  --color-yellow: var(--yellow);
+  --color-cyan: var(--cyan);
+  --color-green: var(--green);
+  --color-red: var(--red);
+  --color-magenta: var(--magenta);
+  --color-blue: var(--blue);
+  --font-sans: var(--font-geist-mono);
+  --font-mono: var(--font-geist-mono);
+  --radius-none: 0;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular,
+    Menlo, Monaco, Consolas, monospace;
+  font-feature-settings: "ss01", "ss02";
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  letter-spacing: 0.01em;
+}
+
+/* Scanline overlay — Text TV / CRT vibe */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0) 2px,
+    rgba(0, 0, 0, 0.18) 2px,
+    rgba(0, 0, 0, 0.18) 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+/* Subtle CRT vignette */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 60%,
+    rgba(0, 0, 0, 0.35) 100%
+  );
+}
+
+@layer base {
+  a {
+    color: var(--cyan);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+}
+
+button {
+  font-family: inherit;
+  letter-spacing: 0.04em;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-feature-settings: inherit;
+}
+
+::selection {
+  background: var(--yellow);
+  color: #000;
+}
