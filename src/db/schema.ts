@@ -59,6 +59,11 @@ export const roundStatus = pgEnum("round_status", [
 
 export const snapshotSource = pgEnum("snapshot_source", ["api", "manual"]);
 
+export const prizePoolKey = pgEnum("prize_pool_key", [
+  "main_league",
+  "daily_bets",
+]);
+
 export const clubs = pgTable("clubs", {
   id: uuid("id").primaryKey().defaultRandom(),
   externalId: text("external_id").unique(),
@@ -126,6 +131,44 @@ export const playerRoundSnapshots = pgTable(
   ],
 );
 
+// ─── Prize pools ────────────────────────────────────────────────────────────
+
+/**
+ * Allocation of the total pot across game modes (main league vs daily bets).
+ * Stored in basis points (10000 = 100%) to keep all money math integer-safe.
+ * The sum of allocationBps across active rows must equal 10000.
+ */
+export const prizePools = pgTable("prize_pools", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  key: prizePoolKey("key").notNull().unique(),
+  label: text("label").notNull(),
+  allocationBps: integer("allocation_bps").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * Per-place share of a pool, in basis points. Sum per pool must equal 10000.
+ * Place starts at 1 and increments without gaps.
+ */
+export const prizePlaces = pgTable(
+  "prize_places",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    poolId: uuid("pool_id")
+      .notNull()
+      .references(() => prizePools.id, { onDelete: "cascade" }),
+    place: integer("place").notNull(),
+    shareBps: integer("share_bps").notNull(),
+  },
+  (t) => [unique("pool_place_unique").on(t.poolId, t.place)],
+);
+
 // ─── Inferred types ─────────────────────────────────────────────────────────
 
 export type User = typeof users.$inferSelect;
@@ -140,7 +183,12 @@ export type Round = typeof rounds.$inferSelect;
 export type NewRound = typeof rounds.$inferInsert;
 export type PlayerRoundSnapshot = typeof playerRoundSnapshots.$inferSelect;
 export type NewPlayerRoundSnapshot = typeof playerRoundSnapshots.$inferInsert;
+export type PrizePool = typeof prizePools.$inferSelect;
+export type NewPrizePool = typeof prizePools.$inferInsert;
+export type PrizePlace = typeof prizePlaces.$inferSelect;
+export type NewPrizePlace = typeof prizePlaces.$inferInsert;
 
 export type Position = (typeof playerPosition.enumValues)[number];
 export type RoundStatus = (typeof roundStatus.enumValues)[number];
 export type SnapshotSource = (typeof snapshotSource.enumValues)[number];
+export type PrizePoolKey = (typeof prizePoolKey.enumValues)[number];

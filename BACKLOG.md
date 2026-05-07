@@ -104,11 +104,16 @@ Each default above is what I'll implement unless you push back.
 
 ### Epic 4 — Game config + rounds + prize pool
 
-- [ ] Schema: `league_config` (singleton row, JSON for rules), `rounds` (id, name, deadline, status: `open` | `locked` | `scored`), `prize_pools` (e.g. `main_league`, `daily_bets` with allocation %), `prize_places` (per pool, place + %).
-- [ ] Admin UI: edit rules until first squad is picked; edit pool allocation until first scoring run; edit place % until first scoring run.
-- [ ] Pot calc: pot = 300 × (count of `users` with `status='approved'`). Recomputes on every approve/reject.
-- [ ] `/how` page reads from these tables.
-- [ ] Tests: pool % must sum to 100; place % per pool must sum to 100; pot allocation math; reject edits past freeze point.
+- [x] Schema: `prize_pools` (key, label, allocationBps, active) + `prize_places` (poolId, place, shareBps). Basis points everywhere — integer-safe money math.
+- [x] Default seed: 80% main league / 20% daily bets, with 50/30/20 and 60/40 place splits.
+- [x] `/admin/config` UI: pot preview, pool allocation form, dynamic places editor (add/remove places per pool).
+- [x] Pot math (`src/lib/prizes.ts`): pure, golden-master tested with rounding scenarios; remainder is surfaced, not silently absorbed.
+- [x] `getPotPayout()`: pot = stake × approved count, then split into pools and places.
+- [x] `/how` reads from DB now and renders the live prize structure.
+- [x] 20 new tests (45 total).
+- **Deferred:** rounds admin UI (set deadline, status, etc.) — stub `rounds` table exists from Epic 3, full admin UI lands when it's actually needed in Epic 5/7.
+- **Deferred:** freeze logic ("can't edit past first scoring run") — placeholder for Epic 7.
+- **Deferred:** rules-config DB editing. Rules stay in `src/lib/rules.ts` for now; only prize structure is editable from admin.
 
 ### Epic 5 — Squad picking + transfers (mode A)
 

@@ -4,6 +4,8 @@ import {
   formationToString,
   type Formation,
 } from "@/lib/rules";
+import { ensureDefaultPrizes, getPotPayout } from "@/lib/prize-config";
+import { bpsToPercent } from "@/lib/prizes";
 
 export const metadata = {
   title: "HOW — Copa del Mundo 2026",
@@ -11,8 +13,14 @@ export const metadata = {
     "How the league works, what the rules are, and how scoring is calculated.",
 };
 
-export default function HowPage() {
+// The pot preview reads the live approved-user count + pool config; never
+// prerender against build-time DB state.
+export const dynamic = "force-dynamic";
+
+export default async function HowPage() {
   const r = currentRules;
+  await ensureDefaultPrizes();
+  const payout = await getPotPayout();
   const lastVerified = r.meta.lastVerifiedAt
     ? new Date(r.meta.lastVerifiedAt).toISOString().slice(0, 10)
     : "ALDRIG VERIFIERAD";
@@ -149,13 +157,56 @@ export default function HowPage() {
 
         <Block title="PENGAR">
           <KV k="INSATS / DELTAGARE" v={`${r.stakePerUserSek} SEK`} />
-          <p className="mt-3 text-xs text-dim">
-            Hela potten = {r.stakePerUserSek} kr × antal godkända lag.
-            Fördelningen mellan ligan (A) och dagens-bet (B) konfigureras av
-            admin innan första rondens scoring körs. Inom varje pott betalas
-            sedan ut enligt en placering-procent-tabell.
-          </p>
-          <p className="mt-2 text-xs text-dim">
+          <KV
+            k="GODKÄNDA LAG"
+            v={<span className="tabular-nums">{payout.approvedCount}</span>}
+          />
+          <KV
+            k="TOTAL POTT NU"
+            v={
+              <span className="tabular-nums text-yellow">
+                {formatSek(payout.totalPotSek)} SEK
+              </span>
+            }
+          />
+
+          <div className="mt-5 space-y-4">
+            {payout.pools.map((pool) => (
+              <div key={pool.key} className="border border-border p-3">
+                <p className="flex items-baseline justify-between text-xs">
+                  <span className="text-yellow">{pool.label}</span>
+                  <span className="tabular-nums text-dim">
+                    <span className="text-foreground">
+                      {bpsToPercent(pool.allocationBps)}
+                    </span>{" "}
+                    · {formatSek(pool.poolAmountSek)} SEK
+                  </span>
+                </p>
+                {pool.places.length > 0 && (
+                  <ul className="mt-2 divide-y divide-dotted divide-border/60 text-xs tabular-nums">
+                    {pool.places.map((place) => (
+                      <li
+                        key={place.place}
+                        className="flex items-baseline justify-between py-1"
+                      >
+                        <span className="text-dim">PLATS {place.place}</span>
+                        <span>
+                          <span className="text-foreground">
+                            {bpsToPercent(place.shareBps)}
+                          </span>
+                          <span className="ml-3 text-yellow">
+                            {formatSek(place.amountSek)} SEK
+                          </span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-4 text-xs text-dim">
             Vid lika poäng delas placeringen och vinstpengarna lika mellan
             inblandade lag.
           </p>
