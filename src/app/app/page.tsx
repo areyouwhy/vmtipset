@@ -119,6 +119,11 @@ export default async function AppPage() {
           )}
           {team && user.status === "approved" && (
             <>
+              <SquadStatusPanel
+                activeRound={activeRound}
+                squadPlayerCount={squad?.playerIds.length ?? 0}
+                locked={squad?.lockedAt != null}
+              />
               {myStanding && (
                 <StandingPanel
                   teamId={team.id}
@@ -127,11 +132,6 @@ export default async function AppPage() {
                   lastRoundPoints={myStanding.lastRoundPoints}
                 />
               )}
-              <ApprovedPanel
-                hasSquad={(squad?.playerIds.length ?? 0) > 0}
-                hasActiveRound={activeRound != null}
-                locked={squad?.lockedAt != null}
-              />
               {openBets && (
                 <BetsSection
                   bets={openBets.bets}
@@ -212,33 +212,125 @@ function fmtSek(n: number): string {
   return `${sign}${abs}`;
 }
 
-function ApprovedPanel({
-  hasSquad,
-  hasActiveRound,
+function SquadStatusPanel({
+  activeRound,
+  squadPlayerCount,
   locked,
 }: {
-  hasSquad: boolean;
-  hasActiveRound: boolean;
+  activeRound: { number: number; name: string; deadline: Date | null } | null;
+  squadPlayerCount: number;
   locked: boolean;
 }) {
-  if (!hasActiveRound) {
+  if (!activeRound) {
     return (
-      <section className="border border-border p-4 text-sm text-dim">
-        Väntar på att admin öppnar en rond.
+      <section className="border border-border p-5">
+        <p className="text-[10px] uppercase tracking-widest text-dim">
+          STATUS
+        </p>
+        <p className="mt-2 text-xl font-bold uppercase tracking-tight text-foreground">
+          INGEN ÖPPEN ROND
+        </p>
+        <p className="mt-2 text-sm text-dim">
+          Admin har inte öppnat någon rond än. Du behöver inte göra något just nu.
+        </p>
       </section>
     );
   }
+
+  const isReady = squadPlayerCount === 11;
+  const tone: "green" | "yellow" | "dim" = locked ? "dim" : isReady ? "green" : "yellow";
+  const borderClass = {
+    green: "border-green",
+    yellow: "border-yellow",
+    dim: "border-border",
+  }[tone];
+  const headerClass = {
+    green: "text-green",
+    yellow: "text-yellow",
+    dim: "text-dim",
+  }[tone];
+
+  const headline = locked
+    ? "TRUPP LÅST"
+    : isReady
+      ? "DU ÄR KLAR"
+      : "INTE KLAR";
+  const subline = locked
+    ? `Truppen är låst för ${activeRound.name}. Inväntar matcher.`
+    : isReady
+      ? `Du har valt ${squadPlayerCount} av 11 spelare för ${activeRound.name}. Du kan fortsätta justera tills deadline.`
+      : squadPlayerCount === 0
+        ? `Du har inte byggt din trupp för ${activeRound.name} än.`
+        : `Du har bara valt ${squadPlayerCount} av 11 spelare för ${activeRound.name}.`;
+
+  const ctaLabel = locked
+    ? "[ VISA TRUPP ]"
+    : isReady
+      ? "[ REDIGERA TRUPP → ]"
+      : "[ BYGG TRUPP → ]";
+
   return (
-    <Link
-      href="/app/squad"
-      className="block w-full border border-yellow bg-yellow px-6 py-3 text-center text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90"
-    >
-      {locked
-        ? "[ VISA TRUPP ]"
-        : hasSquad
-          ? "[ REDIGERA TRUPP → ]"
-          : "[ BYGG TRUPP → ]"}
-    </Link>
+    <section className={`border ${borderClass} p-5`}>
+      <p
+        className={`text-[10px] uppercase tracking-widest ${headerClass}`}
+      >
+        STATUS · ROND #{activeRound.number} {activeRound.name}
+      </p>
+      <p
+        className={`mt-2 text-2xl font-bold uppercase tracking-tight ${headerClass}`}
+      >
+        {headline}
+      </p>
+      <p className="mt-2 text-sm text-dim">{subline}</p>
+
+      {!locked && activeRound.deadline && (
+        <CountdownLine deadline={activeRound.deadline} />
+      )}
+
+      <Link
+        href="/app/squad"
+        className={`mt-5 block w-full border px-6 py-3 text-center text-sm font-bold uppercase tracking-widest transition hover:opacity-90 ${
+          locked
+            ? "border-border text-dim"
+            : isReady
+              ? "border-green bg-green text-black"
+              : "border-yellow bg-yellow text-black"
+        }`}
+      >
+        {ctaLabel}
+      </Link>
+    </section>
+  );
+}
+
+function CountdownLine({ deadline }: { deadline: Date }) {
+  // eslint-disable-next-line react-hooks/purity
+  const ms = new Date(deadline).getTime() - Date.now();
+  if (ms < 0) {
+    return (
+      <p className="mt-3 text-xs uppercase tracking-widest text-red">
+        ! DEADLINE PASSERAD
+      </p>
+    );
+  }
+  const total = Math.floor(ms / 1000);
+  const days = Math.floor(total / 86400);
+  const hours = Math.floor((total % 86400) / 3600);
+  const mins = Math.floor((total % 3600) / 60);
+  const time =
+    days > 0
+      ? `${days}d ${hours}h kvar`
+      : hours > 0
+        ? `${hours}h ${mins}m kvar`
+        : `${mins}m kvar`;
+  return (
+    <p className="mt-3 text-xs uppercase tracking-widest text-dim">
+      DEADLINE{" "}
+      <span className="text-foreground">
+        {new Date(deadline).toISOString().slice(0, 16).replace("T", " ")} UTC
+      </span>{" "}
+      <span className="text-foreground tabular-nums">· {time}</span>
+    </p>
   );
 }
 
