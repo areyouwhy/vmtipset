@@ -27,9 +27,24 @@ export default async function AppPage() {
   const admin = await isAdmin();
   const handle = user.displayName || user.email.split("@")[0];
 
-  const activeRound = team && user.status === "approved" ? await getActiveRound() : null;
+  // Active round is shown for everyone (signed-in) — gives users a clear
+  // signal of what they're picking for, even before they're approved.
+  const activeRound = team ? await getActiveRound() : null;
   const squad =
-    team && activeRound ? await getCurrentSquad(team.id, activeRound.id) : null;
+    team && activeRound && user.status === "approved"
+      ? await getCurrentSquad(team.id, activeRound.id)
+      : null;
+
+  const statusLabel: Record<typeof user.status, string> = {
+    pending: "VÄNTAR PÅ GODKÄNNANDE",
+    approved: "GODKÄND",
+    rejected: "AVVISAD",
+  };
+  const statusColor: Record<typeof user.status, string> = {
+    pending: "text-yellow",
+    approved: "text-green",
+    rejected: "text-red",
+  };
 
   // Pull leaderboard row for this team if any rounds have been scored
   let myStanding: { rank: number; total: number; lastRoundPoints: number | null } | null = null;
@@ -65,13 +80,35 @@ export default async function AppPage() {
           </div>
         </header>
 
-        <section className="py-6">
-          <p className="text-[10px] uppercase tracking-widest text-dim">
-            INLOGGAD SOM
+        <section className="border-b border-border py-4 text-xs uppercase tracking-widest">
+          <p>
+            <span className="text-dim">LOGGAD IN </span>
+            <span className="text-yellow">{handle}</span>
+            {team ? (
+              <>
+                <span className="text-dim"> · </span>
+                <span className="text-foreground">{team.name}</span>
+                <span className="text-dim"> · </span>
+                <span className={statusColor[user.status]}>
+                  {statusLabel[user.status]}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-dim"> · </span>
+                <span className="text-dim">INGET LAG</span>
+              </>
+            )}
           </p>
-          <p className="mt-1 text-lg text-foreground">
-            <span className="text-yellow">{">"} </span>
-            {handle}
+          <p className="mt-2">
+            <span className="text-dim">AKTIV ROND </span>
+            {activeRound ? (
+              <span className="text-yellow">
+                #{activeRound.number} · {activeRound.name}
+              </span>
+            ) : (
+              <span className="text-dim">— ingen öppen —</span>
+            )}
           </p>
         </section>
 
@@ -91,9 +128,8 @@ export default async function AppPage() {
                 />
               )}
               <ApprovedPanel
-                teamName={team.name}
                 hasSquad={(squad?.playerIds.length ?? 0) > 0}
-                activeRoundName={activeRound?.name ?? null}
+                hasActiveRound={activeRound != null}
                 locked={squad?.lockedAt != null}
               />
               {openBets && (
@@ -177,50 +213,32 @@ function fmtSek(n: number): string {
 }
 
 function ApprovedPanel({
-  teamName,
   hasSquad,
-  activeRoundName,
+  hasActiveRound,
   locked,
 }: {
-  teamName: string;
   hasSquad: boolean;
-  activeRoundName: string | null;
+  hasActiveRound: boolean;
   locked: boolean;
 }) {
+  if (!hasActiveRound) {
+    return (
+      <section className="border border-border p-4 text-sm text-dim">
+        Väntar på att admin öppnar en rond.
+      </section>
+    );
+  }
   return (
-    <section className="border border-green p-5">
-      <p className="text-[10px] uppercase tracking-widest text-green">
-        STATUS / GODKÄND
-      </p>
-      <h2 className="mt-2 text-2xl font-bold uppercase tracking-tight text-foreground">
-        DU ÄR MED I LIGAN
-      </h2>
-      <p className="mt-3 text-sm text-dim">
-        <span className="text-yellow">{teamName}</span> är godkänt.
-        {activeRoundName ? (
-          <>
-            {" "}
-            Aktiv rond:{" "}
-            <span className="text-foreground">{activeRoundName}</span>.
-          </>
-        ) : (
-          " Väntar på att admin öppnar en rond."
-        )}
-      </p>
-
-      {activeRoundName && (
-        <Link
-          href="/app/squad"
-          className="mt-5 block w-full border border-yellow bg-yellow px-6 py-3 text-center text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90"
-        >
-          {locked
-            ? "[ VISA TRUPP ]"
-            : hasSquad
-              ? "[ REDIGERA TRUPP → ]"
-              : "[ BYGG TRUPP → ]"}
-        </Link>
-      )}
-    </section>
+    <Link
+      href="/app/squad"
+      className="block w-full border border-yellow bg-yellow px-6 py-3 text-center text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90"
+    >
+      {locked
+        ? "[ VISA TRUPP ]"
+        : hasSquad
+          ? "[ REDIGERA TRUPP → ]"
+          : "[ BYGG TRUPP → ]"}
+    </Link>
   );
 }
 
