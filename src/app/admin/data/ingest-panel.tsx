@@ -2,99 +2,150 @@
 
 import { useState, useTransition } from "react";
 import type { IngestSummary } from "@/lib/ingest-apply";
-import { runMockIngestAction, wipeAndReingestAction } from "./actions";
+import { runIngestAction, wipeAndReingestAction } from "./actions";
 
 export function IngestPanel() {
   const [pending, startTransition] = useTransition();
   const [summary, setSummary] = useState<IngestSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  return (
-    <section className="mt-8 border border-border p-5">
-      <p className="text-[10px] uppercase tracking-widest text-dim">
-        KÖR INGEST
-      </p>
-      <h2 className="mt-2 text-xl font-bold uppercase tracking-tight text-yellow">
-        MOCK-KÄLLA
-      </h2>
-      <p className="mt-2 text-sm text-dim">
-        Mock-datasetet: 8 klubbar, 80 spelare, 2 ronder. Idempotent — andra
-        körningen ska inte ge några nya rader.
-      </p>
+  function run(fn: () => Promise<IngestSummary>) {
+    setError(null);
+    startTransition(async () => {
+      try {
+        setSummary(await fn());
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Okänt fel");
+      }
+    });
+  }
 
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() =>
-            startTransition(async () => {
-              setError(null);
-              try {
-                const result = await runMockIngestAction();
-                setSummary(result);
-              } catch (e) {
-                setError(e instanceof Error ? e.message : "Okänt fel");
-              }
-            })
-          }
-          className="border border-yellow bg-yellow px-6 py-3 text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90 disabled:opacity-40 sm:w-auto"
-        >
-          {pending ? "[ KÖR... ]" : "[ KÖR MOCK INGEST → ]"}
-        </button>
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => {
-            if (
-              !confirm(
-                "RENSA OCH RE-INGEST?\n\nDetta tar bort alla klubbar, spelare, ronder, snapshots, trupper och byten. Bara mock-datat återstår.",
-              )
-            )
-              return;
-            startTransition(async () => {
-              setError(null);
-              try {
-                const result = await wipeAndReingestAction();
-                setSummary(result);
-              } catch (e) {
-                setError(e instanceof Error ? e.message : "Okänt fel");
-              }
-            });
-          }}
-          className="border border-red px-6 py-3 text-sm font-bold uppercase tracking-widest text-red transition hover:bg-red hover:text-black disabled:opacity-40 sm:w-auto"
-        >
-          {pending ? "[ KÖR... ]" : "[ ! RENSA & RE-INGEST ]"}
-        </button>
-      </div>
+  function wipeConfirmed(source: "mock" | "aftonbladet") {
+    const label =
+      source === "aftonbladet"
+        ? "Aftonbladet PL (LIVE)"
+        : "mock-datasetet";
+    if (
+      !confirm(
+        `RENSA OCH INGEST FRÅN ${label.toUpperCase()}?\n\nAlla klubbar, spelare, ronder, snapshots, trupper, byten och poäng raderas innan ny data läses in.`,
+      )
+    )
+      return;
+    run(() => wipeAndReingestAction(source));
+  }
+
+  return (
+    <section className="mt-8 space-y-4">
+      <Block
+        title="MOCK-KÄLLA"
+        body="8 klubbar, 80 spelare, 2 ronder. Idempotent. Bra för test."
+        primaryLabel="[ KÖR MOCK INGEST → ]"
+        primaryTone="yellow"
+        onPrimary={() => run(() => runIngestAction("mock"))}
+        wipeLabel="[ ! RENSA & RE-INGEST MOCK ]"
+        onWipe={() => wipeConfirmed("mock")}
+        pending={pending}
+      />
+
+      <Block
+        title="AFTONBLADET (LIVE)"
+        body="Riktig PL-data via api-manager.aftonbladet.se. ~600 spelare och alla rondsnapshots. Kan ta 30-60 sek."
+        primaryLabel="[ KÖR AFTONBLADET INGEST → ]"
+        primaryTone="cyan"
+        onPrimary={() => run(() => runIngestAction("aftonbladet"))}
+        wipeLabel="[ ! RENSA & RE-INGEST PL ]"
+        onWipe={() => wipeConfirmed("aftonbladet")}
+        pending={pending}
+      />
 
       {error && (
-        <p className="mt-4 border border-red bg-red/10 px-3 py-2 text-sm text-red">
+        <p className="border border-red bg-red/10 px-3 py-2 text-sm text-red">
           ! {error}
         </p>
       )}
 
       {summary && (
-        <dl className="mt-6 space-y-1 text-xs">
-          <Line k="KÄLLA" v={summary.sourceId} />
-          <Line k="KLUBBAR INSERT" v={summary.clubsInserted} />
-          <Line k="KLUBBAR UPDATE" v={summary.clubsUpdated} />
-          <Line k="SPELARE INSERT" v={summary.playersInserted} />
-          <Line k="SPELARE UPDATE" v={summary.playersUpdated} />
-          <Line k="RONDER INSERT" v={summary.roundsInserted} />
-          <Line k="RONDER UPDATE" v={summary.roundsUpdated} />
-          <Line k="SNAPSHOTS INSERT" v={summary.snapshotsInserted} />
-          <Line
-            k="ORFNARS"
-            v={
-              summary.orphanedPlayers.length === 0
-                ? "—"
-                : summary.orphanedPlayers.join(", ")
-            }
-            tone={summary.orphanedPlayers.length > 0 ? "warn" : undefined}
-          />
-        </dl>
+        <section className="border border-border p-5">
+          <p className="text-[10px] uppercase tracking-widest text-dim">
+            SENASTE KÖRNING
+          </p>
+          <dl className="mt-3 space-y-1 text-xs">
+            <Line k="KÄLLA" v={summary.sourceId} />
+            <Line k="KLUBBAR INSERT" v={summary.clubsInserted} />
+            <Line k="KLUBBAR UPDATE" v={summary.clubsUpdated} />
+            <Line k="SPELARE INSERT" v={summary.playersInserted} />
+            <Line k="SPELARE UPDATE" v={summary.playersUpdated} />
+            <Line k="RONDER INSERT" v={summary.roundsInserted} />
+            <Line k="RONDER UPDATE" v={summary.roundsUpdated} />
+            <Line k="SNAPSHOTS INSERT" v={summary.snapshotsInserted} />
+            <Line
+              k="ORFNARS"
+              v={
+                summary.orphanedPlayers.length === 0
+                  ? "—"
+                  : `${summary.orphanedPlayers.length} st`
+              }
+              tone={summary.orphanedPlayers.length > 0 ? "warn" : undefined}
+            />
+          </dl>
+        </section>
       )}
     </section>
+  );
+}
+
+function Block({
+  title,
+  body,
+  primaryLabel,
+  primaryTone,
+  onPrimary,
+  wipeLabel,
+  onWipe,
+  pending,
+}: {
+  title: string;
+  body: string;
+  primaryLabel: string;
+  primaryTone: "yellow" | "cyan";
+  onPrimary: () => void;
+  wipeLabel: string;
+  onWipe: () => void;
+  pending: boolean;
+}) {
+  const primaryClass =
+    primaryTone === "yellow"
+      ? "border-yellow bg-yellow text-black"
+      : "border-cyan bg-cyan text-black";
+  return (
+    <div className="border border-border p-5">
+      <p className="text-[10px] uppercase tracking-widest text-dim">
+        KÄLLA
+      </p>
+      <h2 className="mt-1 text-lg font-bold uppercase tracking-tight text-yellow">
+        {title}
+      </h2>
+      <p className="mt-2 text-sm text-dim">{body}</p>
+
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={onPrimary}
+          className={`${primaryClass} border px-6 py-3 text-sm font-bold uppercase tracking-widest transition hover:opacity-90 disabled:opacity-40 sm:w-auto`}
+        >
+          {pending ? "[ KÖR... ]" : primaryLabel}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={onWipe}
+          className="border border-red px-6 py-3 text-sm font-bold uppercase tracking-widest text-red transition hover:bg-red hover:text-black disabled:opacity-40 sm:w-auto"
+        >
+          {pending ? "[ KÖR... ]" : wipeLabel}
+        </button>
+      </div>
+    </div>
   );
 }
 

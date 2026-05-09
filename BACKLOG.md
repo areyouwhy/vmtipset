@@ -96,11 +96,16 @@ Each default above is what I'll implement unless you push back.
 - [x] `/admin/players/[id]`: per-round panels showing API and Manual snapshots side-by-side. Inline form to upsert a manual snapshot (price in M, growth in k, optional notes) or delete an existing manual override.
 - [x] Manual snapshots win over API at scoring time (already enforced by `score-runner` from Epic 7).
 
-**Phase C — real Aftonbladet client + cron**
-- [ ] Implement `aftonbladetSource.fetchAll()` against the real WC 2026 endpoints.
-- [ ] Vercel cron (daily during tournament) to call `runIngest(aftonbladetSource)`.
-- [ ] Backoff/retry + alerting if the source 5xxs.
-- [ ] Once ingest is live, flip `RULES.md` `meta.lastVerifiedAt` and confirm the 7 `IMPLEMENTED-UNVERIFIED` rules.
+**Phase C — real Aftonbladet client ✓ (PL spring 2026)**
+- [x] `aftonbladetSource.fetchAll()` implemented against `api-manager.aftonbladet.se`.
+  - Fetches `/games/{id}` for rounds + ruleset id.
+  - Fetches `/rulesets/{id}` to derive position-id → enum mapping by slug (`goalkeeper`/`defense`/`midfield`/`striker`).
+  - Filters `active && !eliminated` players.
+  - Round deadline = `close` field (squad-lock time), not `start`.
+- [x] `/admin/data` has two ingest blocks: MOCK and AFTONBLADET (LIVE), each with run + wipe-and-rerun buttons.
+- [x] Configurable via `AFTONBLADET_API_BASE` and `AFTONBLADET_GAME_ID` env vars (default: PL spring 2026, game 731). When WC 2026 game id publishes, swap this env var.
+- **Deferred:** Vercel cron for periodic Aftonbladet refresh. Skipped for now because local manual ingest works fine for testing; the cron is a one-line `vercel.json` addition once we know the right cadence (likely hourly during the tournament).
+- **Deferred:** `RULES.md` re-verification — once we're on actual WC ruleset, flip `meta.lastVerifiedAt` and the 7 `IMPLEMENTED-UNVERIFIED` rows.
 
 ### Epic 4 — Game config + rounds + prize pool
 
