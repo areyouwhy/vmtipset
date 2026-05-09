@@ -158,12 +158,17 @@ export function isValidSquad(c: SquadCandidate): boolean {
 }
 
 /**
- * Greedy auto-pick: cheapest legal squad for a given formation, respecting
- * club + country limits and the budget cap. Captain = highest-priced FWD in
- * the picked squad (or highest-priced overall if no FWD picked, which would
- * already mean the squad is illegal anyway).
+ * Auto-pick: random-shuffled within each position, then walk in shuffled
+ * order picking the first player whose addition still leaves enough budget
+ * for the cheapest legal completion of the squad. Result varies between
+ * calls so the user can hit AUTO-VÄLJ multiple times to explore options.
  *
- * Pure: does not touch state. Returns the player ids and captain id.
+ * - Stays within the 50M budget.
+ * - Respects per-club and per-country caps.
+ * - Captain = a random FWD in the picked squad (falls back to most-
+ *   expensive player overall).
+ *
+ * Pure: does not touch state.
  */
 export type AutoPickResult = {
   ok: boolean;
@@ -175,70 +180,146 @@ export type AutoPickResult = {
 
 export type AutoPickPlayer = SquadCandidatePlayer;
 
+function shuffle<T>(xs: T[]): T[] {
+  const a = [...xs];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export function autoPickSquad(
   pool: AutoPickPlayer[],
   formation: { def: number; mid: number; fwd: number },
 ): AutoPickResult {
   const r = currentRules;
-  const slotsByPos: Record<Position, number> = {
+  const remaining: Record<Position, number> = {
     GK: 1,
     DEF: formation.def,
     MID: formation.mid,
     FWD: formation.fwd,
   };
 
-  // Sort within each position by price ascending — cheapest first.
-  const byPos: Record<Position, AutoPickPlayer[]> = {
-    GK: pool.filter((p) => p.position === "GK").sort((a, b) => a.priceSek - b.priceSek),
-    DEF: pool.filter((p) => p.position === "DEF").sort((a, b) => a.priceSek - b.priceSek),
-    MID: pool.filter((p) => p.position === "MID").sort((a, b) => a.priceSek - b.priceSek),
-    FWD: pool.filter((p) => p.position === "FWD").sort((a, b) => a.priceSek - b.priceSek),
+  // Cheap-first per position — used to estimate the minimum cost of the
+  // unfilled remainder so we don't blow the budget early.
+  const cheapByPos: Record<Position, AutoPickPlayer[]> = {
+    GK: pool
+      .filter((p) => p.position === "GK")
+      .sort((a, b) => a.priceSek - b.priceSek),
+    DEF: pool
+      .filter((p) => p.position === "DEF")
+      .sort((a, b) => a.priceSek - b.priceSek),
+    MID: pool
+      .filter((p) => p.position === "MID")
+      .sort((a, b) => a.priceSek - b.priceSek),
+    FWD: pool
+      .filter((p) => p.position === "FWD")
+      .sort((a, b) => a.priceSek - b.priceSek),
+  };
+  // Shuffled per position — picking order is randomised each call.
+  const shuffledByPos: Record<Position, AutoPickPlayer[]> = {
+    GK: shuffle(cheapByPos.GK),
+    DEF: shuffle(cheapByPos.DEF),
+    MID: shuffle(cheapByPos.MID),
+    FWD: shuffle(cheapByPos.FWD),
   };
 
   const picked: AutoPickPlayer[] = [];
+  const usedIds = new Set<string>();
   const clubCount = new Map<string, number>();
   const countryCount = new Map<string, number>();
   let totalCost = 0;
 
-  for (const pos of ["GK", "DEF", "MID", "FWD"] as const) {
-    const need = slotsByPos[pos];
-    let placed = 0;
-    for (const p of byPos[pos]) {
-      if (placed >= need) break;
-      if (p.clubExternalId) {
-        const c = clubCount.get(p.clubExternalId) ?? 0;
-        if (c >= r.maxFromSameClub) continue;
-      }
-      if (r.maxFromSameCountry !== null && p.countryCode) {
-        const c = countryCount.get(p.countryCode) ?? 0;
-        if (c >= r.maxFromSameCountry) continue;
-      }
-      if (totalCost + p.priceSek > r.budgetSek) continue;
-      picked.push(p);
-      placed++;
-      totalCost += p.priceSek;
-      if (p.clubExternalId) {
-        clubCount.set(p.clubExternalId, (clubCount.get(p.clubExternalId) ?? 0) + 1);
-      }
-      if (p.countryCode) {
-        countryCount.set(p.countryCode, (countryCount.get(p.countryCode) ?? 0) + 1);
-      }
+  function minCostOfUnfilled(): number {
+    let sum = 0;
+    for (const pos of ["GK", "DEF", "MID", "FWD"] as const) {
+      const n = remaining[pos];
+      if (n <= 0) continue;
+      const avail = cheapByPos[pos].filter((p) => !usedIds.has(p.id)).slice(0, n);
+      sum += avail.reduce((a, p) => a + p.priceSek, 0);
     }
-    if (placed < need) {
-      return {
-        ok: false,
-        playerIds: picked.map((p) => p.id),
-        captainPlayerId: null,
-        totalPriceSek: totalCost,
-        reason: `Kunde inte fylla ${pos}: ${placed}/${need} (budget eller klubb/land-tak slut).`,
-      };
+    return sum;
+  }
+
+  function isAllowedByLimits(p: AutoPickPlayer): boolean {
+    if (p.clubExternalId) {
+      const c = clubCount.get(p.clubExternalId) ?? 0;
+      if (c >= r.maxFromSameClub) return false;
+    }
+    if (r.maxFromSameCountry !== null && p.countryCode) {
+      const c = countryCount.get(p.countryCode) ?? 0;
+      if (c >= r.maxFromSameCountry) return false;
+    }
+    return true;
+  }
+
+  for (const pos of ["GK", "DEF", "MID", "FWD"] as const) {
+    while (remaining[pos] > 0) {
+      // Reserve cost of every other still-empty slot so we don't overspend.
+      remaining[pos]--;
+      const reserved = minCostOfUnfilled();
+      remaining[pos]++;
+      const maxThisPick = r.budgetSek - totalCost - reserved;
+
+      // First pass: walk shuffled candidates and take the first that fits all
+      // constraints + this affordability cap.
+      let chosen: AutoPickPlayer | null = null;
+      for (const p of shuffledByPos[pos]) {
+        if (usedIds.has(p.id)) continue;
+        if (p.priceSek > maxThisPick) continue;
+        if (!isAllowedByLimits(p)) continue;
+        chosen = p;
+        break;
+      }
+      // Fallback: if nobody matched (e.g. shuffled order made every option
+      // exceed maxThisPick), take the cheapest remaining at this position
+      // that satisfies club/country/dup rules.
+      if (!chosen) {
+        for (const p of cheapByPos[pos]) {
+          if (usedIds.has(p.id)) continue;
+          if (!isAllowedByLimits(p)) continue;
+          if (totalCost + p.priceSek > r.budgetSek) continue;
+          chosen = p;
+          break;
+        }
+      }
+      if (!chosen) {
+        return {
+          ok: false,
+          playerIds: picked.map((p) => p.id),
+          captainPlayerId: null,
+          totalPriceSek: totalCost,
+          reason: `Kunde inte fylla ${pos} (budget eller klubb/land-tak slut).`,
+        };
+      }
+
+      picked.push(chosen);
+      usedIds.add(chosen.id);
+      remaining[pos]--;
+      totalCost += chosen.priceSek;
+      if (chosen.clubExternalId) {
+        clubCount.set(
+          chosen.clubExternalId,
+          (clubCount.get(chosen.clubExternalId) ?? 0) + 1,
+        );
+      }
+      if (chosen.countryCode) {
+        countryCount.set(
+          chosen.countryCode,
+          (countryCount.get(chosen.countryCode) ?? 0) + 1,
+        );
+      }
     }
   }
 
-  // Captain: priciest FWD if any, else priciest overall.
-  const sorted = [...picked].sort((a, b) => b.priceSek - a.priceSek);
+  // Captain: random FWD in the picked squad (so it varies). Falls back to
+  // the most expensive picked player if no FWD got selected.
+  const fwds = picked.filter((p) => p.position === "FWD");
   const captain =
-    sorted.find((p) => p.position === "FWD")?.id ?? sorted[0]?.id ?? null;
+    fwds.length > 0
+      ? fwds[Math.floor(Math.random() * fwds.length)].id
+      : ([...picked].sort((a, b) => b.priceSek - a.priceSek)[0]?.id ?? null);
 
   return {
     ok: true,
