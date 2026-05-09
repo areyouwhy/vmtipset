@@ -51,12 +51,8 @@ export default async function Home() {
             </Link>
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row">
-              <SignUpButton mode="modal">
-                <button className="flex-1 border border-yellow bg-yellow px-6 py-3 text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90">[ SKAPA KONTO ]</button>
-              </SignUpButton>
-              <SignInButton mode="modal">
-                <button className="flex-1 border border-border px-6 py-3 text-sm font-bold uppercase tracking-widest text-foreground transition hover:border-cyan hover:text-cyan">[ LOGGA IN ]</button>
-              </SignInButton>
+              <SignUpButton mode="modal"><button className="flex-1 border border-yellow bg-yellow px-6 py-3 text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90">[ SKAPA KONTO ]</button></SignUpButton>
+              <SignInButton mode="modal"><button className="flex-1 border border-border px-6 py-3 text-sm font-bold uppercase tracking-widest text-foreground transition hover:border-cyan hover:text-cyan">[ LOGGA IN ]</button></SignInButton>
             </div>
           )}
         </div>

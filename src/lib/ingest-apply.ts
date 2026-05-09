@@ -206,7 +206,14 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
     });
 
     if (rows.length > 0) {
-      await db.insert(playerRoundSnapshots).values(rows);
+      // Batch to stay well under Postgres' ~65k bound-param ceiling.
+      // Each row binds 5 params → 1000 rows = 5000 params per query.
+      const CHUNK = 1000;
+      for (let i = 0; i < rows.length; i += CHUNK) {
+        await db
+          .insert(playerRoundSnapshots)
+          .values(rows.slice(i, i + CHUNK));
+      }
       snapshotsInserted = rows.length;
     }
   }

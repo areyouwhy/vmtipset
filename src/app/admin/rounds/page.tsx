@@ -4,6 +4,7 @@ import { asc, count, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { rounds, squads, teamRoundScores } from "@/db/schema";
 import { isAdmin } from "@/lib/auth";
+import { FastForwardButton } from "./fast-forward";
 import { RoundRow } from "./round-row";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +53,8 @@ export default async function AdminRoundsPage() {
             om så länge data ändras.
           </p>
         </section>
+
+        <FastForwardButton />
 
         <ul className="space-y-4">
           {enriched.length === 0 && (
