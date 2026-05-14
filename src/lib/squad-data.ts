@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
   clubs,
@@ -27,6 +27,13 @@ export type PickablePlayer = {
   totalGrowthSek: number;
   /** Raw count of teams owning this player. */
   popularity: number;
+  /** Percent of Aftonbladet's WC fantasy squads that own this player, in
+   *  this round. Computed from popularity / (Σpopularity / squadSize).
+   *  Already in 0–100 space; render with Math.ceil to avoid "0%" noise. */
+  abPopularityPct: number;
+  /** Percent of *our* (Copa-internal) squads in this round that own this
+   *  player. 0–100 space, same Math.ceil rule for display. */
+  ourPopularityPct: number;
   /** -1 / 0 / +1. */
   trend: number;
   skinColor: string | null;
@@ -55,13 +62,14 @@ export async function getActiveRound(): Promise<Round | null> {
 export async function getPickablePlayers(
   roundId: string,
 ): Promise<PickablePlayer[]> {
-  const [allPlayers, allClubs, allSnapshots] = await Promise.all([
+  const [allPlayers, allClubs, allSnapshots, ourSquads] = await Promise.all([
     db.select().from(players).where(eq(players.active, true)),
     db.select().from(clubs),
     db
       .select()
       .from(playerRoundSnapshots)
       .where(eq(playerRoundSnapshots.roundId, roundId)),
+    db.select().from(squads).where(eq(squads.roundId, roundId)),
   ]);
 
   const clubById = new Map(allClubs.map((c) => [c.id, c]));
@@ -75,11 +83,42 @@ export async function getPickablePlayers(
     }
   }
 
+  // Aftonbladet popularity is a raw count of squads owning this player on
+  // their platform. To turn it into a percentage we infer their total
+  // active-squad count for the round: each squad picks 11 players, so the
+  // sum of popularities across all players in the round equals
+  // (totalSquads × 11). Divide-by-zero pre-tournament → 0%.
+  let abTotalPopularity = 0;
+  for (const s of snapshotByPlayer.values()) abTotalPopularity += s.popularity;
+  const SQUAD_SIZE = 11;
+  const abActiveSquads = abTotalPopularity > 0 ? abTotalPopularity / SQUAD_SIZE : 0;
+
+  // Our own popularity = count of *our* round squads owning the player.
+  const ourSquadIds = ourSquads.map((s) => s.id);
+  const ourCountByPlayer = new Map<string, number>();
+  if (ourSquadIds.length > 0) {
+    const sps = await db
+      .select()
+      .from(squadPlayers)
+      .where(inArray(squadPlayers.squadId, ourSquadIds));
+    for (const sp of sps) {
+      ourCountByPlayer.set(
+        sp.playerId,
+        (ourCountByPlayer.get(sp.playerId) ?? 0) + 1,
+      );
+    }
+  }
+  const ourTotal = ourSquads.length;
+
   return allPlayers
     .flatMap((p) => {
       const snap = snapshotByPlayer.get(p.id);
       if (!snap) return [];
       const club = p.clubId ? clubById.get(p.clubId) : null;
+      const abPct =
+        abActiveSquads > 0 ? (snap.popularity / abActiveSquads) * 100 : 0;
+      const ourCount = ourCountByPlayer.get(p.id) ?? 0;
+      const ourPct = ourTotal > 0 ? (ourCount / ourTotal) * 100 : 0;
       return [
         {
           id: p.id,
@@ -94,6 +133,8 @@ export async function getPickablePlayers(
           growthSek: snap.growthSek,
           totalGrowthSek: snap.totalGrowthSek,
           popularity: snap.popularity,
+          abPopularityPct: abPct,
+          ourPopularityPct: ourPct,
           trend: snap.trend,
           skinColor: p.skinColor ?? null,
           hairColor: p.hairColor ?? null,

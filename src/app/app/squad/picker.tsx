@@ -806,10 +806,16 @@ function renderMetric(
   if (metric === "popularity") {
     const arrow =
       player.trend > 0 ? " ↑" : player.trend < 0 ? " ↓" : "";
+    // ceilPct: 0 stays 0, anything fractional rounds up so a player owned by
+    // a single Aftonbladet user (popularity = 1 of millions) shows as 1%
+    // instead of disappearing into 0%.
+    const ceilPct = (n: number) => (n > 0 ? Math.max(1, Math.ceil(n)) : 0);
+    const ab = ceilPct(player.abPopularityPct);
+    const ours = ceilPct(player.ourPopularityPct);
     return {
-      primary: `${player.popularity}${arrow}`,
+      primary: `${ab}%/${ours}%${arrow}`,
       primaryClass: "text-foreground",
-      secondary: "ägare",
+      secondary: "AB / VÅR",
     };
   }
   if (metric === "club") {
