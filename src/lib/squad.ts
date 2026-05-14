@@ -193,6 +193,27 @@ export function autoPickSquad(
   pool: AutoPickPlayer[],
   formation: { def: number; mid: number; fwd: number },
 ): AutoPickResult {
+  // Randomised picking can occasionally exhaust the budget on the last few
+  // slots when a tight pool gets shuffled into an unlucky order. Retry a
+  // handful of times with fresh shuffles before surrendering.
+  let last: AutoPickResult = {
+    ok: false,
+    playerIds: [],
+    captainPlayerId: null,
+    totalPriceSek: 0,
+    reason: "no attempt",
+  };
+  for (let attempt = 0; attempt < 20; attempt++) {
+    last = autoPickSquadOnce(pool, formation);
+    if (last.ok) return last;
+  }
+  return last;
+}
+
+function autoPickSquadOnce(
+  pool: AutoPickPlayer[],
+  formation: { def: number; mid: number; fwd: number },
+): AutoPickResult {
   const r = currentRules;
   const remaining: Record<Position, number> = {
     GK: 1,
