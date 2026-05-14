@@ -207,7 +207,7 @@ function LeagueTablePanel({
       </ul>
       <footer className="flex items-baseline justify-between border-t border-border px-4 py-2 text-[10px] uppercase tracking-widest">
         <span className="text-dim">{headerLabel}</span>
-        <Link href="/leaderboard" className="text-cyan hover:underline">
+        <Link href="/tabell" className="text-cyan hover:underline">
           [ HELA TABELLEN → ]
         </Link>
       </footer>
@@ -295,7 +295,7 @@ function StandingPanel({
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-3 text-xs">
-        <Link href="/leaderboard" className="text-cyan hover:underline">
+        <Link href="/tabell" className="text-cyan hover:underline">
           [ HELA TABELLEN ]
         </Link>
         <Link href={`/team/${teamId}`} className="text-cyan hover:underline">

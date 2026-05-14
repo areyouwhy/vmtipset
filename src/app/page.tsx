@@ -88,7 +88,7 @@ export default async function Home() {
         </section>
 
         <p className="mt-6 flex flex-wrap justify-center gap-4 text-center text-xs">
-          <Link href="/leaderboard" className="text-cyan">
+          <Link href="/tabell" className="text-cyan">
             [ TABELL ]
           </Link>
           <Link href="/vm" className="text-cyan">

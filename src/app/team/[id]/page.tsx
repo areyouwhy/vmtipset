@@ -24,7 +24,7 @@ export default async function TeamPage({
       <div className="mx-auto w-full max-w-3xl">
         <Breadcrumbs
           trail={[
-            { label: "TABELL", href: "/leaderboard" },
+            { label: "TABELL", href: "/tabell" },
             { label: detail.teamName.toUpperCase() },
           ]}
         />

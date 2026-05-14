@@ -71,7 +71,7 @@ export async function scoreAllPastRoundsAction(): Promise<{
   }
 
   revalidatePath("/admin/rounds");
-  revalidatePath("/leaderboard");
+  revalidatePath("/tabell");
   revalidatePath("/app");
   return { scoredRoundCount: past.length, totalTeamsScored };
 }
