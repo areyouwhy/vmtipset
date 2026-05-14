@@ -816,6 +816,11 @@ function TeamComboBox({
     );
   }, [teams, query]);
 
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+  };
+
   // Click-outside + Esc close.
   useEffect(() => {
     if (!open) return;
@@ -824,11 +829,11 @@ function TeamComboBox({
         rootRef.current &&
         !rootRef.current.contains(e.target as Node)
       ) {
-        setOpen(false);
+        close();
       }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") close();
     };
     document.addEventListener("mousedown", onPointer);
     document.addEventListener("touchstart", onPointer);
@@ -843,7 +848,6 @@ function TeamComboBox({
   // Focus the search field when opening.
   useEffect(() => {
     if (open) inputRef.current?.focus();
-    else setQuery("");
   }, [open]);
 
   const selectedLabel =
@@ -856,7 +860,7 @@ function TeamComboBox({
 
   function pick(v: string) {
     onChange(v);
-    setOpen(false);
+    close();
   }
 
   return (
