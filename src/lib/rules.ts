@@ -62,9 +62,16 @@ export type RuleSet = {
 };
 
 /**
- * v0 placeholder values, primarily inherited from the PL 2026 spring season
- * (Aftonbladet Manager ruleset id 193). Will be updated once Aftonbladet
- * publishes the WC 2026 ruleset. Until then, treat these as best-effort.
+ * Verified against Aftonbladet's WC 2026 Manager ruleset
+ * (id 197 — `SoccerCupSimple Nations 2023`) on 2026-05-14.
+ *
+ * Position counts derived from the 7 published formations:
+ *   GK 1, DEF 3–5, MID 3–5, FWD 1–3.
+ *
+ * Club/country caps and the financial side (stake, transfer fee, bank
+ * interest, captain bonus rule) aren't in the ruleset JSON — they're
+ * league-level decisions we own. Captured here as the values our
+ * scoring engine actually uses; see RULES.md for the deviation log.
  */
 export const currentRules: RuleSet = {
   squadSize: 11,
@@ -72,7 +79,7 @@ export const currentRules: RuleSet = {
   positions: {
     GK: { min: 1, max: 1 },
     DEF: { min: 3, max: 5 },
-    MID: { min: 2, max: 5 },
+    MID: { min: 3, max: 5 },
     FWD: { min: 1, max: 3 },
   },
   legalFormations: [
@@ -89,12 +96,14 @@ export const currentRules: RuleSet = {
   bankInterestPctPerRound: 0.01,
   transferFeePct: 0.01,
   freeTransfersPerRound: 0,
+  // In the WC fantasy data model each "club" is a national team, so the
+  // per-club cap is effectively a per-country cap of 3.
   maxFromSameClub: 3,
-  maxFromSameCountry: null, // TBD for WC variant
+  maxFromSameCountry: null,
   stakePerUserSek: 300,
   meta: {
-    lastVerifiedAt: null,
-    sourceRulesetId: "193", // PL spring 2026; awaiting WC 2026 publication
+    lastVerifiedAt: "2026-05-14",
+    sourceRulesetId: "197", // WC 2026 — verified against Aftonbladet
   },
 };
 

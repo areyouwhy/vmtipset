@@ -57,9 +57,9 @@ export default async function HowPage() {
             v={r.meta.sourceRulesetId ?? "—"}
           />
           <p className="mt-3 text-xs text-dim">
-            Värden markerade <span className="text-yellow">UNVERIFIED</span>{" "}
-            kommer från Aftonbladets förra säsong. Uppdateras när VM-rulesetet
-            publicerats.
+            Alla värden nedan är verifierade mot Aftonbladets WC 2026
+            ruleset (id <span className="text-foreground">{r.meta.sourceRulesetId}</span>).
+            Datumet ovan flyttas så fort vi kör en ny verifiering.
           </p>
         </Block>
 
