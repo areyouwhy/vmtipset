@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
+import { isAdmin } from "@/lib/auth";
 import { getTeamDetail, type TeamDetailPlayer } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +12,11 @@ export default async function TeamPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const detail = await getTeamDetail(id);
+  const [{ userId }, admin] = await Promise.all([auth(), isAdmin()]);
+  const detail = await getTeamDetail(id, {
+    viewerUserId: userId,
+    viewerIsAdmin: admin,
+  });
   if (!detail) notFound();
 
   return (
@@ -138,7 +144,11 @@ function RoundSection({
         </dl>
       )}
 
-      {line.hasSquad ? (
+      {line.squadHidden ? (
+        <p className="mt-3 border border-dashed border-yellow/60 p-3 text-[11px] uppercase tracking-widest text-yellow/80">
+          🔒 TRUPPEN VISAS NÄR RONDEN HAR LÅSTS
+        </p>
+      ) : line.hasSquad ? (
         <ul className="mt-4 divide-y divide-dotted divide-border/60 border border-border">
           {line.players.map((p) => (
             <PlayerLine key={p.id} p={p} />

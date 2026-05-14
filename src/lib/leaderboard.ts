@@ -291,6 +291,10 @@ export type TeamDetailRoundLine = {
   roundName: string;
   status: "upcoming" | "open" | "locked" | "scored";
   hasSquad: boolean;
+  /** A squad exists but is hidden from this viewer because the round is
+   *  still open/upcoming (anti-cheat). Owners and admins always see their
+   *  own squads. */
+  squadHidden: boolean;
   score: TeamRoundScore | null;
   players: TeamDetailPlayer[];
   /** Sum of priceSek across the 11 players for this round (null if any price missing). */
@@ -315,6 +319,7 @@ export type TeamDetail = {
 
 export async function getTeamDetail(
   teamId: string,
+  opts: { viewerUserId?: string | null; viewerIsAdmin?: boolean } = {},
 ): Promise<TeamDetail | null> {
   const [team] = await db
     .select()
@@ -379,9 +384,18 @@ export async function getTeamDetail(
     playersBySquad.set(sp.squadId, arr);
   }
 
+  // Anti-cheat: hide squad contents from anyone who's not the owner (or an
+  // admin) while the round is still open/upcoming, so people can't peek at
+  // each other's lineups before the deadline.
+  const isOwner =
+    opts.viewerUserId != null && opts.viewerUserId === team.ownerUserId;
+  const canSeeAnySquad = isOwner || opts.viewerIsAdmin === true;
+
   const byRound: TeamDetailRoundLine[] = allRounds.map((r) => {
     const sq = squadByRound.get(r.id);
     const playerIds = sq ? (playersBySquad.get(sq.id) ?? []) : [];
+    const roundIsReleased = r.status === "locked" || r.status === "scored";
+    const squadHidden = !!sq && !canSeeAnySquad && !roundIsReleased;
     const linePlayers: TeamDetailPlayer[] = playerIds.flatMap((pid) => {
       const p = playerById.get(pid);
       if (!p) return [];
@@ -428,10 +442,11 @@ export async function getTeamDetail(
       roundName: r.name,
       status: r.status,
       hasSquad: !!sq,
+      squadHidden,
       score: scoreByRound.get(r.id) ?? null,
-      players: linePlayers,
-      teamValueSek,
-      unusedSek,
+      players: squadHidden ? [] : linePlayers,
+      teamValueSek: squadHidden ? null : teamValueSek,
+      unusedSek: squadHidden ? null : unusedSek,
     };
   });
 
@@ -445,7 +460,9 @@ export async function getTeamDetail(
     owner?.displayName || owner?.email.split("@")[0] || "okänd";
 
   // "Current" = the most recent round that has a squad. Reflects what the
-  // user actually owns right now, not historical values.
+  // user actually owns right now, not historical values. If that round's
+  // squad is hidden from this viewer, the derived value/bank are null too —
+  // otherwise we'd leak the team value from the redacted round line.
   const latestWithSquad = [...byRound].reverse().find((l) => l.hasSquad);
   const currentBankSek = latestWithSquad?.unusedSek ?? null;
   const currentTeamValueSek = latestWithSquad?.teamValueSek ?? null;
