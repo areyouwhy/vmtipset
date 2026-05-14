@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { sideBets } from "@/db/schema";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +18,7 @@ export default async function SideBetsPage() {
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / SIDOSPEL</span>
-          <Link href="/" className="text-cyan">
-            ← HEM
-          </Link>
-        </header>
+        <Breadcrumbs trail={[{ label: "SIDOSPEL" }]} />
 
         <section className="py-6">
           <h1 className="text-2xl font-bold uppercase tracking-tight text-yellow">

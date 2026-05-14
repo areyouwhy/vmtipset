@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import {
   currentRules,
   formationToString,
@@ -29,12 +29,7 @@ export default async function HowPage() {
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-2xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / HOW</span>
-          <Link href="/" className="text-cyan">
-            ← HEM
-          </Link>
-        </header>
+        <Breadcrumbs trail={[{ label: "HOW" }]} />
 
         <section className="py-6">
           <h1 className="text-3xl font-bold uppercase tracking-tight text-yellow sm:text-4xl">

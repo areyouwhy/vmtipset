@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isAdmin } from "@/lib/auth";
 import { getPlayerListRows } from "@/lib/players-data";
 import { PlayerListClient } from "./list-client";
@@ -13,12 +13,12 @@ export default async function AdminPlayersPage() {
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / ADMIN / SPELARE</span>
-          <Link href="/admin" className="text-cyan">
-            ← ADMIN
-          </Link>
-        </header>
+        <Breadcrumbs
+          trail={[
+            { label: "ADMIN", href: "/admin" },
+            { label: "SPELARE" },
+          ]}
+        />
 
         <section className="py-6">
           <h1 className="text-2xl font-bold uppercase tracking-tight text-yellow">

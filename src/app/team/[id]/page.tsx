@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isAdmin } from "@/lib/auth";
 import { getTeamDetail, type TeamDetailPlayer } from "@/lib/leaderboard";
 
@@ -22,12 +22,12 @@ export default async function TeamPage({
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / LAG</span>
-          <Link href="/leaderboard" className="text-cyan">
-            ← TABELL
-          </Link>
-        </header>
+        <Breadcrumbs
+          trail={[
+            { label: "TABELL", href: "/leaderboard" },
+            { label: detail.teamName.toUpperCase() },
+          ]}
+        />
 
         <section className="py-6">
           <p className="text-[10px] uppercase tracking-widest text-dim">

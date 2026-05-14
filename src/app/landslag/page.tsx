@@ -1,71 +1,142 @@
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Jersey } from "@/lib/jersey";
 import { getAllNations } from "@/lib/nation-data";
 import { fifaRank, FIFA_RANK_SOURCE_DATE } from "@/data/fifa-rank";
+import { GROUPS, GROUP_KEYS } from "@/data/wc-groups";
 
 export const dynamic = "force-dynamic";
 
 export default async function LandslagIndexPage() {
   const nations = await getAllNations();
-  const sorted = [...nations].sort((a, b) => {
-    const ra = fifaRank(a.countryCode) ?? Infinity;
-    const rb = fifaRank(b.countryCode) ?? Infinity;
-    if (ra !== rb) return ra - rb;
-    return a.countryName.localeCompare(b.countryName);
-  });
+  const byCode = new Map(nations.map((n) => [n.countryCode, n]));
+
+  // Some teams in the groups file may not have player data yet — render
+  // them as a row with "0 spelare" so the group still shows complete.
+  type Row = {
+    countryCode: string;
+    countryName: string;
+    playerCount: number;
+    rank: number | null;
+  };
+  function rowFor(code: string): Row {
+    const n = byCode.get(code);
+    return {
+      countryCode: code,
+      countryName: n?.countryName ?? code,
+      playerCount: n?.playerCount ?? 0,
+      rank: fifaRank(code),
+    };
+  }
+
+  // Any nations we have data for but that aren't in the groups file land in
+  // an "övriga" bucket so they're never lost.
+  const assignedCodes = new Set<string>();
+  for (const key of GROUP_KEYS) for (const code of GROUPS[key]) assignedCodes.add(code);
+  const orphans = nations
+    .filter((n) => !assignedCodes.has(n.countryCode))
+    .map((n) => rowFor(n.countryCode));
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / LANDSLAG</span>
-          <Link href="/" className="text-cyan">
-            ← START
-          </Link>
-        </header>
+        <Breadcrumbs trail={[{ label: "LANDSLAG" }]} />
 
         <section className="py-6">
           <h1 className="text-2xl font-bold uppercase tracking-tight text-yellow">
             LANDSLAG
           </h1>
           <p className="mt-2 text-sm text-dim">
-            Alla {sorted.length} landslag i VM 2026, sorterade efter
-            FIFA-rankning ({FIFA_RANK_SOURCE_DATE}). Klicka för dyrastes
-            startelva och hela truppen.
+            Alla 48 landslag i VM 2026, indelade i sina gruppspels-grupper.
+            FIFA-rank inom parentes ({FIFA_RANK_SOURCE_DATE}).
           </p>
         </section>
 
-        <ul className="divide-y divide-border border border-border">
-          {sorted.map((n) => {
-            const rank = fifaRank(n.countryCode);
+        <div className="space-y-6">
+          {GROUP_KEYS.map((key) => {
+            const rows = GROUPS[key]
+              .map(rowFor)
+              .sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity));
             return (
-              <li key={n.countryCode}>
-                <Link
-                  href={`/landslag/${n.countryCode}`}
-                  className="grid grid-cols-[auto_auto_1fr_auto] items-center gap-3 p-3 text-sm transition hover:bg-yellow/5"
-                >
-                  <span className="w-8 text-right text-[11px] tabular-nums text-dim">
-                    {rank === null ? "—" : `#${rank}`}
+              <section
+                key={key}
+                id={`grupp-${key}`}
+                className="border border-border"
+              >
+                <header className="flex items-baseline justify-between gap-3 border-b border-border px-3 py-2 text-xs uppercase tracking-widest">
+                  <span>
+                    <span className="text-dim">GRUPP </span>
+                    <span className="text-yellow">{key}</span>
                   </span>
-                  <Jersey code={n.countryCode} size={32} />
-                  <span className="min-w-0">
-                    <span className="block truncate text-foreground">
-                      {n.countryName}
-                    </span>
-                    <span className="block text-[10px] uppercase tracking-widest text-dim">
-                      {n.countryCode} ·{" "}
-                      <span className="text-cyan">{n.playerCount}</span> spelare
-                    </span>
+                  <span className="text-[10px] text-dim">
+                    {rows.length} LAG
                   </span>
-                  <span className="text-[10px] uppercase tracking-widest text-cyan">
-                    →
-                  </span>
-                </Link>
-              </li>
+                </header>
+                <ul className="divide-y divide-border">
+                  {rows.map((r) => (
+                    <NationRow key={r.countryCode} row={r} />
+                  ))}
+                </ul>
+              </section>
             );
           })}
-        </ul>
+
+          {orphans.length > 0 && (
+            <section className="border border-border">
+              <header className="flex items-baseline justify-between gap-3 border-b border-border px-3 py-2 text-xs uppercase tracking-widest">
+                <span className="text-dim">ÖVRIGA</span>
+                <span className="text-[10px] text-dim">
+                  {orphans.length} LAG
+                </span>
+              </header>
+              <ul className="divide-y divide-border">
+                {orphans
+                  .sort(
+                    (a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity),
+                  )
+                  .map((r) => (
+                    <NationRow key={r.countryCode} row={r} />
+                  ))}
+              </ul>
+            </section>
+          )}
+        </div>
       </div>
     </main>
+  );
+}
+
+function NationRow({
+  row,
+}: {
+  row: {
+    countryCode: string;
+    countryName: string;
+    playerCount: number;
+    rank: number | null;
+  };
+}) {
+  return (
+    <li>
+      <Link
+        href={`/landslag/${row.countryCode}`}
+        className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 p-3 text-sm transition hover:bg-yellow/5"
+      >
+        <Jersey code={row.countryCode} size={32} />
+        <span className="min-w-0">
+          <span className="block truncate text-foreground">
+            {row.countryName}
+          </span>
+          <span className="block text-[10px] uppercase tracking-widest text-dim">
+            {row.countryCode} ·{" "}
+            <span className="text-cyan">{row.playerCount}</span> spelare
+          </span>
+        </span>
+        <span className="text-[11px] tabular-nums text-yellow">
+          {row.rank === null ? "—" : `#${row.rank}`}
+        </span>
+        <span className="text-[10px] uppercase tracking-widest text-cyan">→</span>
+      </Link>
+    </li>
   );
 }

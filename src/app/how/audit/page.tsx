@@ -2,6 +2,7 @@ import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { rounds } from "@/db/schema";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getRoundAudit } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
@@ -27,12 +28,12 @@ export default async function AuditPage({
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / HOW / AUDIT</span>
-          <Link href="/how" className="text-cyan">
-            ← HOW
-          </Link>
-        </header>
+        <Breadcrumbs
+          trail={[
+            { label: "HOW", href: "/how" },
+            { label: "AUDIT" },
+          ]}
+        />
 
         <section className="py-6">
           <h1 className="text-2xl font-bold uppercase tracking-tight text-yellow sm:text-3xl">

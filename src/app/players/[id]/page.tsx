@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Jersey } from "@/lib/jersey";
 import { getPlayerDetail } from "@/lib/players-data";
 
@@ -20,12 +21,12 @@ export default async function PublicPlayerPage({
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / SPELARE</span>
-          <Link href="/players" className="text-cyan">
-            ← ALLA SPELARE
-          </Link>
-        </header>
+        <Breadcrumbs
+          trail={[
+            { label: "SPELARE", href: "/players" },
+            { label: player.name.toUpperCase() },
+          ]}
+        />
 
         <section className="flex items-start gap-4 py-6">
           {countryCode ? (

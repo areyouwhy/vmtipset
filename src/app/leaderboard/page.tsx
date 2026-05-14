@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getLeaderboard } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +16,7 @@ export default async function LeaderboardPage() {
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / TABELL</span>
-          <Link href="/" className="text-cyan">
-            ← HEM
-          </Link>
-        </header>
+        <Breadcrumbs trail={[{ label: "TABELL" }]} />
 
         <section className="py-6">
           <h1 className="text-2xl font-bold uppercase tracking-tight text-yellow sm:text-3xl">

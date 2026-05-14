@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SignOutLink } from "./sign-out-link";
 import { db } from "@/db";
 import { teams } from "@/db/schema";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getOrCreateDbUser, isAdmin } from "@/lib/auth";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { getOpenBetsForUser } from "@/lib/bets-data";
@@ -71,17 +72,19 @@ export default async function AppPage() {
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-2xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / APP</span>
-          <div className="flex items-center gap-4">
-            {admin && (
-              <a href="/admin" className="text-cyan">
-                ADMIN
-              </a>
-            )}
-            <SignOutLink />
-          </div>
-        </header>
+        <Breadcrumbs
+          trail={[{ label: "APP" }]}
+          right={
+            <div className="flex items-center gap-4">
+              {admin && (
+                <a href="/admin" className="text-cyan">
+                  ADMIN
+                </a>
+              )}
+              <SignOutLink />
+            </div>
+          }
+        />
 
         <section className="border-b border-border py-4 text-xs uppercase tracking-widest">
           <p>

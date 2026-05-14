@@ -3,6 +3,7 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users, teams } from "@/db/schema";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isAdmin } from "@/lib/auth";
 import { UserRow } from "./user-row";
 
@@ -31,32 +32,34 @@ export default async function AdminPage() {
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / ADMIN</span>
-          <div className="flex flex-wrap items-center gap-4">
-            <Link href="/admin/rounds" className="text-cyan">
-              RONDER
-            </Link>
-            <Link href="/admin/bets" className="text-cyan">
-              BET
-            </Link>
-            <Link href="/admin/side-bets" className="text-cyan">
-              SIDOSPEL
-            </Link>
-            <Link href="/admin/players" className="text-cyan">
-              SPELARE
-            </Link>
-            <Link href="/admin/config" className="text-cyan">
-              CONFIG
-            </Link>
-            <Link href="/admin/data" className="text-cyan">
-              DATA
-            </Link>
-            <Link href="/app" className="text-cyan">
-              ← APP
-            </Link>
-          </div>
-        </header>
+        <Breadcrumbs
+          trail={[{ label: "ADMIN" }]}
+          right={
+            <div className="flex flex-wrap items-center gap-4">
+              <Link href="/admin/rounds" className="text-cyan">
+                RONDER
+              </Link>
+              <Link href="/admin/bets" className="text-cyan">
+                BET
+              </Link>
+              <Link href="/admin/side-bets" className="text-cyan">
+                SIDOSPEL
+              </Link>
+              <Link href="/admin/players" className="text-cyan">
+                SPELARE
+              </Link>
+              <Link href="/admin/config" className="text-cyan">
+                CONFIG
+              </Link>
+              <Link href="/admin/data" className="text-cyan">
+                DATA
+              </Link>
+              <Link href="/app" className="text-cyan">
+                ← APP
+              </Link>
+            </div>
+          }
+        />
 
         <section className="py-6">
           <h1 className="text-2xl font-bold uppercase tracking-tight text-yellow">

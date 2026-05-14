@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Jersey, PitchJersey } from "@/lib/jersey";
 import { getNationDetail, type NationPlayer } from "@/lib/nation-data";
 import { fifaRank, FIFA_RANK_SOURCE_DATE } from "@/data/fifa-rank";
+import { groupForCountry } from "@/data/wc-groups";
 
 export const dynamic = "force-dynamic";
 
@@ -16,18 +18,19 @@ export default async function NationPage({
   if (!detail) notFound();
 
   const rank = fifaRank(detail.countryCode);
+  const group = groupForCountry(detail.countryCode);
   const xi = detail.startingEleven;
   const captainId = xi.captainId;
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / LANDSLAG</span>
-          <Link href="/landslag" className="text-cyan">
-            ← ALLA LANDSLAG
-          </Link>
-        </header>
+        <Breadcrumbs
+          trail={[
+            { label: "LANDSLAG", href: "/landslag" },
+            { label: detail.countryName.toUpperCase() },
+          ]}
+        />
 
         <section className="flex items-start gap-4 py-6">
           <Jersey code={detail.countryCode} size={88} />
@@ -39,6 +42,17 @@ export default async function NationPage({
               {detail.countryName}
             </h1>
             <p className="mt-2 flex flex-wrap items-baseline gap-4 text-[11px] uppercase tracking-widest">
+              {group && (
+                <span>
+                  <span className="text-dim">GRUPP </span>
+                  <Link
+                    href={`/landslag#grupp-${group}`}
+                    className="text-cyan tabular-nums hover:text-yellow"
+                  >
+                    {group}
+                  </Link>
+                </span>
+              )}
               <span>
                 <span className="text-dim">FIFA-RANKING </span>
                 <span className="text-yellow tabular-nums">

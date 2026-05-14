@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { db } from "@/db";
 import { teams } from "@/db/schema";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getOrCreateDbUser } from "@/lib/auth";
 import {
   getActiveRound,
@@ -30,12 +30,12 @@ export default async function SquadPage() {
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / TRUPP</span>
-          <Link href="/app" className="text-cyan">
-            ← APP
-          </Link>
-        </header>
+        <Breadcrumbs
+          trail={[
+            { label: "APP", href: "/app" },
+            { label: "TRUPP" },
+          ]}
+        />
 
         <section className="py-6">
           <p className="text-[10px] uppercase tracking-widest text-dim">
