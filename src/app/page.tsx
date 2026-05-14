@@ -94,6 +94,9 @@ export default async function Home() {
           <Link href="/landslag" className="text-cyan">
             [ LANDSLAG ]
           </Link>
+          <Link href="/knockout" className="text-cyan">
+            [ SLUTSPEL ]
+          </Link>
           <Link href="/players" className="text-cyan">
             [ SPELARE ]
           </Link>
