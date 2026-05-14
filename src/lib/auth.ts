@@ -41,7 +41,9 @@ export async function getOrCreateDbUser(): Promise<User | null> {
 }
 
 export async function isAdmin(): Promise<boolean> {
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+  // .trim() guards against stray whitespace/newlines in the env var — easy
+  // to introduce when piping the value through the Vercel CLI.
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   if (!adminEmail) return false;
 
   const clerkUser = await currentUser();
