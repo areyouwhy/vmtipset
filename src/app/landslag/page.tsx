@@ -18,6 +18,7 @@ export default async function LandslagIndexPage() {
     countryName: string;
     playerCount: number;
     rank: number | null;
+    dreamTeamValueSek: number | null;
   };
   function rowFor(code: string): Row {
     const n = byCode.get(code);
@@ -26,6 +27,7 @@ export default async function LandslagIndexPage() {
       countryName: n?.countryName ?? code,
       playerCount: n?.playerCount ?? 0,
       rank: fifaRank(code),
+      dreamTeamValueSek: n?.dreamTeamValueSek ?? null,
     };
   }
 
@@ -114,6 +116,7 @@ function NationRow({
     countryName: string;
     playerCount: number;
     rank: number | null;
+    dreamTeamValueSek: number | null;
   };
 }) {
   return (
@@ -128,12 +131,23 @@ function NationRow({
             {row.countryName}
           </span>
           <span className="block text-[10px] uppercase tracking-widest text-dim">
-            {row.countryCode} ·{" "}
-            <span className="text-cyan">{row.playerCount}</span> spelare
+            {row.countryCode} · FIFA{" "}
+            <span className="text-yellow">
+              {row.rank === null ? "—" : `#${row.rank}`}
+            </span>{" "}
+            ·{" "}
+            <span className="text-cyan">{row.playerCount}</span> SP
           </span>
         </span>
-        <span className="text-[11px] tabular-nums text-yellow">
-          {row.rank === null ? "—" : `#${row.rank}`}
+        <span className="flex flex-col items-end leading-tight">
+          <span className="text-[11px] tabular-nums text-green">
+            {row.dreamTeamValueSek === null
+              ? "—"
+              : `${(row.dreamTeamValueSek / 1_000_000).toFixed(1)}M`}
+          </span>
+          <span className="text-[8px] uppercase tracking-widest text-dim">
+            DREAM XI
+          </span>
         </span>
         <span className="text-[10px] uppercase tracking-widest text-cyan">→</span>
       </Link>

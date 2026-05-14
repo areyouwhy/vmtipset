@@ -65,6 +65,14 @@ export default async function NationPage({
                 )}
               </span>
               <span>
+                <span className="text-dim">DREAM TEAM </span>
+                <span className="text-green tabular-nums">
+                  {detail.dreamTeamValueSek === null
+                    ? "—"
+                    : `${(detail.dreamTeamValueSek / 1_000_000).toFixed(1)}M`}
+                </span>
+              </span>
+              <span>
                 <span className="text-dim">TRUPP </span>
                 <span className="text-cyan tabular-nums">
                   {detail.players.length}
