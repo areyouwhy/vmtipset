@@ -270,9 +270,10 @@ export function SquadPicker({
 
   return (
     <div className="pb-24">
-      {/* Compact sticky summary */}
-      <section className="sticky top-0 z-20 -mx-4 border-y border-border bg-background px-4 py-2 sm:-mx-6 sm:px-6">
-        <div className="flex items-center justify-between gap-3 text-xs tabular-nums">
+      {/* Compact sticky summary — single dense line on mobile, position
+          counts get a second line only on sm+ to save vertical space. */}
+      <section className="sticky top-0 z-20 -mx-4 border-y border-border bg-background px-4 py-1.5 sm:-mx-6 sm:px-6">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tabular-nums">
           <span>
             <span className="text-dim">TRUPP </span>
             <span className={fullSquad ? "text-green" : "text-yellow"}>
@@ -291,12 +292,14 @@ export function SquadPicker({
               {(summary.remainingBudgetSek / 1_000_000).toFixed(1)}M
             </span>
           </span>
-          <span className="truncate">
+          <span className="min-w-0 flex-1 truncate text-right">
             <span className="text-dim">© </span>
             <span className="text-yellow">{captainName ?? "—"}</span>
           </span>
         </div>
-        <div className="mt-1 flex items-center justify-between gap-2 text-[10px] tabular-nums">
+        {/* Per-position counts: visible on tablet+ where there's room,
+            collapsed on phones where the pitch chips already show counts. */}
+        <div className="mt-0.5 hidden items-center justify-between gap-2 text-[10px] tabular-nums sm:flex">
           {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => {
             const range = currentRules.positions[pos];
             const v = summary.byPosition[pos];
@@ -329,32 +332,34 @@ export function SquadPicker({
         )}
       </section>
 
-      {/* Auto-pick / clear */}
+      {/* Auto-pick / clear + metric toggle on the same line on phones. */}
       {!locked && (
-        <div className="mt-4 flex flex-wrap gap-2 border border-border p-2">
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px]">
           <button
             type="button"
             onClick={autoPick}
-            className="border border-cyan px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-cyan transition hover:bg-cyan hover:text-black"
+            className="border border-cyan px-2 py-1 font-bold uppercase tracking-widest text-cyan transition hover:bg-cyan hover:text-black"
           >
-            [ AUTO-VÄLJ TRUPP ]
+            [ AUTO ]
           </button>
           <button
             type="button"
             onClick={clearSquad}
             disabled={selected.size === 0}
-            className="border border-border px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-dim transition hover:border-red hover:text-red disabled:opacity-40"
+            className="border border-border px-2 py-1 font-bold uppercase tracking-widest text-dim transition hover:border-red hover:text-red disabled:opacity-40"
           >
             [ × RENSA ]
           </button>
+          <span className="min-w-0 flex-1">
+            <MetricToggle value={metric} onChange={setMetric} />
+          </span>
         </div>
       )}
-
-      {/* Metric toggle — applies to both PLAN and LISTA so users compare the
-          same attribute across views. */}
-      <div className="mt-3">
-        <MetricToggle value={metric} onChange={setMetric} />
-      </div>
+      {locked && (
+        <div className="mt-2">
+          <MetricToggle value={metric} onChange={setMetric} />
+        </div>
+      )}
 
       {/* View tabs */}
       <div className="mt-2 grid grid-cols-2 border border-border">
@@ -552,9 +557,18 @@ function PitchView({
   const rows: Position[] = ["GK", "DEF", "MID", "FWD"];
 
   return (
-    <div className="mt-4">
-      {/* Formation selector */}
-      <div className="mb-2 -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1">
+    <div className="mt-3">
+      {/* Formation selector — horizontal scroll with a fade on the right
+          edge so users see there's more to swipe to. */}
+      <div
+        className="mb-2 -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1"
+        style={{
+          maskImage:
+            "linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%)",
+          WebkitMaskImage:
+            "linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%)",
+        }}
+      >
         {currentRules.legalFormations.map((f) => {
           const active =
             f.def === formation.def &&
