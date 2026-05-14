@@ -5,6 +5,10 @@
     {
       "path": "/api/cron/lock-deadlines",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/aftonbladet-refresh",
+      "schedule": "15 * * * *"
     }
   ]
 }

@@ -149,29 +149,57 @@ describe("planIngest — change detection", () => {
   });
 });
 
-describe("planIngest — snapshots are append-only", () => {
-  it("never updates an existing api snapshot, even if value differs", () => {
+describe("planIngest — snapshot upsert", () => {
+  it("emits an update-snapshot when an existing api row's price or growth changed", () => {
+    const target = mockDataset.snapshots[0];
     const existing: ExistingState = {
       clubs: [],
       players: [],
       rounds: [],
       snapshots: [
         {
-          playerExternalId: "p:arg-8",
-          roundExternalId: "r:1",
-          priceSek: 99_999, // wildly different from incoming
-          growthSek: 0,
+          playerExternalId: target.playerExternalId,
+          roundExternalId: target.roundExternalId,
+          priceSek: target.priceSek + 100_000,
+          growthSek: target.growthSek + 50_000,
           source: "api",
         },
       ],
     };
     const plan = planIngest(mockDataset, existing);
-    const conflict = plan.snapshots.find(
-      (op) =>
-        op.snapshot.playerExternalId === "p:arg-8" &&
-        op.snapshot.roundExternalId === "r:1",
+    const op = plan.snapshots.find(
+      (o) =>
+        o.snapshot.playerExternalId === target.playerExternalId &&
+        o.snapshot.roundExternalId === target.roundExternalId,
     );
-    expect(conflict).toBeUndefined();
+    expect(op?.kind).toBe("update-snapshot");
+    expect(op?.snapshot.priceSek).toBe(target.priceSek);
+    expect(op?.snapshot.growthSek).toBe(target.growthSek);
+  });
+
+  it("skips when an existing api row already matches incoming exactly", () => {
+    const target = mockDataset.snapshots[0];
+    const existing: ExistingState = {
+      clubs: [],
+      players: [],
+      rounds: [],
+      snapshots: [
+        {
+          playerExternalId: target.playerExternalId,
+          roundExternalId: target.roundExternalId,
+          priceSek: target.priceSek,
+          growthSek: target.growthSek,
+          source: "api",
+        },
+      ],
+    };
+    const plan = planIngest(mockDataset, existing);
+    const op = plan.snapshots.find(
+      (o) =>
+        o.snapshot.playerExternalId === target.playerExternalId &&
+        o.snapshot.roundExternalId === target.roundExternalId,
+    );
+    expect(op).toBeUndefined();
   });
 
   it("treats a manual snapshot for the same (player, round) as not blocking the api snapshot", () => {

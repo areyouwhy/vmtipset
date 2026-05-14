@@ -21,11 +21,11 @@ import type {
  *
  * Configurable via env:
  *   AFTONBLADET_API_BASE  default https://api-manager.aftonbladet.se
- *   AFTONBLADET_GAME_ID   default 731  (PL spring 2026 — switch to WC 2026 when published)
+ *   AFTONBLADET_GAME_ID   default 735  (WC 2026 — slug ab-2026-world-fantasy, ruleset 197)
  */
 
 const DEFAULT_API_BASE = "https://api-manager.aftonbladet.se";
-const DEFAULT_GAME_ID = "731";
+const DEFAULT_GAME_ID = "735";
 
 const PLAYER_BATCH = 80;
 
@@ -104,13 +104,20 @@ export const aftonbladetSource: DataSource = {
       "game",
     );
     const rawRounds = game.rounds ?? [];
-    const rounds: ExternalRound[] = rawRounds.map((r, i) => ({
-      externalId: `ab:r:${i + 1}`,
-      number: i + 1,
-      name: `Round ${i + 1}`,
+    const rounds: ExternalRound[] = rawRounds.map((r, i) => {
       // `close` is the squad-lock deadline. Falls back to `start` if absent.
-      deadline: r.close ?? r.start ?? null,
-    }));
+      // Normalize to canonical ISO (with ms) so it matches what we read back
+      // from Postgres via `Date.toISOString()` — otherwise change-detection
+      // fires every cron tick on identical instants.
+      const raw = r.close ?? r.start ?? null;
+      const deadline = raw ? new Date(raw).toISOString() : null;
+      return {
+        externalId: `ab:r:${i + 1}`,
+        number: i + 1,
+        name: `Round ${i + 1}`,
+        deadline,
+      };
+    });
 
     // 2. Ruleset — build position-id → enum mapping by slug.
     let positionByApiId: Record<number, Position> = {};
@@ -182,11 +189,14 @@ export const aftonbladetSource: DataSource = {
     }
 
     // Build the typed dataset.
+    // For WC the "team" IS a nation — there's no nested country object, but
+    // `abbreviation` is the ISO alpha-3 code (ARG, BRA…). Fall back to it so
+    // the squad picker's LAND filter works on national-team data.
     const clubs: ExternalClub[] = Array.from(teamById.values()).map((t) => ({
       externalId: `ab:club:${t.id}`,
       name: t.name,
       shortName: t.abbreviation ?? null,
-      countryCode: t.country?.code ?? null,
+      countryCode: t.country?.code ?? t.abbreviation ?? null,
     }));
 
     const players: ExternalPlayer[] = rawPlayers.flatMap((p) => {

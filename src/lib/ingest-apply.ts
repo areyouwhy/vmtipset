@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
   clubs,
@@ -22,7 +22,9 @@ export type IngestSummary = {
   roundsInserted: number;
   roundsUpdated: number;
   snapshotsInserted: number;
+  snapshotsUpdated: number;
   orphanedPlayers: string[];
+  playersDeactivated: number;
 };
 
 export async function loadExistingState(): Promise<ExistingState> {
@@ -100,6 +102,8 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
   let roundsInserted = 0;
   let roundsUpdated = 0;
   let snapshotsInserted = 0;
+  let snapshotsUpdated = 0;
+  let playersDeactivated = 0;
 
   // Clubs first — players reference them.
   for (const op of plan.clubs) {
@@ -190,7 +194,8 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
       ),
     );
 
-    const rows = plan.snapshots.flatMap((op) => {
+    const inserts = plan.snapshots.flatMap((op) => {
+      if (op.kind !== "insert-snapshot") return [];
       const playerId = playerIdByExt.get(op.snapshot.playerExternalId);
       const roundId = roundIdByExt.get(op.snapshot.roundExternalId);
       if (!playerId || !roundId) return [];
@@ -205,17 +210,56 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
       ];
     });
 
-    if (rows.length > 0) {
+    if (inserts.length > 0) {
       // Batch to stay well under Postgres' ~65k bound-param ceiling.
       // Each row binds 5 params → 1000 rows = 5000 params per query.
       const CHUNK = 1000;
-      for (let i = 0; i < rows.length; i += CHUNK) {
+      for (let i = 0; i < inserts.length; i += CHUNK) {
         await db
           .insert(playerRoundSnapshots)
-          .values(rows.slice(i, i + CHUNK));
+          .values(inserts.slice(i, i + CHUNK));
       }
-      snapshotsInserted = rows.length;
+      snapshotsInserted = inserts.length;
     }
+
+    for (const op of plan.snapshots) {
+      if (op.kind !== "update-snapshot") continue;
+      const playerId = playerIdByExt.get(op.snapshot.playerExternalId);
+      const roundId = roundIdByExt.get(op.snapshot.roundExternalId);
+      if (!playerId || !roundId) continue;
+      await db
+        .update(playerRoundSnapshots)
+        .set({
+          priceSek: op.snapshot.priceSek,
+          growthSek: op.snapshot.growthSek,
+          capturedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(playerRoundSnapshots.playerId, playerId),
+            eq(playerRoundSnapshots.roundId, roundId),
+            eq(playerRoundSnapshots.source, "api"),
+          ),
+        );
+      snapshotsUpdated++;
+    }
+  }
+
+  // Orphans: players the source dropped (eliminated, injured, withdrawn).
+  // Flip them to active=false so the squad picker hides them; admins can
+  // see them on /admin/players and manually override prices if needed.
+  if (plan.orphanedPlayers.length > 0) {
+    const result = await db
+      .update(players)
+      .set({ active: false, updatedAt: new Date() })
+      .where(
+        and(
+          inArray(players.externalId, plan.orphanedPlayers),
+          eq(players.active, true),
+        ),
+      )
+      .returning({ id: players.id });
+    playersDeactivated = result.length;
   }
 
   return {
@@ -227,7 +271,9 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
     roundsInserted,
     roundsUpdated,
     snapshotsInserted,
+    snapshotsUpdated,
     orphanedPlayers: plan.orphanedPlayers,
+    playersDeactivated,
   };
 }
 

@@ -64,11 +64,17 @@ export type RoundOp =
   | { kind: "insert-round"; round: ExternalRound }
   | { kind: "update-round"; externalId: string; round: ExternalRound };
 
-export type SnapshotOp = {
-  kind: "insert-snapshot";
-  snapshot: ExternalSnapshot;
-  source: "api";
-};
+export type SnapshotOp =
+  | {
+      kind: "insert-snapshot";
+      snapshot: ExternalSnapshot;
+      source: "api";
+    }
+  | {
+      kind: "update-snapshot";
+      snapshot: ExternalSnapshot;
+      source: "api";
+    };
 
 export type IngestPlan = {
   clubs: ClubOp[];
@@ -125,19 +131,26 @@ export function planIngest(
     }
   }
 
-  // Snapshots — append-only with idempotency on (player, round, source=api).
+  // Snapshots — upsert on (player, round, source=api). Mid-round prices and
+  // growth values do change at Aftonbladet (player movement, late goal counted
+  // into growth, etc.), so we update existing api rows in place. Scoring
+  // captures the snapshot ids it used at compute time into
+  // `team_round_scores.snapshotIdsUsed`, so an audit trail still exists.
   // Manual snapshots are written through a separate admin path, never here.
-  const existingApiSnapshots = new Set(
+  const existingApiSnapshotsByKey = new Map(
     existing.snapshots
       .filter((s) => s.source === "api")
-      .map((s) => snapshotKey(s.playerExternalId, s.roundExternalId)),
+      .map((s) => [snapshotKey(s.playerExternalId, s.roundExternalId), s]),
   );
   const snapshots: SnapshotOp[] = [];
   for (const s of incoming.snapshots) {
-    if (existingApiSnapshots.has(snapshotKey(s.playerExternalId, s.roundExternalId))) {
-      continue;
+    const key = snapshotKey(s.playerExternalId, s.roundExternalId);
+    const prev = existingApiSnapshotsByKey.get(key);
+    if (!prev) {
+      snapshots.push({ kind: "insert-snapshot", snapshot: s, source: "api" });
+    } else if (prev.priceSek !== s.priceSek || prev.growthSek !== s.growthSek) {
+      snapshots.push({ kind: "update-snapshot", snapshot: s, source: "api" });
     }
-    snapshots.push({ kind: "insert-snapshot", snapshot: s, source: "api" });
   }
 
   // Orphans: players we have that the source no longer mentions

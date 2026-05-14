@@ -46,68 +46,83 @@ export default async function LeaderboardPage() {
           <p className="border border-border p-4 text-sm text-dim">
             Inga lag ännu.
           </p>
-        ) : scoredRounds.length === 0 ? (
-          <p className="border border-yellow/30 bg-yellow/5 p-4 text-sm text-dim">
-            Inga ronder är poängsatta ännu — tabellen är tom.
-          </p>
         ) : (
-          <ul className="space-y-3">
-            {lb.rows.map((row) => (
-              <li
-                key={row.teamId}
-                className="border border-border p-4"
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <div className="flex items-baseline gap-3 min-w-0">
-                    <span className="tabular-nums text-yellow text-lg font-bold">
-                      {String(row.rank).padStart(2, "0")}
-                    </span>
-                    <RankArrow change={row.rankChange} />
-                    <Link
-                      href={`/team/${row.teamId}`}
-                      className="truncate font-bold uppercase tracking-tight text-foreground hover:text-cyan"
-                    >
-                      {row.teamName}
-                    </Link>
-                  </div>
-                  <span className="tabular-nums text-yellow">
-                    {fmtSek(row.totalPointsSek)}
-                  </span>
-                </div>
-                <p className="mt-1 truncate text-[10px] uppercase tracking-widest text-dim">
-                  {row.ownerHandle}
-                </p>
-
-                {scoredRounds.length > 0 && (
-                  <ul className="mt-3 -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 text-[11px] tabular-nums">
-                    {row.perRound.map((pr) => (
-                      <li
-                        key={pr.roundId}
-                        className="shrink-0 snap-start border border-border px-2 py-1"
+          <>
+            {scoredRounds.length === 0 && (
+              <p className="mb-3 border border-yellow/30 bg-yellow/5 px-3 py-2 text-xs text-dim">
+                Inga ronder är poängsatta ännu — ordningen visas efter lagvärde.
+              </p>
+            )}
+            <ul className="space-y-3">
+              {lb.rows.map((row) => (
+                <li
+                  key={row.teamId}
+                  className="border border-border p-4"
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="flex items-baseline gap-3 min-w-0">
+                      <span className="tabular-nums text-yellow text-lg font-bold">
+                        {String(row.rank).padStart(2, "0")}
+                      </span>
+                      <RankArrow change={row.rankChange} />
+                      <Link
+                        href={`/team/${row.teamId}`}
+                        className="truncate font-bold uppercase tracking-tight text-foreground hover:text-cyan"
                       >
-                        <span className="text-dim">
-                          R{pr.roundNumber}{" "}
+                        {row.teamName}
+                      </Link>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5">
+                      {scoredRounds.length > 0 && (
+                        <span className="tabular-nums text-yellow">
+                          {fmtSek(row.totalPointsSek)}
                         </span>
-                        <span
-                          className={
-                            pr.pointsSek === null
-                              ? "text-dim"
-                              : pr.pointsSek > 0
-                                ? "text-green"
-                                : pr.pointsSek < 0
-                                  ? "text-red"
-                                  : "text-foreground"
-                          }
+                      )}
+                      <span className="text-[10px] uppercase tracking-widest text-dim">
+                        VÄRDE{" "}
+                        <span className="text-foreground tabular-nums">
+                          {row.teamValueSek === null
+                            ? "—"
+                            : fmtSek(row.teamValueSek)}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  <p className="mt-1 truncate text-[10px] uppercase tracking-widest text-dim">
+                    {row.ownerHandle}
+                  </p>
+
+                  {scoredRounds.length > 0 && (
+                    <ul className="mt-3 -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 text-[11px] tabular-nums">
+                      {row.perRound.map((pr) => (
+                        <li
+                          key={pr.roundId}
+                          className="shrink-0 snap-start border border-border px-2 py-1"
                         >
-                          {pr.pointsSek === null ? "—" : fmtSek(pr.pointsSek)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
+                          <span className="text-dim">
+                            R{pr.roundNumber}{" "}
+                          </span>
+                          <span
+                            className={
+                              pr.pointsSek === null
+                                ? "text-dim"
+                                : pr.pointsSek > 0
+                                  ? "text-green"
+                                  : pr.pointsSek < 0
+                                    ? "text-red"
+                                    : "text-foreground"
+                            }
+                          >
+                            {pr.pointsSek === null ? "—" : fmtSek(pr.pointsSek)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </>
         )}
 
         <section className="mt-10">

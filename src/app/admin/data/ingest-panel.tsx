@@ -23,7 +23,7 @@ export function IngestPanel() {
   function wipeConfirmed(source: "mock" | "aftonbladet") {
     const label =
       source === "aftonbladet"
-        ? "Aftonbladet PL (LIVE)"
+        ? "Aftonbladet VM 2026 (LIVE)"
         : "mock-datasetet";
     if (
       !confirm(
@@ -49,11 +49,11 @@ export function IngestPanel() {
 
       <Block
         title="AFTONBLADET (LIVE)"
-        body="Riktig PL-data via api-manager.aftonbladet.se. ~600 spelare och alla rondsnapshots. Kan ta 30-60 sek."
+        body="Riktig VM 2026-data via api-manager.aftonbladet.se (spel 735). 48 nationer, ~1300 spelare och alla rondsnapshots. Kan ta 30-60 sek. Cron uppdaterar varje timme."
         primaryLabel="[ KÖR AFTONBLADET INGEST → ]"
         primaryTone="cyan"
         onPrimary={() => run(() => runIngestAction("aftonbladet"))}
-        wipeLabel="[ ! RENSA & RE-INGEST PL ]"
+        wipeLabel="[ ! RENSA & RE-INGEST VM ]"
         onWipe={() => wipeConfirmed("aftonbladet")}
         pending={pending}
       />
@@ -78,6 +78,7 @@ export function IngestPanel() {
             <Line k="RONDER INSERT" v={summary.roundsInserted} />
             <Line k="RONDER UPDATE" v={summary.roundsUpdated} />
             <Line k="SNAPSHOTS INSERT" v={summary.snapshotsInserted} />
+            <Line k="SNAPSHOTS UPDATE" v={summary.snapshotsUpdated} />
             <Line
               k="ORFNARS"
               v={
@@ -86,6 +87,11 @@ export function IngestPanel() {
                   : `${summary.orphanedPlayers.length} st`
               }
               tone={summary.orphanedPlayers.length > 0 ? "warn" : undefined}
+            />
+            <Line
+              k="DEAKTIVERADE"
+              v={summary.playersDeactivated}
+              tone={summary.playersDeactivated > 0 ? "warn" : undefined}
             />
           </dl>
         </section>

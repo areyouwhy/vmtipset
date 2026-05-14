@@ -14,6 +14,7 @@ import {
   type TeamRoundScore,
 } from "@/db/schema";
 import { getBetTotalsByTeam } from "./bets-data";
+import { currentRules } from "./rules";
 
 export type LeaderboardPerRound = {
   roundId: string;
@@ -33,6 +34,8 @@ export type LeaderboardRow = {
   perRound: LeaderboardPerRound[];
   /** Sum of awarded points across all scored daily bets — separate pool. */
   dailyBetsPoints: number;
+  /** Sum of player prices for the team's latest squad. null if no squad yet. */
+  teamValueSek: number | null;
 };
 
 export type DailyBetsRow = {
@@ -48,6 +51,8 @@ export type Leaderboard = {
   rows: LeaderboardRow[];
   dailyBets: DailyBetsRow[];
   latestScoredRoundId: string | null;
+  /** True once at least one round has been scored. */
+  anyScored: boolean;
 };
 
 /**
@@ -56,14 +61,25 @@ export type Leaderboard = {
  * lower numeric rank (`1, 2, 2, 4`).
  */
 export async function getLeaderboard(): Promise<Leaderboard> {
-  const [allRounds, allScores, allTeams, allUsers, dailyBetsByTeam] =
-    await Promise.all([
-      db.select().from(rounds).orderBy(asc(rounds.number)),
-      db.select().from(teamRoundScores),
-      db.select().from(teams),
-      db.select().from(users),
-      getBetTotalsByTeam(),
-    ]);
+  const [
+    allRounds,
+    allScores,
+    allTeams,
+    allUsers,
+    dailyBetsByTeam,
+    allSquads,
+    allSquadPlayers,
+    allSnapshots,
+  ] = await Promise.all([
+    db.select().from(rounds).orderBy(asc(rounds.number)),
+    db.select().from(teamRoundScores),
+    db.select().from(teams),
+    db.select().from(users),
+    getBetTotalsByTeam(),
+    db.select().from(squads),
+    db.select().from(squadPlayers),
+    db.select().from(playerRoundSnapshots),
+  ]);
 
   const userById = new Map(allUsers.map((u) => [u.id, u]));
   const teamById = new Map(allTeams.map((t) => [t.id, t]));
@@ -114,7 +130,68 @@ export async function getLeaderboard(): Promise<Leaderboard> {
     return ranks;
   };
 
-  const currentRanks = ranksFor(totalByTeam);
+  // Team value: sum of player prices for the team's most recent squad's
+  // round, using API-snapshot priority (manual wins over api when both exist).
+  const roundOrderIndex = new Map(allRounds.map((r, i) => [r.id, i] as const));
+  const latestSquadByTeam = new Map<string, { roundId: string; squadId: string }>();
+  for (const sq of allSquads) {
+    const cur = latestSquadByTeam.get(sq.teamId);
+    const curIdx = cur ? (roundOrderIndex.get(cur.roundId) ?? -1) : -1;
+    const newIdx = roundOrderIndex.get(sq.roundId) ?? -1;
+    if (newIdx > curIdx) {
+      latestSquadByTeam.set(sq.teamId, { roundId: sq.roundId, squadId: sq.id });
+    }
+  }
+  const playerIdsBySquad = new Map<string, string[]>();
+  for (const sp of allSquadPlayers) {
+    const arr = playerIdsBySquad.get(sp.squadId) ?? [];
+    arr.push(sp.playerId);
+    playerIdsBySquad.set(sp.squadId, arr);
+  }
+  // Best snapshot per (round, player): manual beats api when both present.
+  const snapshotByRoundPlayer = new Map<string, number>();
+  for (const s of allSnapshots) {
+    const key = `${s.roundId}::${s.playerId}`;
+    const existing = snapshotByRoundPlayer.get(key);
+    if (existing === undefined || s.source === "manual") {
+      snapshotByRoundPlayer.set(key, s.priceSek);
+    }
+  }
+  const teamValueByTeam = new Map<string, number | null>();
+  for (const t of allTeams) {
+    const latest = latestSquadByTeam.get(t.id);
+    if (!latest) {
+      teamValueByTeam.set(t.id, null);
+      continue;
+    }
+    const pids = playerIdsBySquad.get(latest.squadId) ?? [];
+    if (pids.length === 0) {
+      teamValueByTeam.set(t.id, null);
+      continue;
+    }
+    let sum = 0;
+    let missing = false;
+    for (const pid of pids) {
+      const price = snapshotByRoundPlayer.get(`${latest.roundId}::${pid}`);
+      if (price === undefined) {
+        missing = true;
+        break;
+      }
+      sum += price;
+    }
+    teamValueByTeam.set(t.id, missing ? null : sum);
+  }
+
+  // Before any round is scored everyone is tied at 0 points. Fall back to
+  // team value so the table still has a meaningful numbered ordering.
+  const currentRanks =
+    scoredRounds.length > 0
+      ? ranksFor(totalByTeam)
+      : ranksFor(
+          new Map(
+            allTeams.map((t) => [t.id, teamValueByTeam.get(t.id) ?? 0] as const),
+          ),
+        );
   const prevRanks =
     previousScoredRounds.length > 0 ? ranksFor(prevTotalByTeam) : null;
 
@@ -148,6 +225,7 @@ export async function getLeaderboard(): Promise<Leaderboard> {
       totalPointsSek: total,
       perRound,
       dailyBetsPoints: dailyBetsByTeam.get(t.id) ?? 0,
+      teamValueSek: teamValueByTeam.get(t.id) ?? null,
     };
   });
 
@@ -189,6 +267,7 @@ export async function getLeaderboard(): Promise<Leaderboard> {
     rows,
     dailyBets,
     latestScoredRoundId: latestScored?.id ?? null,
+    anyScored: scoredRounds.length > 0,
   };
 }
 
@@ -214,6 +293,10 @@ export type TeamDetailRoundLine = {
   hasSquad: boolean;
   score: TeamRoundScore | null;
   players: TeamDetailPlayer[];
+  /** Sum of priceSek across the 11 players for this round (null if any price missing). */
+  teamValueSek: number | null;
+  /** budget − teamValue, or null if teamValue couldn't be computed. */
+  unusedSek: number | null;
 };
 
 export type TeamDetail = {
@@ -222,6 +305,11 @@ export type TeamDetail = {
   ownerHandle: string;
   totalPointsSek: number;
   rank: number | null;
+  budgetSek: number;
+  /** Unused budget for the most recent round that has a squad. null if no squad yet. */
+  currentBankSek: number | null;
+  /** Sum of player prices for the most recent round that has a squad. */
+  currentTeamValueSek: number | null;
   byRound: TeamDetailRoundLine[];
 };
 
@@ -322,6 +410,18 @@ export async function getTeamDetail(
       if (a.isCaptain !== b.isCaptain) return a.isCaptain ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
+    // Team value = sum of priceSek across all 11 players for this round.
+    // If any one player's snapshot is missing for this round, leave null —
+    // partial sums would be misleading.
+    const hasAnyMissingPrice =
+      linePlayers.length === 0 ||
+      linePlayers.some((p) => p.priceSek === null);
+    const teamValueSek = hasAnyMissingPrice
+      ? null
+      : linePlayers.reduce((acc, p) => acc + (p.priceSek ?? 0), 0);
+    const unusedSek =
+      teamValueSek === null ? null : currentRules.budgetSek - teamValueSek;
+
     return {
       roundId: r.id,
       roundNumber: r.number,
@@ -330,6 +430,8 @@ export async function getTeamDetail(
       hasSquad: !!sq,
       score: scoreByRound.get(r.id) ?? null,
       players: linePlayers,
+      teamValueSek,
+      unusedSek,
     };
   });
 
@@ -342,12 +444,21 @@ export async function getTeamDetail(
   const handle =
     owner?.displayName || owner?.email.split("@")[0] || "okänd";
 
+  // "Current" = the most recent round that has a squad. Reflects what the
+  // user actually owns right now, not historical values.
+  const latestWithSquad = [...byRound].reverse().find((l) => l.hasSquad);
+  const currentBankSek = latestWithSquad?.unusedSek ?? null;
+  const currentTeamValueSek = latestWithSquad?.teamValueSek ?? null;
+
   return {
     teamId: team.id,
     teamName: team.name,
     ownerHandle: handle,
     totalPointsSek: total,
     rank: me?.rank ?? null,
+    budgetSek: currentRules.budgetSek,
+    currentBankSek,
+    currentTeamValueSek,
     byRound,
   };
 }

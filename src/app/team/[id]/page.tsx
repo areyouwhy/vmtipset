@@ -30,12 +30,33 @@ export default async function TeamPage({
           <h1 className="mt-1 text-2xl font-bold uppercase tracking-tight text-yellow sm:text-3xl">
             {detail.teamName}
           </h1>
-          <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Stat
               label="PLACERING"
               value={detail.rank ? `#${detail.rank}` : "—"}
             />
             <Stat label="TOTAL" value={fmtSek(detail.totalPointsSek)} />
+            <Stat
+              label="LAGVÄRDE"
+              value={
+                detail.currentTeamValueSek === null
+                  ? "—"
+                  : fmtSek(detail.currentTeamValueSek)
+              }
+            />
+            <Stat
+              label="BANK"
+              value={
+                detail.currentBankSek === null
+                  ? "—"
+                  : fmtSek(detail.currentBankSek)
+              }
+              tone={
+                detail.currentBankSek !== null && detail.currentBankSek < 0
+                  ? "red"
+                  : undefined
+              }
+            />
           </div>
         </section>
 
@@ -102,6 +123,21 @@ function RoundSection({
         </dl>
       )}
 
+      {line.hasSquad && line.teamValueSek !== null && (
+        <dl className="mt-3 grid grid-cols-2 gap-2 text-[11px] tabular-nums sm:grid-cols-2">
+          <KV k="LAGVÄRDE" v={fmtSek(line.teamValueSek)} />
+          <KV
+            k="BANK / OANVÄNT"
+            v={line.unusedSek === null ? "—" : fmtSek(line.unusedSek)}
+            tone={
+              line.unusedSek !== null && line.unusedSek < 0
+                ? "red"
+                : undefined
+            }
+          />
+        </dl>
+      )}
+
       {line.hasSquad ? (
         <ul className="mt-4 divide-y divide-dotted divide-border/60 border border-border">
           {line.players.map((p) => (
@@ -144,11 +180,20 @@ function PlayerLine({ p }: { p: TeamDetailPlayer }) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "red";
+}) {
+  const valueClass = tone === "red" ? "text-red" : "text-yellow";
   return (
     <div>
       <p className="text-[10px] uppercase tracking-widest text-dim">{label}</p>
-      <p className="mt-1 text-xl font-bold tabular-nums text-yellow">
+      <p className={`mt-1 text-xl font-bold tabular-nums ${valueClass}`}>
         {value}
       </p>
     </div>
@@ -162,16 +207,18 @@ function KV({
 }: {
   k: string;
   v: string;
-  tone?: "yellow";
+  tone?: "yellow" | "red";
 }) {
+  const valueClass =
+    tone === "yellow"
+      ? "text-yellow font-bold"
+      : tone === "red"
+        ? "text-red font-bold"
+        : "text-foreground";
   return (
     <div>
       <dt className="text-[10px] uppercase tracking-widest text-dim">{k}</dt>
-      <dd
-        className={`mt-0.5 ${tone === "yellow" ? "text-yellow font-bold" : "text-foreground"}`}
-      >
-        {v}
-      </dd>
+      <dd className={`mt-0.5 ${valueClass}`}>{v}</dd>
     </div>
   );
 }

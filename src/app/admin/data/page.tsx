@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   clubs,
@@ -11,17 +11,19 @@ import { isAdmin } from "@/lib/auth";
 import { IngestPanel } from "./ingest-panel";
 
 async function getCounts() {
-  const [c, p, r, s] = await Promise.all([
+  const [c, p, r, s, inactive] = await Promise.all([
     db.select({ n: count() }).from(clubs),
     db.select({ n: count() }).from(players),
     db.select({ n: count() }).from(rounds),
     db.select({ n: count() }).from(playerRoundSnapshots),
+    db.select({ n: count() }).from(players).where(eq(players.active, false)),
   ]);
   return {
     clubs: c[0].n,
     players: p[0].n,
     rounds: r[0].n,
     snapshots: s[0].n,
+    inactive: inactive[0].n,
   };
 }
 
@@ -49,9 +51,10 @@ export default async function AdminDataPage() {
           </p>
         </section>
 
-        <section className="grid grid-cols-2 gap-0 border border-border sm:grid-cols-4">
+        <section className="grid grid-cols-2 gap-0 border border-border sm:grid-cols-5">
           <Stat label="KLUBBAR" value={counts.clubs} />
           <Stat label="SPELARE" value={counts.players} />
+          <Stat label="EJ AKTIVA" value={counts.inactive} tone="warn" />
           <Stat label="RONDER" value={counts.rounds} />
           <Stat label="SNAPSHOTS" value={counts.snapshots} />
         </section>
@@ -62,11 +65,21 @@ export default async function AdminDataPage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: "warn";
+}) {
+  const valueClass =
+    tone === "warn" && value > 0 ? "text-red" : "text-yellow";
   return (
     <div className="border-r border-border p-4 last:border-r-0">
       <p className="text-[10px] uppercase tracking-widest text-dim">{label}</p>
-      <p className="mt-2 text-3xl font-bold tabular-nums text-yellow">
+      <p className={`mt-2 text-3xl font-bold tabular-nums ${valueClass}`}>
         {String(value).padStart(3, "0")}
       </p>
     </div>

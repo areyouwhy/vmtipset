@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { SignOutButton } from "@clerk/nextjs";
+import { SignOutLink } from "./sign-out-link";
 import { db } from "@/db";
 import { teams } from "@/db/schema";
 import { getOrCreateDbUser, isAdmin } from "@/lib/auth";
@@ -46,10 +46,13 @@ export default async function AppPage() {
     rejected: "text-red",
   };
 
-  // Pull leaderboard row for this team if any rounds have been scored
+  // Leaderboard powers both the standing panel and the league table. Fetch
+  // once for any signed-in user (cheap; only teams + scores reads).
+  const lb = await getLeaderboard();
+  const anyScored = lb.rounds.some((r) => r.isScored);
+
   let myStanding: { rank: number; total: number; lastRoundPoints: number | null } | null = null;
   if (team && user.status === "approved") {
-    const lb = await getLeaderboard();
     const me = lb.rows.find((r) => r.teamId === team.id);
     const lastScored = lb.rounds.filter((r) => r.isScored).at(-1);
     if (me && lastScored) {
@@ -76,7 +79,7 @@ export default async function AppPage() {
                 ADMIN
               </a>
             )}
-            <SignOutButton><button className="text-dim hover:text-red">LOGGA UT</button></SignOutButton>
+            <SignOutLink />
           </div>
         </header>
 
@@ -143,9 +146,106 @@ export default async function AppPage() {
             </>
           )}
           {user.status === "rejected" && <RejectedPanel />}
+
+          {lb.rows.length > 0 && (
+            <LeagueTablePanel
+              rows={lb.rows}
+              myTeamId={team?.id ?? null}
+              anyScored={anyScored}
+            />
+          )}
         </div>
       </div>
     </main>
+  );
+}
+
+function LeagueTablePanel({
+  rows,
+  myTeamId,
+  anyScored,
+}: {
+  rows: Awaited<ReturnType<typeof getLeaderboard>>["rows"];
+  myTeamId: string | null;
+  anyScored: boolean;
+}) {
+  // rows are already in rank order from getLeaderboard — points when scored,
+  // team value otherwise. Top 5 + always include the viewer's row if it falls
+  // outside the cut.
+  const TOP_N = 5;
+  const top = rows.slice(0, TOP_N);
+  const mine = myTeamId ? rows.find((r) => r.teamId === myTeamId) : null;
+  const mineOutsideTop =
+    mine && !top.some((r) => r.teamId === myTeamId) ? mine : null;
+  const headerLabel = anyScored ? "POÄNG" : "VÄRDE";
+
+  return (
+    <section className="border border-border">
+      <header className="flex items-baseline justify-between border-b border-border px-4 py-2 text-[10px] uppercase tracking-widest">
+        <span className="text-yellow">
+          {anyScored ? "TABELL" : "LAG I LIGAN"}
+        </span>
+        <span className="text-dim tabular-nums">
+          TOPP {Math.min(TOP_N, rows.length)} / {rows.length}
+        </span>
+      </header>
+      <ul className="divide-y divide-border">
+        {top.map((row) => (
+          <LeagueRow key={row.teamId} row={row} mine={row.teamId === myTeamId} anyScored={anyScored} />
+        ))}
+        {mineOutsideTop && (
+          <>
+            <li className="px-4 py-1 text-center text-[10px] uppercase tracking-widest text-dim">
+              · · ·
+            </li>
+            <LeagueRow row={mineOutsideTop} mine anyScored={anyScored} />
+          </>
+        )}
+      </ul>
+      <footer className="flex items-baseline justify-between border-t border-border px-4 py-2 text-[10px] uppercase tracking-widest">
+        <span className="text-dim">{headerLabel}</span>
+        <Link href="/leaderboard" className="text-cyan hover:underline">
+          [ HELA TABELLEN → ]
+        </Link>
+      </footer>
+    </section>
+  );
+}
+
+function LeagueRow({
+  row,
+  mine,
+  anyScored,
+}: {
+  row: Awaited<ReturnType<typeof getLeaderboard>>["rows"][number];
+  mine: boolean;
+  anyScored: boolean;
+}) {
+  const value = anyScored ? row.totalPointsSek : row.teamValueSek;
+  return (
+    <li
+      className={`grid grid-cols-[2.25rem_1fr_auto] items-baseline gap-3 px-4 py-2 text-sm ${
+        mine ? "bg-yellow/10" : ""
+      }`}
+    >
+      <span className="tabular-nums text-yellow font-bold">
+        {String(row.rank).padStart(2, "0")}
+      </span>
+      <Link
+        href={`/team/${row.teamId}`}
+        className={`min-w-0 truncate ${
+          mine ? "text-yellow" : "text-foreground"
+        } hover:text-cyan`}
+      >
+        {row.teamName}
+        <span className="ml-2 text-[10px] uppercase tracking-widest text-dim">
+          {row.ownerHandle}
+        </span>
+      </Link>
+      <span className="tabular-nums text-yellow">
+        {value === null ? "—" : fmtSek(value)}
+      </span>
+    </li>
   );
 }
 

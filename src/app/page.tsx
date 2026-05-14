@@ -1,5 +1,5 @@
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import { SignUpInButtons } from "./auth-buttons";
 import { count, eq } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
@@ -50,10 +50,7 @@ export default async function Home() {
               [ TILL LIGAN → ]
             </Link>
           ) : (
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <SignUpButton mode="modal"><button className="flex-1 border border-yellow bg-yellow px-6 py-3 text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90">[ SKAPA KONTO ]</button></SignUpButton>
-              <SignInButton mode="modal"><button className="flex-1 border border-border px-6 py-3 text-sm font-bold uppercase tracking-widest text-foreground transition hover:border-cyan hover:text-cyan">[ LOGGA IN ]</button></SignInButton>
-            </div>
+            <SignUpInButtons />
           )}
         </div>
 
