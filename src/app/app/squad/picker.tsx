@@ -876,8 +876,12 @@ function PlayerRow({
         </p>
         <p className="truncate text-[10px] uppercase tracking-widest text-dim">
           {player.countryCode ?? "—"}
-          {" · "}
-          {player.clubShortName}
+          {player.domesticClub && (
+            <>
+              {" · "}
+              <span className="text-cyan/80">{player.domesticClub}</span>
+            </>
+          )}
           {greyed && reason && (
             <span className="ml-2 text-red">! {reason}</span>
           )}

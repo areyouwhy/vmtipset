@@ -1,4 +1,5 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
+import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
 import {
   clubs,
@@ -38,6 +39,9 @@ export type PickablePlayer = {
   trend: number;
   skinColor: string | null;
   hairColor: string | null;
+  /** Domestic club at WC time (e.g. "Inter Miami CF"). null if unknown.
+   *  Static lookup keyed by Aftonbladet player externalId. */
+  domesticClub: string | null;
 };
 
 export async function getActiveRound(): Promise<Round | null> {
@@ -138,6 +142,7 @@ export async function getPickablePlayers(
           trend: snap.trend,
           skinColor: p.skinColor ?? null,
           hairColor: p.hairColor ?? null,
+          domesticClub: clubFor(p.externalId),
         },
       ];
     })

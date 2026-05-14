@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { clubFor } from "@/data/player-clubs";
 import { Jersey } from "@/lib/jersey";
 import { getPlayerDetail } from "@/lib/players-data";
 
@@ -17,6 +18,7 @@ export default async function PublicPlayerPage({
 
   const { player, club, rounds: roundLines } = detail;
   const countryCode = club?.countryCode ?? null;
+  const domesticClub = clubFor(player.externalId);
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
@@ -49,6 +51,13 @@ export default async function PublicPlayerPage({
                 >
                   {countryCode} ↗
                 </Link>
+                {domesticClub && (
+                  <>
+                    <span className="mx-2 text-dim">·</span>
+                    <span className="text-cyan/80">KLUBB: </span>
+                    <span className="text-foreground">{domesticClub}</span>
+                  </>
+                )}
               </p>
             )}
           </div>

@@ -104,8 +104,14 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
               <span className="text-yellow tabular-nums">{r.position}</span>
               <span className="min-w-0">
                 <span className="block truncate text-foreground">{r.name}</span>
-                <span className="block text-[10px] uppercase tracking-widest text-dim">
-                  {r.countryCode ?? "—"} · {r.clubShortName}
+                <span className="block truncate text-[10px] uppercase tracking-widest text-dim">
+                  {r.countryCode ?? "—"}
+                  {r.domesticClub && (
+                    <>
+                      {" · "}
+                      <span className="text-cyan/80">{r.domesticClub}</span>
+                    </>
+                  )}
                 </span>
               </span>
               <span className="tabular-nums text-foreground">

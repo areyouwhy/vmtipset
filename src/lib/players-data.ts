@@ -1,4 +1,5 @@
 import { asc, eq } from "drizzle-orm";
+import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
 import {
   clubs,
@@ -24,6 +25,8 @@ export type PlayerListRow = {
   currentPriceSek: number | null;
   /** Count of manual admin overrides across all rounds (0 for clean data). */
   manualOverrides: number;
+  /** Domestic club at WC time (e.g. "Inter Miami CF"); null if unknown. */
+  domesticClub: string | null;
 };
 
 /**
@@ -83,6 +86,7 @@ export async function getPlayerListRows(): Promise<PlayerListRow[]> {
       basePriceSek: baselineByPlayer.get(p.id)?.priceSek ?? null,
       currentPriceSek: latestByPlayer.get(p.id)?.priceSek ?? null,
       manualOverrides: manualCountByPlayer.get(p.id) ?? 0,
+      domesticClub: clubFor(p.externalId),
     };
   });
 }
