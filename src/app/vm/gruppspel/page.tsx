@@ -143,11 +143,30 @@ function GroupSection({
           <summary className="cursor-pointer px-3 py-2 text-[10px] uppercase tracking-widest text-dim hover:text-cyan">
             MATCHER ({view.matches.length}) ▾
           </summary>
-          <ul className="divide-y divide-border/40 px-3 pb-3">
-            {view.matches.map((m) => (
-              <MatchLine key={m.externalId} m={m} teamsById={view.teamsById} />
-            ))}
-          </ul>
+          <div className="px-3 pb-3">
+            {/* Group stage runs across rounds 1–3 (one matchday each).
+                Render a sub-header per matchday for orientation. */}
+            {[1, 2, 3].map((round) => {
+              const inRound = view.matches.filter((m) => m.roundNumber === round);
+              if (inRound.length === 0) return null;
+              return (
+                <div key={round} className="mt-2 first:mt-0">
+                  <p className="border-b border-border/40 pb-0.5 text-[9px] uppercase tracking-widest text-yellow/80">
+                    OMGÅNG {round}
+                  </p>
+                  <ul className="divide-y divide-border/40">
+                    {inRound.map((m) => (
+                      <MatchLine
+                        key={m.externalId}
+                        m={m}
+                        teamsById={view.teamsById}
+                      />
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
         </details>
       )}
     </section>

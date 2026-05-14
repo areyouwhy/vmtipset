@@ -122,6 +122,10 @@ export type WcMatch = {
   kickoff: string; // ISO
   status: "pending" | "ongoing" | "finished" | string;
   matchGroupId: number;
+  /** Fantasy-game round (1–8) the match belongs to. For the group stage
+   *  this is also the WC matchday (1, 2, 3). For knockout it identifies
+   *  the bracket round (R32, R16, QF, SF/Bronze, Final). */
+  roundNumber: number;
   homeTeamId: number;
   awayTeamId: number;
   homeScore: number | null;
@@ -175,7 +179,7 @@ function extractScore(periods: RawPeriod[]): { home: number; away: number } | nu
   return null;
 }
 
-function normaliseMatch(m: RawMatch): WcMatch {
+function normaliseMatch(m: RawMatch, roundNumber: number): WcMatch {
   const home = m.teams.find((t) => t.type === "home");
   const away = m.teams.find((t) => t.type === "away");
   const score = extractScore(m.periods);
@@ -184,6 +188,7 @@ function normaliseMatch(m: RawMatch): WcMatch {
     kickoff: m.start,
     status: m.status,
     matchGroupId: m.matchGroupId,
+    roundNumber,
     homeTeamId: home?.team ?? 0,
     awayTeamId: away?.team ?? 0,
     homeScore: score?.home ?? null,
@@ -224,12 +229,14 @@ export async function getMatchGroups(): Promise<Map<number, WcMatchGroup>> {
 export async function getAllMatches(): Promise<WcMatch[]> {
   const perRound = await Promise.all(
     Array.from({ length: ROUND_COUNT }, (_, i) =>
-      fetchJson<RawMatch[]>(`games/${GAME_ID}/rounds/${i + 1}/matches`).catch(
-        () => [] as RawMatch[],
-      ),
+      fetchJson<RawMatch[]>(`games/${GAME_ID}/rounds/${i + 1}/matches`)
+        .then((ms) => ({ round: i + 1, matches: ms }))
+        .catch(() => ({ round: i + 1, matches: [] as RawMatch[] })),
     ),
   );
-  return perRound.flat().map(normaliseMatch);
+  return perRound.flatMap(({ round, matches }) =>
+    matches.map((m) => normaliseMatch(m, round)),
+  );
 }
 
 export async function getGroupStandings(): Promise<WcGroupStanding[]> {
