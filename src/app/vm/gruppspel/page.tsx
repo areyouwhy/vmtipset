@@ -23,9 +23,12 @@ export default async function LandslagIndexPage() {
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
         <Breadcrumbs
-          trail={[{ label: "LANDSLAG" }]}
+          trail={[
+            { label: "VM", href: "/vm" },
+            { label: "GRUPPSPEL" },
+          ]}
           right={
-            <Link href="/knockout" className="text-cyan hover:text-yellow">
+            <Link href="/vm/slutspel" className="text-cyan hover:text-yellow">
               SLUTSPEL →
             </Link>
           }
@@ -33,7 +36,7 @@ export default async function LandslagIndexPage() {
 
         <section className="py-6">
           <h1 className="text-2xl font-bold uppercase tracking-tight text-yellow">
-            LANDSLAG
+            GRUPPSPEL
           </h1>
           <p className="mt-2 text-sm text-dim">
             Alla 48 landslag i VM 2026 indelade i sina gruppspels-grupper.

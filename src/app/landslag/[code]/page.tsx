@@ -27,7 +27,8 @@ export default async function NationPage({
       <div className="mx-auto w-full max-w-3xl">
         <Breadcrumbs
           trail={[
-            { label: "LANDSLAG", href: "/landslag" },
+            { label: "VM", href: "/vm" },
+            { label: "GRUPPSPEL", href: "/vm/gruppspel" },
             { label: detail.countryName.toUpperCase() },
           ]}
         />
@@ -46,7 +47,7 @@ export default async function NationPage({
                 <span>
                   <span className="text-dim">GRUPP </span>
                   <Link
-                    href={`/landslag#grupp-${group}`}
+                    href={`/vm/gruppspel#grupp-${group}`}
                     className="text-cyan tabular-nums hover:text-yellow"
                   >
                     {group}

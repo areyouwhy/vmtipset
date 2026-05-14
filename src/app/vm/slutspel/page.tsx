@@ -30,9 +30,12 @@ export default async function KnockoutPage() {
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-2xl">
         <Breadcrumbs
-          trail={[{ label: "SLUTSPEL" }]}
+          trail={[
+            { label: "VM", href: "/vm" },
+            { label: "SLUTSPEL" },
+          ]}
           right={
-            <Link href="/landslag" className="text-cyan hover:text-yellow">
+            <Link href="/vm/gruppspel" className="text-cyan hover:text-yellow">
               ← GRUPPSPEL
             </Link>
           }
