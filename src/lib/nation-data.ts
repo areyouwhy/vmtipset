@@ -8,6 +8,7 @@ import {
   type Player,
   type PlayerRoundSnapshot,
 } from "@/db/schema";
+import { currentRules } from "@/lib/rules";
 
 export type NationPlayer = {
   id: string;
@@ -31,11 +32,14 @@ export type NationDetail = {
   countryName: string;
   /** All active players from this country, sorted by position then price. */
   players: NationPlayer[];
-  /** "Best XI": 1 GK + 4 DEF + 3 MID + 3 FWD picked by current price,
-   *  captain = most expensive FWD (or most expensive overall if no FWD). */
+  /** "Best XI" under the most expensive legal formation. Captain = most
+   *  expensive FWD (or most expensive overall if no FWD picked). */
   startingEleven: StartingEleven;
-  /** Sum of priceSek across the 11 best-XI players. null if any of those
-   *  11 has no price (so we don't show a partial number). */
+  /** The formation actually chosen (def-mid-fwd). null when the roster
+   *  can't fill any legal shape. */
+  dreamTeamFormation: { def: number; mid: number; fwd: number } | null;
+  /** Sum of priceSek across the 11 best-XI players. null if no valid XI
+   *  could be built (roster too short or prices missing). */
   dreamTeamValueSek: number | null;
 };
 
@@ -44,11 +48,14 @@ function priceOf(p: NationPlayer): number {
 }
 
 /**
- * Pick the most expensive starting XI (4-3-3) for a roster + flag whether
- * its total value is fully known. Pure function — no IO.
+ * Pick the highest-value legal starting XI for this roster. Tries every
+ * formation allowed by the rules (4-3-3, 4-4-2, 3-5-2, etc.) and keeps
+ * the one whose top-N picks per position sum to the most. Pure function —
+ * no IO. Returns null formation/value when no legal shape fits.
  */
 function buildDreamTeam(roster: NationPlayer[]): {
   startingEleven: StartingEleven;
+  dreamTeamFormation: { def: number; mid: number; fwd: number } | null;
   dreamTeamValueSek: number | null;
 } {
   const byPos = {
@@ -60,31 +67,78 @@ function buildDreamTeam(roster: NationPlayer[]): {
   for (const k of Object.keys(byPos) as (keyof typeof byPos)[]) {
     byPos[k].sort((a, b) => priceOf(b) - priceOf(a));
   }
-  const startingEleven: StartingEleven = {
-    GK: byPos.GK.slice(0, 1),
-    DEF: byPos.DEF.slice(0, 4),
-    MID: byPos.MID.slice(0, 3),
-    FWD: byPos.FWD.slice(0, 3),
-    captainId:
-      byPos.FWD[0]?.id ??
-      [...byPos.MID, ...byPos.DEF, ...byPos.GK].sort(
-        (a, b) => priceOf(b) - priceOf(a),
-      )[0]?.id ??
-      null,
-  };
-  const xi = [
-    ...startingEleven.GK,
-    ...startingEleven.DEF,
-    ...startingEleven.MID,
-    ...startingEleven.FWD,
-  ];
-  // If we couldn't fill the formation (very small roster) the value is null.
-  if (xi.length < 11) return { startingEleven, dreamTeamValueSek: null };
-  const anyMissing = xi.some((p) => p.priceSek === null && p.basePriceSek === null);
-  const total = xi.reduce((acc, p) => acc + (p.priceSek ?? p.basePriceSek ?? 0), 0);
+
+  // No goalkeeper at all → no legal XI.
+  if (byPos.GK.length === 0) {
+    return {
+      startingEleven: {
+        GK: [], DEF: [], MID: [], FWD: [], captainId: null,
+      },
+      dreamTeamFormation: null,
+      dreamTeamValueSek: null,
+    };
+  }
+
+  let best: {
+    formation: { def: number; mid: number; fwd: number };
+    xi: NationPlayer[];
+    value: number;
+    eleven: StartingEleven;
+  } | null = null;
+
+  for (const f of currentRules.legalFormations) {
+    if (
+      byPos.DEF.length < f.def ||
+      byPos.MID.length < f.mid ||
+      byPos.FWD.length < f.fwd
+    ) {
+      continue;
+    }
+    const gk = byPos.GK.slice(0, 1);
+    const def = byPos.DEF.slice(0, f.def);
+    const mid = byPos.MID.slice(0, f.mid);
+    const fwd = byPos.FWD.slice(0, f.fwd);
+    const xi = [...gk, ...def, ...mid, ...fwd];
+    const anyMissing = xi.some(
+      (p) => p.priceSek === null && p.basePriceSek === null,
+    );
+    if (anyMissing) continue;
+    const value = xi.reduce(
+      (acc, p) => acc + (p.priceSek ?? p.basePriceSek ?? 0),
+      0,
+    );
+    const eleven: StartingEleven = {
+      GK: gk,
+      DEF: def,
+      MID: mid,
+      FWD: fwd,
+      captainId:
+        fwd[0]?.id ??
+        [...mid, ...def, ...gk].sort((a, b) => priceOf(b) - priceOf(a))[0]?.id ??
+        null,
+    };
+    if (!best || value > best.value) {
+      best = { formation: f, xi, value, eleven };
+    }
+  }
+
+  if (!best) {
+    return {
+      startingEleven: {
+        GK: byPos.GK.slice(0, 1),
+        DEF: byPos.DEF.slice(0, 4),
+        MID: byPos.MID.slice(0, 3),
+        FWD: byPos.FWD.slice(0, 3),
+        captainId: null,
+      },
+      dreamTeamFormation: null,
+      dreamTeamValueSek: null,
+    };
+  }
   return {
-    startingEleven,
-    dreamTeamValueSek: anyMissing ? null : total,
+    startingEleven: best.eleven,
+    dreamTeamFormation: best.formation,
+    dreamTeamValueSek: best.value,
   };
 }
 
@@ -168,7 +222,8 @@ export async function getNationDetail(
       basePriceSek: baseline.get(p.id) ?? null,
     }));
 
-  const { startingEleven, dreamTeamValueSek } = buildDreamTeam(roster);
+  const { startingEleven, dreamTeamFormation, dreamTeamValueSek } =
+    buildDreamTeam(roster);
 
   // Full roster ordering: GK→FWD, then price desc.
   const order = { GK: 0, DEF: 1, MID: 2, FWD: 3 } as const;
@@ -184,6 +239,7 @@ export async function getNationDetail(
     countryName: club.name,
     players: roster,
     startingEleven,
+    dreamTeamFormation,
     dreamTeamValueSek,
   };
 }

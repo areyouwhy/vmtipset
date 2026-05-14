@@ -84,13 +84,29 @@ export default async function NationPage({
 
         <section className="border-t border-border pt-6">
           <h2 className="mb-2 text-[10px] uppercase tracking-widest text-dim">
-            DREAM TEAM · DYRASTE STARTELVA · 4-3-3
+            DREAM TEAM · DYRASTE STARTELVA
+            {detail.dreamTeamFormation && (
+              <>
+                {" · "}
+                <span className="text-yellow tabular-nums">
+                  {detail.dreamTeamFormation.def}-
+                  {detail.dreamTeamFormation.mid}-
+                  {detail.dreamTeamFormation.fwd}
+                </span>
+              </>
+            )}
           </h2>
-          <Pitch
-            countryCode={detail.countryCode}
-            xi={xi}
-            captainId={captainId}
-          />
+          {detail.dreamTeamFormation ? (
+            <Pitch
+              countryCode={detail.countryCode}
+              xi={xi}
+              captainId={captainId}
+            />
+          ) : (
+            <p className="border border-dashed border-border p-3 text-xs text-dim">
+              — för få spelare för en laglig formation —
+            </p>
+          )}
         </section>
 
         <section className="mt-6 border-t border-border pt-6">
