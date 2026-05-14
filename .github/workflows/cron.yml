@@ -1,0 +1,50 @@
+name: cron
+
+# Vercel Hobby caps crons at one run/day, so we keep a daily run in
+# vercel.json as a backstop and trigger the same endpoints from GitHub
+# Actions on a tighter schedule. Both endpoints verify CRON_SECRET.
+#
+# Requires repo secrets:
+#   CRON_SECRET  — same value as the CRON_SECRET env var on Vercel
+#   CRON_BASE_URL (optional) — defaults to https://copa.ruy.se
+
+on:
+  schedule:
+    # lock-deadlines: every 10 min (light, idempotent — just checks deadlines)
+    - cron: "*/10 * * * *"
+    # aftonbladet-refresh: hourly at :05 (heavier — full ingest run)
+    - cron: "5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: cron-${{ github.event.schedule || 'manual' }}
+  cancel-in-progress: false
+
+jobs:
+  lock-deadlines:
+    if: github.event.schedule == '*/10 * * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Hit /api/cron/lock-deadlines
+        env:
+          BASE: ${{ vars.CRON_BASE_URL || 'https://copa.ruy.se' }}
+          SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -sS --fail-with-body --max-time 60 \
+            -H "Authorization: Bearer $SECRET" \
+            "$BASE/api/cron/lock-deadlines"
+
+  aftonbladet-refresh:
+    if: github.event.schedule == '5 * * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Hit /api/cron/aftonbladet-refresh
+        env:
+          BASE: ${{ vars.CRON_BASE_URL || 'https://copa.ruy.se' }}
+          SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -sS --fail-with-body --max-time 300 \
+            -H "Authorization: Bearer $SECRET" \
+            "$BASE/api/cron/aftonbladet-refresh"

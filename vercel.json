@@ -4,11 +4,11 @@
   "crons": [
     {
       "path": "/api/cron/lock-deadlines",
-      "schedule": "0 * * * *"
+      "schedule": "0 4 * * *"
     },
     {
       "path": "/api/cron/aftonbladet-refresh",
-      "schedule": "15 * * * *"
+      "schedule": "15 4 * * *"
     }
   ]
 }
