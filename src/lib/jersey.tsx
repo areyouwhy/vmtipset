@@ -28,22 +28,33 @@ export function Jersey({
 }
 
 /** Larger jersey rendered on the pitch / lineup view. Falls back to a flat
- *  country-code square when no jersey is baked for that code. */
+ *  country-code square when no jersey is baked for that code.
+ *
+ *  `size` is the desktop/max size. On narrow viewports the rendered jersey
+ *  scales down so four rows of chips can fit inside the pitch without
+ *  overflowing. Pass `responsive={false}` to opt out and pin to `size`. */
 export function PitchJersey({
   countryCode,
   size = 84,
+  responsive = true,
   ringClass = "",
 }: {
   countryCode: string | null | undefined;
   size?: number;
+  responsive?: boolean;
   ringClass?: string;
 }) {
   const src = jerseyPath(countryCode);
+  // clamp(minPx, viewport-relative preferred, maxPx) → caps at `size` on
+  // wider screens, shrinks to 14vw on narrow ones (≈ 56px at iPhone width).
+  const dim = responsive
+    ? `clamp(56px, 18vw, ${size}px)`
+    : `${size}px`;
   if (!src) {
     return (
       <span
         className={`flex items-center justify-center bg-[#222] text-[10px] font-bold uppercase tracking-wider text-yellow ${ringClass}`}
-        style={{ width: size, height: size }}
+        style={{ width: dim, height: dim }}
       >
         {countryCode ?? "—"}
       </span>
@@ -58,7 +69,7 @@ export function PitchJersey({
       alt=""
       aria-hidden="true"
       className={`block ${ringClass}`}
-      style={{ width: size, height: size }}
+      style={{ width: dim, height: dim }}
     />
   );
 }
