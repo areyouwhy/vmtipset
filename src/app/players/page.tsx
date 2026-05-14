@@ -1,22 +1,19 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { isAdmin } from "@/lib/auth";
 import { getPlayerListRows } from "@/lib/players-data";
-import { PlayerListClient } from "./list-client";
+import { PublicPlayersList } from "./list-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPlayersPage() {
-  if (!(await isAdmin())) redirect("/app");
+export default async function PlayersPage() {
   const rows = await getPlayerListRows();
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
         <header className="flex items-center justify-between border-b border-border pb-3 text-xs uppercase tracking-widest">
-          <span className="text-yellow">COPA / ADMIN / SPELARE</span>
-          <Link href="/admin" className="text-cyan">
-            ← ADMIN
+          <span className="text-yellow">COPA / SPELARE</span>
+          <Link href="/" className="text-cyan">
+            ← START
           </Link>
         </header>
 
@@ -25,14 +22,12 @@ export default async function AdminPlayersPage() {
             SPELARE
           </h1>
           <p className="mt-2 text-sm text-dim">
-            Klicka på en spelare för att se snapshot per rond eller skriva
-            över värden manuellt. Manuella ändringar markeras med{" "}
-            <span className="text-yellow">M</span> och vinner över API-data
-            vid poängräkning.
+            Alla {rows.length} spelare i VM 2026. Filtrera på position eller
+            landslag. Klicka på en spelare för rondvärden.
           </p>
         </section>
 
-        <PlayerListClient rows={rows} />
+        <PublicPlayersList rows={rows} />
       </div>
     </main>
   );

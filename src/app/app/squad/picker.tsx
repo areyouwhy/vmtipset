@@ -14,66 +14,8 @@ import {
   type Formation,
 } from "@/lib/rules";
 import type { PickablePlayer } from "@/lib/squad-data";
-import { jerseyPath } from "@/lib/jersey-map";
+import { Jersey, PitchJersey } from "@/lib/jersey";
 import { saveSquadAction } from "./actions";
-
-function Jersey({
-  code,
-  size = 24,
-  className = "",
-}: {
-  code: string | null | undefined;
-  size?: number;
-  className?: string;
-}) {
-  const src = jerseyPath(code);
-  if (!src) return null;
-  return (
-    <img
-      src={src}
-      width={size}
-      height={size}
-      alt=""
-      aria-hidden="true"
-      className={`shrink-0 ${className}`}
-      style={{ width: size, height: size }}
-    />
-  );
-}
-
-function PitchJersey({
-  countryCode,
-  size = 48,
-  ringClass = "",
-}: {
-  countryCode: string | null | undefined;
-  size?: number;
-  ringClass?: string;
-}) {
-  const src = jerseyPath(countryCode);
-  // Solid-coloured fallback for players whose country has no baked jersey.
-  if (!src) {
-    return (
-      <span
-        className={`flex items-center justify-center bg-[#222] text-[10px] font-bold uppercase tracking-wider text-yellow ${ringClass}`}
-        style={{ width: size, height: size }}
-      >
-        {countryCode ?? "—"}
-      </span>
-    );
-  }
-  return (
-    <img
-      src={src}
-      width={size}
-      height={size}
-      alt=""
-      aria-hidden="true"
-      className={`block ${ringClass}`}
-      style={{ width: size, height: size }}
-    />
-  );
-}
 
 const POSITION_FILTERS: Array<"ALL" | Position> = [
   "ALL",
