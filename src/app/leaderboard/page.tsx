@@ -25,7 +25,7 @@ export default async function LeaderboardPage() {
           <p className="mt-2 text-sm text-dim">
             Total = summa av rondpoäng. Vid lika delas placeringen, vinst-
             pengar splittras vid utbetalning.{" "}
-            <Link href="/how/audit" className="text-cyan">
+            <Link href="/hur/audit" className="text-cyan">
               SE AUDIT →
             </Link>
           </p>

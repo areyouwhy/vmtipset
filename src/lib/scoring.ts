@@ -7,7 +7,7 @@ import type { Position } from "@/db/schema";
  * function can be unit-tested with hand-calculated expected values, and that
  * re-running it on the same inputs always produces the same outputs.
  *
- * Scoring formula matches `/how`:
+ * Scoring formula matches `/hur`:
  *
  *   ROUND_POINTS =
  *     Σ (each player's price growth in this round)

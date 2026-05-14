@@ -29,7 +29,7 @@ export default async function HowPage() {
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-2xl">
-        <Breadcrumbs trail={[{ label: "HOW" }]} />
+        <Breadcrumbs trail={[{ label: "HUR" }]} />
 
         <section className="py-6">
           <h1 className="text-3xl font-bold uppercase tracking-tight text-yellow sm:text-4xl">

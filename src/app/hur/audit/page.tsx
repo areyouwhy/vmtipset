@@ -30,7 +30,7 @@ export default async function AuditPage({
       <div className="mx-auto w-full max-w-3xl">
         <Breadcrumbs
           trail={[
-            { label: "HOW", href: "/how" },
+            { label: "HUR", href: "/hur" },
             { label: "AUDIT" },
           ]}
         />
@@ -59,7 +59,7 @@ export default async function AuditPage({
                 return (
                   <Link
                     key={r.id}
-                    href={`/how/audit?round=${r.id}`}
+                    href={`/hur/audit?round=${r.id}`}
                     className={`border px-3 py-1.5 text-[10px] uppercase tracking-widest transition tabular-nums ${
                       active
                         ? "border-yellow bg-yellow text-black"

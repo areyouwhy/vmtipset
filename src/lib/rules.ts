@@ -1,7 +1,7 @@
 /**
  * Live rule set for Copa del Mundo 2026.
  *
- * Source of truth for both /how and the scoring engine. Any change here
+ * Source of truth for both /hur and the scoring engine. Any change here
  * must be reflected in RULES.md (with date + reason) and ideally backed
  * by tests.
  */

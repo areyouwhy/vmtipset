@@ -100,7 +100,7 @@ export default async function Home() {
           <Link href="/side-bets" className="text-cyan">
             [ SIDOSPEL ]
           </Link>
-          <Link href="/how" className="text-cyan">
+          <Link href="/hur" className="text-cyan">
             [ HUR FUNKAR DET? ]
           </Link>
         </p>
