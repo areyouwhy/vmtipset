@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { WcMatchLine } from "@/components/wc-match-line";
 import { Jersey } from "@/lib/jersey";
 import { getAllNations } from "@/lib/nation-data";
 import {
   getGroupsView,
   type GroupView,
-  type WcMatch,
-  type WcTeam,
 } from "@/lib/wc-tournament";
 import { fifaRank, FIFA_RANK_SOURCE_DATE } from "@/data/fifa-rank";
 
@@ -151,12 +150,15 @@ function GroupSection({
               if (inRound.length === 0) return null;
               return (
                 <div key={round} className="mt-2 first:mt-0">
-                  <p className="border-b border-border/40 pb-0.5 text-[9px] uppercase tracking-widest text-yellow/80">
-                    OMGÅNG {round}
-                  </p>
+                  <Link
+                    href={`/vm/omgang/${round}`}
+                    className="block border-b border-border/40 pb-0.5 text-[9px] uppercase tracking-widest text-yellow/80 hover:text-yellow"
+                  >
+                    OMGÅNG {round} →
+                  </Link>
                   <ul className="divide-y divide-border/40">
                     {inRound.map((m) => (
-                      <MatchLine
+                      <WcMatchLine
                         key={m.externalId}
                         m={m}
                         teamsById={view.teamsById}
@@ -173,48 +175,3 @@ function GroupSection({
   );
 }
 
-export function MatchLine({
-  m,
-  teamsById,
-}: {
-  m: WcMatch;
-  teamsById: Map<number, WcTeam>;
-}) {
-  const home = teamsById.get(m.homeTeamId);
-  const away = teamsById.get(m.awayTeamId);
-  const kickoff = new Date(m.kickoff);
-  const date = kickoff.toLocaleDateString("sv-SE", { month: "short", day: "numeric" });
-  const time = kickoff.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
-  const played = m.status === "finished" && m.homeScore !== null;
-  return (
-    <li className="grid grid-cols-[auto_1fr_auto_1fr_auto] items-center gap-2 py-1.5 text-[11px]">
-      <span className="text-[9px] uppercase tracking-widest text-dim">
-        {date} {time}
-      </span>
-      <span className="flex items-center justify-end gap-1.5">
-        {home && (
-          <Link href={`/landslag/${home.code}`} className="truncate hover:text-yellow">
-            {home.name}
-          </Link>
-        )}
-        {home && <Jersey code={home.code} size={16} />}
-      </span>
-      <span className="px-1 text-center text-yellow tabular-nums">
-        {played
-          ? `${m.homeScore}-${m.awayScore}`
-          : m.status === "ongoing"
-            ? "LIVE"
-            : "—"}
-      </span>
-      <span className="flex items-center gap-1.5">
-        {away && <Jersey code={away.code} size={16} />}
-        {away && (
-          <Link href={`/landslag/${away.code}`} className="truncate hover:text-yellow">
-            {away.name}
-          </Link>
-        )}
-      </span>
-      <span></span>
-    </li>
-  );
-}

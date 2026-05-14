@@ -21,6 +21,15 @@ const TAB_LABELS: Record<StageKey, string> = {
 
 const TAB_ORDER: StageKey[] = ["r32", "r16", "qf", "sf", "final"];
 
+/** Each knockout stage maps to one of the 8 fantasy rounds. */
+const STAGE_TO_ROUND: Record<StageKey, number> = {
+  r32: 4,
+  r16: 5,
+  qf: 6,
+  sf: 7,
+  final: 8,
+};
+
 export function KnockoutTabs({
   stages,
   teams,
@@ -79,6 +88,16 @@ export function KnockoutTabs({
           );
         })}
       </nav>
+
+      {/* Per-round detail link */}
+      <p className="mt-3 text-right text-[10px] uppercase tracking-widest">
+        <Link
+          href={`/vm/omgang/${STAGE_TO_ROUND[active]}`}
+          className="text-cyan hover:text-yellow"
+        >
+          OMGÅNG {STAGE_TO_ROUND[active]} — DETALJER →
+        </Link>
+      </p>
 
       {/* Match list for the active tab */}
       <ul className="mt-6 space-y-2">
