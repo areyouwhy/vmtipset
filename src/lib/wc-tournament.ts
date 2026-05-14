@@ -315,7 +315,7 @@ const STAGE_ORDER: WcMatchGroup["stage"][] = [
 ];
 const STAGE_LABELS: Record<WcMatchGroup["stage"], string> = {
   group: "GRUPPSPEL",
-  r32: "ÅTTONDEL (32)",
+  r32: "SEXTONDELSFINAL",
   r16: "ÅTTONDELSFINAL",
   qf: "KVARTSFINAL",
   sf: "SEMIFINAL",

@@ -44,7 +44,7 @@ export default async function KnockoutPage() {
           </h1>
           <p className="mt-2 text-sm text-dim">
             Klicka på en runda för att se matcherna. {totalMatches} matcher
-            från 32-delsfinal till final, live från Aftonbladet.
+            från sextondelsfinal till final, live från Aftonbladet.
           </p>
         </section>
 

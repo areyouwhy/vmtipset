@@ -12,8 +12,8 @@ type SerialisedStages = Record<StageKey, WcMatch[]> & { bronze: WcMatch[] };
 type Team = WcTeam;
 
 const TAB_LABELS: Record<StageKey, string> = {
-  r32: "32-DEL",
-  r16: "ÅTTONDEL",
+  r32: "SEXTONDELSFINAL",
+  r16: "ÅTTONDELSFINAL",
   qf: "KVARTSFINAL",
   sf: "SEMIFINAL",
   final: "FINAL",
