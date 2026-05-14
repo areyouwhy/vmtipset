@@ -4,6 +4,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  smallint,
   text,
   timestamp,
   unique,
@@ -94,6 +95,11 @@ export const players = pgTable("players", {
   clubId: uuid("club_id").references(() => clubs.id, { onDelete: "set null" }),
   position: playerPosition("position").notNull(),
   active: boolean("active").notNull().default(true),
+  /** Hex color used to fill the stylised avatar head. Sourced from
+   *  Aftonbladet's person.properties.skinColor. Nullable for mock data. */
+  skinColor: text("skin_color"),
+  /** Hex color used to fill the avatar's hair cap. */
+  hairColor: text("hair_color"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -115,10 +121,10 @@ export const rounds = pgTable("rounds", {
 });
 
 /**
- * Immutable snapshot of a player's price + round-over-round growth, attributed
- * to a source (Aftonbladet API or a manual admin override). Unique per
- * (player, round, source) so the API value and a manual correction can
- * coexist; scoring prefers `manual` when both are present.
+ * Snapshot of a player's value for a (round, source) pair. API rows upsert on
+ * conflict — prices and growth can drift mid-round at Aftonbladet, so we keep
+ * the latest. Manual rows are written through a separate admin path; scoring
+ * prefers `manual` when both exist.
  */
 export const playerRoundSnapshots = pgTable(
   "player_round_snapshots",
@@ -132,6 +138,13 @@ export const playerRoundSnapshots = pgTable(
       .references(() => rounds.id, { onDelete: "cascade" }),
     priceSek: integer("price_sek").notNull(),
     growthSek: integer("growth_sek").notNull().default(0),
+    /** Cumulative SEK growth across the tournament through this round. */
+    totalGrowthSek: integer("total_growth_sek").notNull().default(0),
+    /** Raw count of teams owning this player. Aftonbladet returns this as a
+     *  count, not a percentage — divide by approved-team count to render %. */
+    popularity: integer("popularity").notNull().default(0),
+    /** -1 = falling, 0 = flat, +1 = rising. Aftonbladet's own indicator. */
+    trend: smallint("trend").notNull().default(0),
     source: snapshotSource("source").notNull(),
     notes: text("notes"),
     capturedAt: timestamp("captured_at", { withTimezone: true })

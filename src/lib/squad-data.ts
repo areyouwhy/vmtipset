@@ -21,6 +21,16 @@ export type PickablePlayer = {
   clubExternalId: string | null;
   countryCode: string | null;
   priceSek: number;
+  /** Round growth (this round's delta in SEK). */
+  growthSek: number;
+  /** Cumulative growth through this round. */
+  totalGrowthSek: number;
+  /** Raw count of teams owning this player. */
+  popularity: number;
+  /** -1 / 0 / +1. */
+  trend: number;
+  skinColor: string | null;
+  hairColor: string | null;
 };
 
 export async function getActiveRound(): Promise<Round | null> {
@@ -81,6 +91,12 @@ export async function getPickablePlayers(
           clubExternalId: club?.externalId ?? null,
           countryCode: club?.countryCode ?? null,
           priceSek: snap.priceSek,
+          growthSek: snap.growthSek,
+          totalGrowthSek: snap.totalGrowthSek,
+          popularity: snap.popularity,
+          trend: snap.trend,
+          skinColor: p.skinColor ?? null,
+          hairColor: p.hairColor ?? null,
         },
       ];
     })

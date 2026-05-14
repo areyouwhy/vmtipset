@@ -28,6 +28,8 @@ export type PlayerKnown = {
   clubExternalId: string | null;
   position: Position;
   active: boolean;
+  skinColor: string | null;
+  hairColor: string | null;
 };
 
 export type RoundKnown = {
@@ -42,6 +44,9 @@ export type SnapshotKnown = {
   roundExternalId: string;
   priceSek: number;
   growthSek: number;
+  totalGrowthSek: number;
+  popularity: number;
+  trend: number;
   source: "api" | "manual";
 };
 
@@ -146,9 +151,18 @@ export function planIngest(
   for (const s of incoming.snapshots) {
     const key = snapshotKey(s.playerExternalId, s.roundExternalId);
     const prev = existingApiSnapshotsByKey.get(key);
+    const incomingTotalGrowth = s.totalGrowthSek ?? 0;
+    const incomingPopularity = s.popularity ?? 0;
+    const incomingTrend = s.trend ?? 0;
     if (!prev) {
       snapshots.push({ kind: "insert-snapshot", snapshot: s, source: "api" });
-    } else if (prev.priceSek !== s.priceSek || prev.growthSek !== s.growthSek) {
+    } else if (
+      prev.priceSek !== s.priceSek ||
+      prev.growthSek !== s.growthSek ||
+      prev.totalGrowthSek !== incomingTotalGrowth ||
+      prev.popularity !== incomingPopularity ||
+      prev.trend !== incomingTrend
+    ) {
       snapshots.push({ kind: "update-snapshot", snapshot: s, source: "api" });
     }
   }
@@ -179,7 +193,9 @@ function playerChanged(prev: PlayerKnown, next: ExternalPlayer): boolean {
     prev.name !== next.name ||
     prev.clubExternalId !== next.clubExternalId ||
     prev.position !== next.position ||
-    prev.active !== (next.active ?? true)
+    prev.active !== (next.active ?? true) ||
+    (prev.skinColor ?? null) !== (next.skinColor ?? null) ||
+    (prev.hairColor ?? null) !== (next.hairColor ?? null)
   );
 }
 

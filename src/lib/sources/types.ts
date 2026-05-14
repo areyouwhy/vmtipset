@@ -19,6 +19,10 @@ export type ExternalPlayer = {
   clubExternalId: string;
   position: Position;
   active?: boolean;
+  /** Hex colour for the stylised avatar head. */
+  skinColor?: string | null;
+  /** Hex colour for the stylised avatar hair cap. */
+  hairColor?: string | null;
 };
 
 export type ExternalRound = {
@@ -33,6 +37,12 @@ export type ExternalSnapshot = {
   roundExternalId: string;
   priceSek: number;
   growthSek: number;
+  /** Cumulative growth across the tournament through this round. */
+  totalGrowthSek?: number;
+  /** Raw count of teams owning this player at snapshot time. */
+  popularity?: number;
+  /** -1 = falling, 0 = flat, +1 = rising. */
+  trend?: number;
 };
 
 export type ExternalDataset = {

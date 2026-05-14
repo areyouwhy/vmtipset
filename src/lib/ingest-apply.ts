@@ -62,6 +62,8 @@ export async function loadExistingState(): Promise<ExistingState> {
           clubExternalId: clubExt,
           position: p.position,
           active: p.active,
+          skinColor: p.skinColor ?? null,
+          hairColor: p.hairColor ?? null,
         },
       ];
     }),
@@ -87,6 +89,9 @@ export async function loadExistingState(): Promise<ExistingState> {
           roundExternalId: roundExt,
           priceSek: s.priceSek,
           growthSek: s.growthSek,
+          totalGrowthSek: s.totalGrowthSek,
+          popularity: s.popularity,
+          trend: s.trend,
           source: s.source,
         },
       ];
@@ -164,6 +169,8 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
         clubId,
         position: op.player.position,
         active: op.player.active ?? true,
+        skinColor: op.player.skinColor ?? null,
+        hairColor: op.player.hairColor ?? null,
       });
       playersInserted++;
     } else {
@@ -174,6 +181,8 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
           clubId,
           position: op.player.position,
           active: op.player.active ?? true,
+          skinColor: op.player.skinColor ?? null,
+          hairColor: op.player.hairColor ?? null,
           updatedAt: new Date(),
         })
         .where(eq(players.externalId, op.externalId));
@@ -205,6 +214,9 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
           roundId,
           priceSek: op.snapshot.priceSek,
           growthSek: op.snapshot.growthSek,
+          totalGrowthSek: op.snapshot.totalGrowthSek ?? 0,
+          popularity: op.snapshot.popularity ?? 0,
+          trend: op.snapshot.trend ?? 0,
           source: op.source,
         } as const,
       ];
@@ -212,8 +224,8 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
 
     if (inserts.length > 0) {
       // Batch to stay well under Postgres' ~65k bound-param ceiling.
-      // Each row binds 5 params → 1000 rows = 5000 params per query.
-      const CHUNK = 1000;
+      // Each row binds 8 params → 600 rows = 4800 params per query.
+      const CHUNK = 600;
       for (let i = 0; i < inserts.length; i += CHUNK) {
         await db
           .insert(playerRoundSnapshots)
@@ -232,6 +244,9 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
         .set({
           priceSek: op.snapshot.priceSek,
           growthSek: op.snapshot.growthSek,
+          totalGrowthSek: op.snapshot.totalGrowthSek ?? 0,
+          popularity: op.snapshot.popularity ?? 0,
+          trend: op.snapshot.trend ?? 0,
           capturedAt: new Date(),
         })
         .where(

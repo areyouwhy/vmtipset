@@ -66,12 +66,20 @@ type RawPerson = {
   id: number;
   fullName: string;
   nationality?: { code?: string };
+  properties?: {
+    skinColor?: string | null;
+    hairColor?: string | null;
+    hairCut?: string | null;
+  };
 };
 
 type RawRoundValue = {
   player: number | { id: number };
   value: number;
   growth: number;
+  totalGrowth?: number;
+  popularity?: number;
+  trend?: number;
 };
 
 async function getJson<T>(url: string, label: string): Promise<T> {
@@ -179,11 +187,17 @@ export const aftonbladetSource: DataSource = {
       for (const rv of values) {
         const playerId =
           typeof rv.player === "number" ? rv.player : rv.player.id;
+        // Trend can come back as ±1.something float; clamp to {-1, 0, +1}.
+        const rawTrend = rv.trend ?? 0;
+        const trend = rawTrend > 0 ? 1 : rawTrend < 0 ? -1 : 0;
         snapshots.push({
           playerExternalId: `ab:p:${playerId}`,
           roundExternalId: round.externalId,
           priceSek: rv.value ?? 0,
           growthSek: rv.growth ?? 0,
+          totalGrowthSek: rv.totalGrowth ?? 0,
+          popularity: rv.popularity ?? 0,
+          trend,
         });
       }
     }
@@ -209,6 +223,8 @@ export const aftonbladetSource: DataSource = {
           name: person?.fullName ?? "—",
           clubExternalId: `ab:club:${p.team.id}`,
           position,
+          skinColor: person?.properties?.skinColor ?? null,
+          hairColor: person?.properties?.hairColor ?? null,
         },
       ];
     });

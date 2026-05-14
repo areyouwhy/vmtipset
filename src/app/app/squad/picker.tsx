@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { Position } from "@/db/schema";
 import {
   autoPickSquad,
@@ -14,7 +14,66 @@ import {
   type Formation,
 } from "@/lib/rules";
 import type { PickablePlayer } from "@/lib/squad-data";
+import { jerseyPath } from "@/lib/jersey-map";
 import { saveSquadAction } from "./actions";
+
+function Jersey({
+  code,
+  size = 24,
+  className = "",
+}: {
+  code: string | null | undefined;
+  size?: number;
+  className?: string;
+}) {
+  const src = jerseyPath(code);
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      width={size}
+      height={size}
+      alt=""
+      aria-hidden="true"
+      className={`shrink-0 ${className}`}
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
+function PitchJersey({
+  countryCode,
+  size = 48,
+  ringClass = "",
+}: {
+  countryCode: string | null | undefined;
+  size?: number;
+  ringClass?: string;
+}) {
+  const src = jerseyPath(countryCode);
+  // Solid-coloured fallback for players whose country has no baked jersey.
+  if (!src) {
+    return (
+      <span
+        className={`flex items-center justify-center bg-[#222] text-[10px] font-bold uppercase tracking-wider text-yellow ${ringClass}`}
+        style={{ width: size, height: size }}
+      >
+        {countryCode ?? "—"}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={src}
+      width={size}
+      height={size}
+      alt=""
+      aria-hidden="true"
+      className={`block ${ringClass}`}
+      style={{ width: size, height: size }}
+    />
+  );
+}
 
 const POSITION_FILTERS: Array<"ALL" | Position> = [
   "ALL",
@@ -23,6 +82,8 @@ const POSITION_FILTERS: Array<"ALL" | Position> = [
   "MID",
   "FWD",
 ];
+
+type Metric = "value" | "growth" | "popularity" | "club";
 
 export function SquadPicker({
   players,
@@ -45,6 +106,7 @@ export function SquadPicker({
   const [onlyFits, setOnlyFits] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [view, setView] = useState<"plan" | "lista">("plan");
+  const [metric, setMetric] = useState<Metric>("value");
   const [formation, setFormation] = useState<Formation>(
     () => currentRules.legalFormations.find((f) => f.def === 4 && f.mid === 3 && f.fwd === 3) ?? currentRules.legalFormations[0],
   );
@@ -124,9 +186,16 @@ export function SquadPicker({
   }, [players, filter, teamFilter, onlyAffordable, onlyFits, selected, summary]);
 
   const teamsInOrder = useMemo(() => {
-    const seen = new Set<string>();
-    for (const p of players) if (p.countryCode) seen.add(p.countryCode);
-    return Array.from(seen).sort();
+    // One entry per countryCode, first-seen club name wins.
+    const seen = new Map<string, string>();
+    for (const p of players) {
+      if (p.countryCode && !seen.has(p.countryCode)) {
+        seen.set(p.countryCode, p.clubName);
+      }
+    }
+    return Array.from(seen.entries())
+      .map(([code, name]) => ({ code, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, "sv"));
   }, [players]);
 
   const selectedPlayers = useMemo(
@@ -318,6 +387,12 @@ export function SquadPicker({
         </div>
       )}
 
+      {/* Metric toggle — applies to both PLAN and LISTA so users compare the
+          same attribute across views. */}
+      <div className="mt-3">
+        <MetricToggle value={metric} onChange={setMetric} />
+      </div>
+
       {/* View tabs */}
       <div className="mt-2 grid grid-cols-2 border border-border">
         <button
@@ -357,6 +432,7 @@ export function SquadPicker({
           captainId={captainId}
           locked={locked}
           formation={formation}
+          metric={metric}
           onChangeFormation={setFormation}
           onRemove={toggle}
           onSetCaptain={setCaptain}
@@ -383,12 +459,8 @@ export function SquadPicker({
               value={filter}
               onChange={(v) => setFilter(v as "ALL" | Position)}
             />
-            <FilterRow
-              label="LAG"
-              options={[
-                { value: "ALL", label: "ALLA" },
-                ...teamsInOrder.map((c) => ({ value: c, label: c })),
-              ]}
+            <TeamComboBox
+              teams={teamsInOrder}
               value={teamFilter}
               onChange={setTeamFilter}
             />
@@ -422,6 +494,7 @@ export function SquadPicker({
                   isCaptain={captainId === p.id}
                   disabled={locked || (!isSel && reason !== null)}
                   reason={reason}
+                  metric={metric}
                   onToggle={() => toggle(p.id)}
                   onCaptain={() => setCaptain(p.id)}
                 />
@@ -486,6 +559,7 @@ function PitchView({
   captainId,
   locked,
   formation,
+  metric,
   onChangeFormation,
   onRemove,
   onSetCaptain,
@@ -495,6 +569,7 @@ function PitchView({
   captainId: string | null;
   locked: boolean;
   formation: Formation;
+  metric: Metric;
   onChangeFormation: (f: Formation) => void;
   onRemove: (id: string) => void;
   onSetCaptain: (id: string) => void;
@@ -539,17 +614,16 @@ function PitchView({
         })}
       </div>
 
+      {/* Pitch canvas — locked to the source image's aspect ratio so the
+          rows always line up with the painted markings. */}
       <div
-        className="border border-yellow/40 p-3"
+        className="relative w-full overflow-hidden border border-yellow/40 bg-[#1a3a1a] bg-[length:100%_100%] bg-no-repeat"
         style={{
-          background:
-            "repeating-linear-gradient(0deg, rgba(0,255,0,0.04) 0 24px, rgba(0,255,0,0.08) 24px 48px)",
+          aspectRatio: "313 / 340",
+          backgroundImage: "url('/img/pitch.png')",
         }}
       >
-        {/* Top goal box (GK end) — decorative */}
-        <div className="mx-auto mb-2 h-5 w-2/3 border-x-2 border-b-2 border-yellow/30" />
-
-        <div className="flex flex-col gap-3">
+        <div className="absolute inset-0 flex flex-col px-2 py-3">
           {rows.map((pos) => {
             const players = byPos(pos);
             const targetSlots = slotsByPos[pos];
@@ -557,7 +631,7 @@ function PitchView({
             return (
               <div
                 key={pos}
-                className="flex min-h-[88px] items-start justify-around gap-1"
+                className="flex flex-1 items-center justify-around gap-1"
               >
                 {players.map((p) => (
                   <PitchChip
@@ -565,6 +639,7 @@ function PitchView({
                     player={p}
                     isCaptain={captainId === p.id}
                     locked={locked}
+                    metric={metric}
                     onRemove={() => onRemove(p.id)}
                     onSetCaptain={() => onSetCaptain(p.id)}
                   />
@@ -581,9 +656,6 @@ function PitchView({
             );
           })}
         </div>
-
-        {/* Bottom goal box (attacking end) — decorative */}
-        <div className="mx-auto mt-2 h-5 w-2/3 border-x-2 border-t-2 border-yellow/30" />
       </div>
     </div>
   );
@@ -593,33 +665,42 @@ function PitchChip({
   player,
   isCaptain,
   locked,
+  metric,
   onRemove,
   onSetCaptain,
 }: {
   player: PickablePlayer;
   isCaptain: boolean;
   locked: boolean;
+  metric: Metric;
   onRemove: () => void;
   onSetCaptain: () => void;
 }) {
+  const lastName = player.name.split(" ").slice(-1)[0] ?? player.name;
+  const m = renderMetric(player, metric);
   return (
-    <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5">
+    <div className="flex min-w-0 flex-1 flex-col items-center">
       <div className="relative">
         <button
           type="button"
           onClick={onSetCaptain}
           disabled={locked}
-          className="relative flex h-12 w-14 items-center justify-center border-2 border-yellow bg-background text-base font-bold tabular-nums text-yellow transition hover:border-cyan disabled:cursor-not-allowed"
+          className="block disabled:cursor-not-allowed"
           title="Sätt som kapten"
           aria-label={`Sätt ${player.name} som kapten`}
         >
-          {player.countryCode ?? "—"}
+          <PitchJersey
+            countryCode={player.countryCode}
+            size={84}
+            ringClass={isCaptain ? "ring-2 ring-yellow" : "hover:ring-2 hover:ring-cyan"}
+          />
         </button>
-        <span className="absolute -left-1 -top-1 border border-yellow bg-background px-1 text-[8px] uppercase tracking-widest text-yellow">
-          {player.position}
+        {/* Country code label tucked under the jersey. */}
+        <span className="absolute -left-1 bottom-1 border border-yellow bg-black px-1 text-[8px] font-bold uppercase leading-tight tracking-wider text-yellow">
+          {player.countryCode ?? "—"}
         </span>
         {isCaptain && (
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center border border-yellow bg-yellow text-[9px] font-bold text-black">
+          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center border border-yellow bg-yellow text-[9px] font-bold leading-none text-black">
             C
           </span>
         )}
@@ -627,18 +708,22 @@ function PitchChip({
           type="button"
           onClick={onRemove}
           disabled={locked}
-          className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center border border-red bg-background text-[10px] leading-none text-red transition hover:bg-red hover:text-black disabled:opacity-50"
+          className="absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center border border-red bg-black text-[10px] leading-none text-red transition hover:bg-red hover:text-black disabled:opacity-50"
           aria-label={`Ta bort ${player.name}`}
           title="Ta bort"
         >
           ×
         </button>
       </div>
-      <span className="line-clamp-1 max-w-[64px] text-[10px] leading-tight text-foreground">
-        {player.name}
+      <span className="mt-1 line-clamp-1 max-w-[100px] bg-black/80 px-1 text-[10px] leading-tight text-foreground">
+        {lastName}
       </span>
-      <span className="text-[10px] tabular-nums text-dim">
-        {(player.priceSek / 1_000_000).toFixed(1)}M
+      <span
+        className={`line-clamp-1 max-w-[100px] bg-black/80 px-1 text-[9px] tabular-nums ${
+          metric === "value" ? "text-yellow" : m.primaryClass
+        }`}
+      >
+        {m.primary}
       </span>
     </div>
   );
@@ -658,13 +743,13 @@ function EmptySlot({
       type="button"
       onClick={onClick}
       disabled={locked}
-      className="flex min-w-0 flex-1 flex-col items-center gap-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex min-w-0 flex-1 flex-col items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
       aria-label={`Lägg till ${pos}`}
     >
-      <div className="flex h-12 w-14 items-center justify-center border-2 border-dashed border-yellow/50 text-yellow/70 transition hover:border-yellow hover:text-yellow">
+      <div className="flex h-[84px] w-[84px] items-center justify-center border-2 border-dashed border-yellow/70 bg-black/40 text-3xl leading-none text-yellow/90 transition hover:border-yellow hover:bg-black/60 hover:text-yellow">
         +
       </div>
-      <span className="text-[10px] uppercase tracking-widest text-dim">
+      <span className="bg-black/80 px-1 text-[10px] uppercase tracking-widest text-yellow/80">
         {pos}
       </span>
     </button>
@@ -707,6 +792,161 @@ function FilterRow({
   );
 }
 
+function TeamComboBox({
+  teams,
+  value,
+  onChange,
+}: {
+  teams: { code: string; name: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return teams;
+    return teams.filter(
+      (t) =>
+        t.code.toLowerCase().includes(q) ||
+        t.name.toLowerCase().includes(q),
+    );
+  }, [teams, query]);
+
+  // Click-outside + Esc close.
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: MouseEvent | TouchEvent) => {
+      if (
+        rootRef.current &&
+        !rootRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("touchstart", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("touchstart", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  // Focus the search field when opening.
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+    else setQuery("");
+  }, [open]);
+
+  const selectedLabel =
+    value === "ALL"
+      ? "ALLA LAG"
+      : (() => {
+          const t = teams.find((x) => x.code === value);
+          return t ? `${t.code} · ${t.name.toUpperCase()}` : value;
+        })();
+
+  function pick(v: string) {
+    onChange(v);
+    setOpen(false);
+  }
+
+  return (
+    <div ref={rootRef} className="relative">
+      <p className="mb-1 text-[10px] uppercase tracking-widest text-dim">LAG</p>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={`flex w-full items-center justify-between gap-3 border px-3 py-2 text-left text-xs uppercase tracking-widest transition ${
+          value === "ALL"
+            ? "border-border text-dim hover:border-cyan hover:text-cyan"
+            : "border-yellow text-yellow"
+        }`}
+      >
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          {value !== "ALL" && <Jersey code={value} size={20} />}
+          <span className="truncate">{selectedLabel}</span>
+        </span>
+        <span aria-hidden="true" className="text-[10px]">
+          {open ? "▲" : "▼"}
+        </span>
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          aria-label="Välj lag"
+          className="absolute inset-x-0 top-full z-20 mt-1 max-h-72 overflow-hidden border border-yellow bg-background shadow-lg"
+        >
+          <div className="border-b border-border p-2">
+            <input
+              ref={inputRef}
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="SÖK LAND (T.EX. ARG, BRASILIEN)"
+              className="w-full border border-border bg-background px-2 py-1.5 text-xs uppercase tracking-widest text-foreground placeholder:text-dim focus:border-cyan focus:outline-none"
+            />
+          </div>
+          <ul className="max-h-56 overflow-y-auto">
+            <li>
+              <button
+                type="button"
+                onClick={() => pick("ALL")}
+                className={`flex w-full items-baseline justify-between gap-3 px-3 py-2 text-left text-xs uppercase tracking-widest transition hover:bg-yellow/10 ${
+                  value === "ALL" ? "bg-yellow/15 text-yellow" : "text-foreground"
+                }`}
+              >
+                <span>ALLA LAG</span>
+                <span className="text-[10px] text-dim tabular-nums">
+                  {teams.length}
+                </span>
+              </button>
+            </li>
+            {matches.map((t) => {
+              const active = value === t.code;
+              return (
+                <li key={t.code}>
+                  <button
+                    type="button"
+                    onClick={() => pick(t.code)}
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs uppercase tracking-widest transition hover:bg-yellow/10 ${
+                      active ? "bg-yellow/15 text-yellow" : "text-foreground"
+                    }`}
+                  >
+                    <Jersey code={t.code} size={24} />
+                    <span className="min-w-0 flex-1 truncate">
+                      <span className="text-yellow tabular-nums">{t.code}</span>{" "}
+                      <span className={active ? "text-yellow" : "text-dim"}>
+                        · {t.name}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+            {matches.length === 0 && (
+              <li className="px-3 py-3 text-center text-xs text-dim">
+                — inga matcher —
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ToggleChip({
   on,
   onChange,
@@ -732,12 +972,92 @@ function ToggleChip({
   );
 }
 
+function MetricToggle({
+  value,
+  onChange,
+}: {
+  value: Metric;
+  onChange: (v: Metric) => void;
+}) {
+  const opts: Array<{ key: Metric; label: string }> = [
+    { key: "value", label: "VÄRDE" },
+    { key: "growth", label: "VÄXT" },
+    { key: "popularity", label: "POPULÄR" },
+    { key: "club", label: "KLUBB" },
+  ];
+  return (
+    <div className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1">
+      {opts.map((o) => (
+        <button
+          key={o.key}
+          type="button"
+          onClick={() => onChange(o.key)}
+          aria-pressed={value === o.key}
+          className={`shrink-0 snap-start border px-3 py-1.5 text-[10px] uppercase tracking-widest transition ${
+            value === o.key
+              ? "border-yellow bg-yellow text-black"
+              : "border-border text-dim hover:border-cyan hover:text-cyan"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function fmtKSek(n: number): string {
+  if (n === 0) return "0";
+  const sign = n < 0 ? "−" : "+";
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(2)}M`;
+  if (abs >= 1_000) return `${sign}${Math.round(abs / 1_000)}k`;
+  return `${sign}${abs}`;
+}
+
+function renderMetric(
+  player: PickablePlayer,
+  metric: Metric,
+): { primary: string; primaryClass: string; secondary?: string } {
+  if (metric === "growth") {
+    const g = player.growthSek;
+    const primary = g === 0 ? "0" : fmtKSek(g);
+    const primaryClass =
+      g > 0 ? "text-green" : g < 0 ? "text-red" : "text-foreground";
+    const secondary =
+      player.totalGrowthSek !== 0
+        ? `tot ${fmtKSek(player.totalGrowthSek)}`
+        : undefined;
+    return { primary, primaryClass, secondary };
+  }
+  if (metric === "popularity") {
+    const arrow =
+      player.trend > 0 ? " ↑" : player.trend < 0 ? " ↓" : "";
+    return {
+      primary: `${player.popularity}${arrow}`,
+      primaryClass: "text-foreground",
+      secondary: "ägare",
+    };
+  }
+  if (metric === "club") {
+    return {
+      primary: player.clubName,
+      primaryClass: "text-foreground",
+    };
+  }
+  return {
+    primary: `${(player.priceSek / 1_000_000).toFixed(1)}M`,
+    primaryClass: "text-foreground",
+  };
+}
+
 function PlayerRow({
   player,
   selected,
   isCaptain,
   disabled,
   reason,
+  metric,
   onToggle,
   onCaptain,
 }: {
@@ -746,13 +1066,15 @@ function PlayerRow({
   isCaptain: boolean;
   disabled: boolean;
   reason: string | null;
+  metric: Metric;
   onToggle: () => void;
   onCaptain: () => void;
 }) {
   const greyed = !selected && reason !== null;
+  const m = renderMetric(player, metric);
   return (
     <li
-      className={`grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 p-3 transition-opacity ${greyed ? "opacity-40" : ""}`}
+      className={`grid grid-cols-[auto_auto_1fr_auto_auto] items-center gap-3 p-3 transition-opacity ${greyed ? "opacity-40" : ""}`}
     >
       <button
         type="button"
@@ -767,6 +1089,7 @@ function PlayerRow({
       >
         {selected ? "✓" : ""}
       </button>
+      <Jersey code={player.countryCode} size={28} />
       <div className="min-w-0">
         <p className="truncate text-sm">
           <span className="text-yellow">{player.position}</span>{" "}
@@ -781,9 +1104,16 @@ function PlayerRow({
           )}
         </p>
       </div>
-      <span className="tabular-nums text-sm text-foreground">
-        {(player.priceSek / 1_000_000).toFixed(1)}M
-      </span>
+      <div className="flex flex-col items-end leading-tight">
+        <span className={`tabular-nums text-sm ${m.primaryClass}`}>
+          {m.primary}
+        </span>
+        {m.secondary && (
+          <span className="text-[9px] uppercase tracking-widest text-dim tabular-nums">
+            {m.secondary}
+          </span>
+        )}
+      </div>
       <button
         type="button"
         onClick={onCaptain}

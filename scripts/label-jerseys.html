@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>LABEL JERSEYS</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background:#000; color:#fff;
+      font-family:"Geist Mono",ui-monospace,monospace;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    h1 { letter-spacing:.2em; font-size:14px; color:#ffff00; margin:0; }
+    .top {
+      padding:12px 24px; border-bottom:1px solid #222;
+      display:flex; gap:16px; align-items:center; flex-wrap:wrap;
+    }
+    .progress {
+      flex:1; height:6px; background:#111; border:1px solid #333; position:relative; min-width:200px;
+    }
+    .progress > span { display:block; height:100%; background:#00ff00; transition:width .1s; }
+    .count { color:#00ffff; font-size:12px; }
+    .top button {
+      background:#000; color:#ffff00; border:1px solid #ffff00;
+      padding:4px 10px; font-family:inherit; font-size:11px; cursor:pointer;
+    }
+    .top button:hover { background:#ffff00; color:#000; }
+
+    .main {
+      flex:1; display:flex; min-height:0;
+    }
+    .left {
+      flex: 0 0 50%;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:24px; border-right:1px solid #222;
+      gap: 16px;
+    }
+    .jersey {
+      width: 360px; height: 360px;
+      background:#0a0a0a; border:1px solid #333; padding:8px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .jersey img { max-width:100%; max-height:100%; image-rendering:auto; }
+    .meta { font-size:11px; color:#666; }
+    .meta b { color:#aaa; }
+    .conf {
+      display:inline-block; padding:2px 8px; border:1px solid; margin-left:8px; text-transform:uppercase; font-size:10px;
+    }
+    .conf.high   { color:#00ff00; border-color:#00ff00; }
+    .conf.medium { color:#ffff00; border-color:#ffff00; }
+    .conf.low    { color:#ff5555; border-color:#ff5555; }
+
+    .right {
+      flex: 1; padding:24px;
+      display:flex; flex-direction:column; gap:12px; min-width:0;
+    }
+    .guess {
+      font-size:24px; color:#fff;
+      border:1px solid #333; padding:12px 16px; background:#0a0a0a;
+    }
+    .guess small { display:block; color:#888; font-size:11px; margin-top:4px; line-height:1.4; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .actions button {
+      background:#000; color:#fff; border:1px solid #444;
+      padding:10px 16px; font-family:inherit; font-size:12px; cursor:pointer;
+      letter-spacing:.05em;
+    }
+    .actions button.primary { border-color:#00ff00; color:#00ff00; }
+    .actions button.primary:hover { background:#00ff00; color:#000; }
+    .actions button.danger  { border-color:#ff5555; color:#ff5555; }
+    .actions button.danger:hover { background:#ff5555; color:#000; }
+    .actions button:hover { background:#fff; color:#000; }
+    .kbd {
+      font-size:10px; color:#666; margin-left:6px; padding:1px 4px; border:1px solid #333;
+    }
+
+    .pick { display:flex; flex-direction:column; gap:8px; min-height:0; flex:1; }
+    .pick label { font-size:11px; color:#888; }
+    .pick input {
+      background:#000; color:#fff; border:1px solid #444; padding:8px;
+      font-family:inherit; font-size:14px;
+    }
+    .pick input:focus { outline:none; border-color:#ffff00; }
+    .teams {
+      overflow-y:auto; border:1px solid #222; background:#0a0a0a;
+      flex:1; min-height:0;
+    }
+    .team {
+      padding:6px 10px; cursor:pointer; font-size:13px;
+      display:flex; justify-content:space-between; gap:8px;
+    }
+    .team:hover { background:#222; }
+    .team.current { background:#1a1a1a; border-left:2px solid #00ffff; padding-left:8px; }
+    .team .code { color:#00ffff; font-family:inherit; min-width:36px; }
+    .team .name { flex:1; color:#fff; }
+    .pickHead { font-size:11px; color:#888; display:flex; justify-content:space-between; }
+    .pickHead .rem { color:#00ffff; }
+
+    [hidden] { display: none !important; }
+    .overlay {
+      position:absolute; inset:0; background:#000;
+      display:flex; flex-direction:column;
+      padding:24px; overflow:hidden;
+    }
+    .overlayHead {
+      display:flex; align-items:center; gap:16px; padding-bottom:16px; border-bottom:1px solid #222;
+    }
+    .overlayHead h2 { color:#00ff00; font-size:16px; letter-spacing:.2em; margin:0; }
+    .overlayHead button {
+      margin-left:auto; background:#000; color:#888; border:1px solid #444;
+      padding:6px 12px; font-family:inherit; font-size:11px; cursor:pointer;
+    }
+    .overlayHead button:hover { background:#fff; color:#000; }
+    .confirmedGrid {
+      flex:1; overflow-y:auto; padding-top:16px;
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px;
+    }
+    .confCell {
+      border:1px solid #00ff00; padding:8px; background:#0a0a0a;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .confCell img { width:100%; height:120px; object-fit:contain; background:#111; }
+    .confCell .team { font-size:13px; color:#fff; }
+    .confCell .team .code { color:#00ffff; }
+    .confCell .row { display:flex; gap:4px; }
+    .confCell button {
+      flex:1; background:#000; border:1px solid #444; color:#fff;
+      padding:4px 6px; font-family:inherit; font-size:10px; cursor:pointer;
+    }
+    .confCell button.jump:hover { background:#00ffff; color:#000; border-color:#00ffff; }
+    .confCell button.undo:hover { background:#ff5555; color:#000; border-color:#ff5555; }
+    .confCell .hash { font-size:9px; color:#444; }
+    .empty { color:#666; text-align:center; padding:48px; grid-column:1/-1; }
+    .done {
+      position:absolute; inset:0; background:#000;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:24px;
+    }
+    .done h2 { color:#00ff00; font-size:24px; letter-spacing:.2em; }
+    .done pre {
+      max-width: 800px; max-height: 50vh; overflow:auto;
+      background:#0a0a0a; border:1px solid #222; padding:12px; font-size:11px;
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1>LABEL JERSEYS</h1>
+    <div class="progress"><span id="bar" style="width:0%"></span></div>
+    <span class="count" id="count">0 / 48</span>
+    <button id="prev">◀ PREV</button>
+    <button id="next">SKIP ▶</button>
+    <button id="showConfirmed">[ ✓ CONFIRMED ]</button>
+    <button id="copy">[ COPY JSON ]</button>
+    <button id="reset">RESET</button>
+  </div>
+
+  <div class="main" id="main">
+    <div class="left">
+      <div class="jersey"><img id="img" alt="" /></div>
+      <div class="meta">
+        hash <b id="hash">—</b>
+        <span class="conf" id="confBadge">—</span>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="guess">
+        <span id="guessText">—</span>
+        <small id="guessWhy"></small>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="confirm">✓ CONFIRM <span class="kbd">↵</span></button>
+        <button id="skip">SKIP <span class="kbd">→</span></button>
+        <button class="danger" id="clearOne">CLEAR PICK</button>
+      </div>
+
+      <div class="pick">
+        <div class="pickHead">
+          <span>Or pick a different team:</span>
+          <span class="rem" id="remaining">— remaining</span>
+        </div>
+        <input id="search" placeholder="type to filter — country code or name…" autofocus />
+        <div class="teams" id="teams"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="confirmedScreen" hidden>
+    <div class="overlayHead">
+      <h2>CONFIRMED PICKS</h2>
+      <span id="confirmedCount" class="count">0</span>
+      <button id="closeConfirmed">CLOSE ✕</button>
+    </div>
+    <div class="confirmedGrid" id="confirmedGrid"></div>
+  </div>
+
+  <div class="done" id="doneScreen" hidden>
+    <h2>ALL 48 LABELED ✓</h2>
+    <p style="color:#888;font-size:12px;max-width:600px;text-align:center;margin:16px 0;">
+      Paste the JSON below into <code>scripts/jersey-map.json</code> (overwrite it), then tell me you're done so I can wire it up.
+    </p>
+    <button id="copyDone" style="background:#000;color:#00ff00;border:1px solid #00ff00;padding:8px 16px;cursor:pointer;font-family:inherit;margin-bottom:16px;">[ COPY JSON ]</button>
+    <pre id="doneJson"></pre>
+    <button id="back" style="background:#000;color:#888;border:1px solid #444;padding:6px 12px;cursor:pointer;font-family:inherit;margin-top:16px;">← back to labeling</button>
+  </div>
+
+  <script>
+    const HASHES = [
+      "02431d783ebe","13665ee819b1","18b55486933f","1a1e7e8e9c18","1b3156f80abd",
+      "1eddb7ddcb84","22796960ee84","26cffa2ad5dd","2858eb89f0b8","2f891586edb1",
+      "3ed97b4f681b","4026b03053f7","46f3661b0095","4749a3cb2542","49d4442e1a56",
+      "4e565dc7e23e","4f291c5c716b","594a9bea9815","63229f4b93a6","6687cc07ad50",
+      "6902413c1ae3","6aaebf4808e2","6b24ab5918ab","6e2001f01605","80f73134c032",
+      "82d740447832","8845f6047ce1","8a4bf9fecaa9","9c6e37db27da","a391fbb3d8c8",
+      "a5562fa64d84","a9316a1225fa","aab8c961c57c","ab218b41ce9a","b3307a937846",
+      "b7ab883f0da4","bccc6bdc8b69","be921ce8dce5","c465b3e12a6e","ca1a6d952fc1",
+      "cba83e498f97","dbc6dfcb5dd6","ece4ba44c776","f657bb4a1652","facaab50aafb",
+      "fe1aab837cc3","fe34c13f627b","ff85eace5435"
+    ];
+
+    const TEAMS = [
+      ["ALG",4283,"Algeria"],["ARG",4284,"Argentina"],["AUS",4285,"Australia"],
+      ["AUT",3963,"Austria"],["BEL",4648,"Belgium"],["BIH",4646,"Bosnia-Herzegovina"],
+      ["BRA",4286,"Brazil"],["CAN",5070,"Canada"],["CIV",4289,"Côte d'Ivoire"],
+      ["COD",5197,"Congo DR"],["COL",4643,"Colombia"],["CRO",3964,"Croatia"],
+      ["CUW",5179,"Curaçao"],["CVE",5176,"Cape Verde"],["CZE",3960,"Czechia"],
+      ["ECU",4645,"Ecuador"],["EGY",4817,"Egypt"],["ENG",4291,"England"],
+      ["FRA",3969,"France"],["GER",3966,"Germany"],["GHA",4292,"Ghana"],
+      ["HTI",5180,"Haiti"],["IRN",4647,"Iran"],["IRQ",4747,"Iraq"],
+      ["JOR",5174,"Jordan"],["JPN",4295,"Japan"],["KOR",4297,"South Korea"],
+      ["KSA",4821,"Saudi Arabia"],["MEX",4298,"Mexico"],["MOR",4818,"Morocco"],
+      ["NED",3970,"Netherlands"],["NOR",5177,"Norway"],["NZL",4299,"New Zealand"],
+      ["PAN",4815,"Panama"],["PAR",4301,"Paraguay"],["POR",3961,"Portugal"],
+      ["QAT",4867,"Qatar"],["RSA",4305,"South Africa"],["SCO",4921,"Scotland"],
+      ["SEN",4819,"Senegal"],["SPA",3972,"Spain"],["SUI",3959,"Switzerland"],
+      ["SWE",3975,"Sweden"],["TUN",4820,"Tunisia"],["TUR",3962,"Türkiye"],
+      ["URU",4306,"Uruguay"],["USA",4307,"USA"],["UZB",5173,"Uzbekistan"]
+    ];
+
+    const STATE_KEY = "jersey-labels-v2";
+    const CONF_KEY  = "jersey-conf-v2";
+    const WHY_KEY   = "jersey-why-v2";
+
+    let state = JSON.parse(localStorage.getItem(STATE_KEY) || "{}");     // hash -> code
+    let confidence = JSON.parse(localStorage.getItem(CONF_KEY) || "{}"); // hash -> "high"|"medium"|"low"
+    let whyMap = JSON.parse(localStorage.getItem(WHY_KEY) || "{}");      // hash -> string
+    let idx = 0;
+
+    const $ = (id) => document.getElementById(id);
+
+    function save() {
+      localStorage.setItem(STATE_KEY, JSON.stringify(state));
+      localStorage.setItem(CONF_KEY, JSON.stringify(confidence));
+      localStorage.setItem(WHY_KEY, JSON.stringify(whyMap));
+    }
+
+    function confirmedCount() {
+      return HASHES.filter(h => confidence[h] === "high").length;
+    }
+
+    function buildJSON() {
+      const out = {};
+      for (const hash of HASHES) {
+        const code = state[hash];
+        if (!code) continue;
+        const team = TEAMS.find(t => t[0] === code);
+        if (!team) continue;
+        out[code] = { hash, externalId: team[1], name: team[2], confidence: confidence[hash] || "medium" };
+      }
+      return out;
+    }
+
+    function render() {
+      if (idx >= HASHES.length) idx = 0;
+      const hash = HASHES[idx];
+      const code = state[hash];
+      const conf = confidence[hash] || "low";
+
+      $("img").src = `../public/img/jerseys/_raw/${hash}.svg`;
+      $("hash").textContent = hash;
+
+      $("confBadge").className = "conf " + conf;
+      $("confBadge").textContent = conf;
+
+      if (code) {
+        const team = TEAMS.find(t => t[0] === code);
+        $("guessText").innerHTML = `<span style="color:#00ffff">${code}</span> — ${team ? team[2] : code}`;
+        $("guessWhy").textContent = whyMap[hash] || "";
+      } else {
+        $("guessText").innerHTML = `<span style="color:#666">no guess</span>`;
+        $("guessWhy").textContent = "";
+      }
+
+      const c = confirmedCount();
+      $("bar").style.width = (c / HASHES.length * 100) + "%";
+      $("count").textContent = `${c} / ${HASHES.length} confirmed · #${idx+1} of ${HASHES.length}`;
+
+      renderTeams();
+      $("search").value = "";
+      $("search").focus();
+    }
+
+    function renderTeams(filter = "") {
+      const wrap = $("teams");
+      wrap.innerHTML = "";
+      const currentHash = HASHES[idx];
+      const currentPick = state[currentHash];
+      // Hide teams confirmed (high) on OTHER jerseys.
+      // Teams that are still unconfirmed (low/medium guesses) elsewhere stay visible
+      // so you can steal them from a wrong guess.
+      const taken = new Set();
+      for (const [h, code] of Object.entries(state)) {
+        if (h !== currentHash && confidence[h] === "high") taken.add(code);
+      }
+      const f = filter.toLowerCase().trim();
+      let count = 0;
+      for (const [code, _id, name] of TEAMS) {
+        if (taken.has(code)) continue;
+        if (f && !code.toLowerCase().includes(f) && !name.toLowerCase().includes(f)) continue;
+        count++;
+        const row = document.createElement("div");
+        row.className = "team" + (code === currentPick ? " current" : "");
+        row.innerHTML = `<span class="code">${code}</span><span class="name">${name}</span>`;
+        row.addEventListener("click", () => pick(code));
+        wrap.appendChild(row);
+      }
+      $("remaining").textContent = `${count} available`;
+    }
+
+    function pick(code) {
+      const hash = HASHES[idx];
+      // if this code was used elsewhere, clear that one
+      for (const [h, c] of Object.entries(state)) {
+        if (c === code && h !== hash) { delete state[h]; delete confidence[h]; }
+      }
+      state[hash] = code;
+      confidence[hash] = "high";
+      save();
+      advance();
+    }
+
+    function confirmGuess() {
+      const hash = HASHES[idx];
+      if (state[hash]) {
+        confidence[hash] = "high";
+        save();
+      }
+      advance();
+    }
+
+    function clearPick() {
+      const hash = HASHES[idx];
+      delete state[hash];
+      delete confidence[hash];
+      save();
+      render();
+    }
+
+    function advance() {
+      // jump to next still-unconfirmed
+      for (let step = 1; step <= HASHES.length; step++) {
+        const i = (idx + step) % HASHES.length;
+        if (confidence[HASHES[i]] !== "high") { idx = i; render(); checkDone(); return; }
+      }
+      // all confirmed
+      checkDone();
+    }
+
+    function back() {
+      idx = (idx - 1 + HASHES.length) % HASHES.length;
+      render();
+    }
+
+    function checkDone() {
+      if (confirmedCount() === HASHES.length) {
+        $("doneScreen").hidden = false;
+        $("doneJson").textContent = JSON.stringify(buildJSON(), null, 2);
+      }
+    }
+
+    function renderConfirmed() {
+      const grid = $("confirmedGrid");
+      grid.innerHTML = "";
+      const entries = HASHES
+        .filter(h => confidence[h] === "high")
+        .map(h => ({ hash: h, code: state[h] }));
+      $("confirmedCount").textContent = `${entries.length} / ${HASHES.length}`;
+      if (entries.length === 0) {
+        grid.innerHTML = `<div class="empty">no confirmed picks yet — confirm some first</div>`;
+        return;
+      }
+      // sort by team code so it's easy to scan
+      entries.sort((a, b) => a.code.localeCompare(b.code));
+      for (const { hash, code } of entries) {
+        const team = TEAMS.find(t => t[0] === code);
+        const cell = document.createElement("div");
+        cell.className = "confCell";
+        cell.innerHTML = `
+          <img src="../public/img/jerseys/_raw/${hash}.svg" alt="" />
+          <div class="team"><span class="code">${code}</span> — ${team ? team[2] : code}</div>
+          <div class="row">
+            <button class="jump" data-act="jump">JUMP TO</button>
+            <button class="undo" data-act="undo">UNDO</button>
+          </div>
+          <div class="hash">${hash}</div>
+        `;
+        cell.querySelector('[data-act="jump"]').addEventListener("click", () => {
+          idx = HASHES.indexOf(hash);
+          $("confirmedScreen").hidden = true;
+          render();
+        });
+        cell.querySelector('[data-act="undo"]').addEventListener("click", () => {
+          delete state[hash];
+          delete confidence[hash];
+          save();
+          renderConfirmed();
+          // also refresh the team picker if visible behind
+          renderTeams($("search").value);
+          $("bar").style.width = (confirmedCount() / HASHES.length * 100) + "%";
+          $("count").textContent = `${confirmedCount()} / ${HASHES.length} confirmed · #${idx+1} of ${HASHES.length}`;
+        });
+        grid.appendChild(cell);
+      }
+    }
+
+    async function loadGuesses() {
+      if (Object.keys(state).length > 0) return; // don't overwrite saved progress
+      try {
+        const res = await fetch("./jersey-map.json");
+        const data = await res.json();
+        for (const [code, entry] of Object.entries(data)) {
+          if (code.startsWith("_")) continue;
+          state[entry.hash] = code;
+          confidence[entry.hash] = entry.confidence || "medium";
+          whyMap[entry.hash] = entry.why || "";
+        }
+        save();
+      } catch (e) { console.warn("no jersey-map.json yet", e); }
+    }
+
+    // events
+    $("confirm").addEventListener("click", confirmGuess);
+    $("skip").addEventListener("click", advance);
+    $("prev").addEventListener("click", back);
+    $("next").addEventListener("click", advance);
+    $("clearOne").addEventListener("click", clearPick);
+    $("reset").addEventListener("click", () => {
+      if (!confirm("Wipe all labels?")) return;
+      localStorage.removeItem(STATE_KEY);
+      localStorage.removeItem(CONF_KEY);
+      localStorage.removeItem(WHY_KEY);
+      state = {}; confidence = {}; whyMap = {};
+      idx = 0;
+      loadGuesses().then(render);
+    });
+    $("copy").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(JSON.stringify(buildJSON(), null, 2));
+      $("copy").textContent = "[ COPIED! ]";
+      setTimeout(() => $("copy").textContent = "[ COPY JSON ]", 1500);
+    });
+    $("copyDone").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(JSON.stringify(buildJSON(), null, 2));
+      $("copyDone").textContent = "[ COPIED! ]";
+    });
+    $("back").addEventListener("click", () => { $("doneScreen").hidden = true; });
+    $("showConfirmed").addEventListener("click", () => {
+      renderConfirmed();
+      $("confirmedScreen").hidden = false;
+    });
+    $("closeConfirmed").addEventListener("click", () => {
+      $("confirmedScreen").hidden = true;
+      render();
+    });
+
+    $("search").addEventListener("input", e => renderTeams(e.target.value));
+    $("search").addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        // pick first visible team
+        const first = $("teams").querySelector(".team");
+        if (first) first.click();
+        else confirmGuess();
+        e.preventDefault();
+      }
+    });
+    document.addEventListener("keydown", e => {
+      if (e.target.tagName === "INPUT") return;
+      if (!$("confirmedScreen").hidden) {
+        if (e.key === "Escape") { $("confirmedScreen").hidden = true; e.preventDefault(); }
+        return;
+      }
+      if (e.key === "Enter") { confirmGuess(); e.preventDefault(); }
+      else if (e.key === "ArrowRight") { advance(); e.preventDefault(); }
+      else if (e.key === "ArrowLeft") { back(); e.preventDefault(); }
+      else if (e.key === "Backspace") { clearPick(); e.preventDefault(); }
+    });
+
+    // init
+    loadGuesses().then(() => {
+      // start on first not-yet-confirmed
+      idx = HASHES.findIndex(h => confidence[h] !== "high");
+      if (idx < 0) idx = 0;
+      render();
+      checkDone();
+    });
+  </script>
+</body>
+</html>
