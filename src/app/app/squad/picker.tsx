@@ -50,9 +50,29 @@ export function SquadPicker({
   const [showErrors, setShowErrors] = useState(false);
   const [view, setView] = useState<"plan" | "lista">("plan");
   const [metric, setMetric] = useState<Metric>("value");
-  const [formation, setFormation] = useState<Formation>(
-    () => currentRules.legalFormations.find((f) => f.def === 4 && f.mid === 3 && f.fwd === 3) ?? currentRules.legalFormations[0],
-  );
+  const [formation, setFormation] = useState<Formation>(() => {
+    // If the user already has a saved squad, derive the formation from it
+    // (count positions in the initial selection). Otherwise default to
+    // 4-3-3. Falls back to the first legal formation if neither matches.
+    const playerById = new Map(players.map((p) => [p.id, p]));
+    const counts = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
+    for (const id of initialPlayerIds) {
+      const p = playerById.get(id);
+      if (p) counts[p.position]++;
+    }
+    if (counts.GK + counts.DEF + counts.MID + counts.FWD === 11) {
+      const saved = currentRules.legalFormations.find(
+        (f) =>
+          f.def === counts.DEF && f.mid === counts.MID && f.fwd === counts.FWD,
+      );
+      if (saved) return saved;
+    }
+    return (
+      currentRules.legalFormations.find(
+        (f) => f.def === 4 && f.mid === 3 && f.fwd === 3,
+      ) ?? currentRules.legalFormations[0]
+    );
+  });
   // When user clicks an empty pitch slot we jump to LISTA filtered by that
   // position; pickedSlotPosition lets us auto-return to PLAN once they pick.
   const [pickedSlotPosition, setPickedSlotPosition] = useState<Position | null>(null);
