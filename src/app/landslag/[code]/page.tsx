@@ -181,7 +181,7 @@ function Chip({
   const lastName = player.name.split(" ").slice(-1)[0] ?? player.name;
   return (
     <Link
-      href={`/players/${player.id}`}
+      href={`/spelare/${player.id}`}
       className="flex min-w-0 flex-1 flex-col items-center transition hover:opacity-80"
       title={player.name}
     >
@@ -230,7 +230,7 @@ function RosterByPosition({ players }: { players: NationPlayer[] }) {
               {inGroup.map((p) => (
                 <li key={p.id}>
                   <Link
-                    href={`/players/${p.id}`}
+                    href={`/spelare/${p.id}`}
                     className="grid grid-cols-[auto_1fr_auto] items-baseline gap-3 p-2 text-sm transition hover:bg-yellow/5"
                   >
                     <span className="text-yellow tabular-nums">{p.position}</span>

@@ -94,7 +94,7 @@ export default async function Home() {
           <Link href="/vm" className="text-cyan">
             [ VM ]
           </Link>
-          <Link href="/players" className="text-cyan">
+          <Link href="/spelare" className="text-cyan">
             [ SPELARE ]
           </Link>
           <Link href="/side-bets" className="text-cyan">

@@ -55,7 +55,7 @@ export default async function VMHomePage() {
             accent="cyan"
           />
           <HubCard
-            href="/players"
+            href="/spelare"
             title="SPELARE"
             subtitle="Alla aktiva"
             blurb="Filtrera på position, land och pris. Klicka för rondvärden."

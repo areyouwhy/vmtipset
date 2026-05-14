@@ -23,7 +23,7 @@ export default async function PublicPlayerPage({
       <div className="mx-auto w-full max-w-3xl">
         <Breadcrumbs
           trail={[
-            { label: "SPELARE", href: "/players" },
+            { label: "SPELARE", href: "/spelare" },
             { label: player.name.toUpperCase() },
           ]}
         />
