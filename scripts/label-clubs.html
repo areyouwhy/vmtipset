@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>LABEL CLUBS</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background:#000; color:#fff;
+      font-family:"Geist Mono",ui-monospace,monospace;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    h1 { letter-spacing:.2em; font-size:14px; color:#ffff00; margin:0; }
+    .top {
+      padding:12px 24px; border-bottom:1px solid #222;
+      display:flex; gap:16px; align-items:center; flex-wrap:wrap;
+    }
+    .progress {
+      flex:1; height:6px; background:#111; border:1px solid #333; position:relative; min-width:200px;
+    }
+    .progress > span { display:block; height:100%; background:#00ff00; transition:width .1s; }
+    .count { color:#00ffff; font-size:12px; }
+    .top button {
+      background:#000; color:#ffff00; border:1px solid #ffff00;
+      padding:4px 10px; font-family:inherit; font-size:11px; cursor:pointer;
+    }
+    .top button:hover { background:#ffff00; color:#000; }
+
+    .main { flex:1; display:flex; min-height:0; }
+    .left {
+      flex: 0 0 45%;
+      display:flex; flex-direction:column; justify-content:center;
+      padding:24px; border-right:1px solid #222; gap: 12px;
+    }
+    .pname { font-size:28px; color:#ffff00; font-weight:bold; letter-spacing:.05em; }
+    .pmeta { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; }
+    .pmeta b { color:#aaa; }
+    .pmeta .price { color:#00ff00; font-size:18px; font-weight:bold; }
+    .pmeta .ccode { color:#00ffff; }
+    .pcurrent {
+      margin-top:8px; padding:12px; border:1px solid #333; background:#0a0a0a;
+    }
+    .pcurrent .label { font-size:10px; color:#888; letter-spacing:.15em; text-transform:uppercase; }
+    .pcurrent .value { font-size:18px; margin-top:4px; }
+    .pcurrent.has  .value { color:#fff; }
+    .pcurrent.none .value { color:#888; font-style: italic; }
+
+    .right {
+      flex:1; padding:24px;
+      display:flex; flex-direction:column; gap:12px; min-width:0;
+    }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .actions button {
+      background:#000; color:#fff; border:1px solid #444;
+      padding:10px 16px; font-family:inherit; font-size:12px; cursor:pointer;
+      letter-spacing:.05em;
+    }
+    .actions button.confirm { border-color:#00ff00; color:#00ff00; }
+    .actions button.confirm:hover { background:#00ff00; color:#000; }
+    .actions button.skip    { border-color:#888; color:#888; }
+    .actions button.skip:hover { background:#888; color:#000; }
+    .actions button.clear   { border-color:#ff5555; color:#ff5555; }
+    .actions button.clear:hover { background:#ff5555; color:#000; }
+    .actions .kbd {
+      font-size:10px; color:#666; margin-left:6px; padding:1px 4px; border:1px solid #333;
+    }
+
+    .pick { display:flex; flex-direction:column; gap:8px; min-height:0; flex:1; }
+    .pick label { font-size:11px; color:#888; }
+    .pick input {
+      background:#000; color:#fff; border:1px solid #444; padding:8px;
+      font-family:inherit; font-size:14px;
+    }
+    .pick input:focus { outline:none; border-color:#ffff00; }
+    .options {
+      overflow-y:auto; border:1px solid #222; background:#0a0a0a;
+      flex:1; min-height:0;
+    }
+    .opt {
+      padding:6px 10px; cursor:pointer; font-size:13px;
+      display:flex; justify-content:space-between; gap:8px;
+    }
+    .opt:hover { background:#222; }
+    .opt.new   { color:#00ff00; font-style: italic; }
+    .opt .ccount { color:#666; font-size:11px; }
+
+    .done {
+      position:absolute; inset:0; background:#000;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:24px;
+    }
+    [hidden] { display: none !important; }
+    .done h2 { color:#00ff00; font-size:24px; letter-spacing:.2em; }
+    .done pre {
+      max-width: 800px; max-height: 50vh; overflow:auto;
+      background:#0a0a0a; border:1px solid #222; padding:12px; font-size:11px;
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1>LABEL CLUBS</h1>
+    <div class="progress"><span id="bar" style="width:0%"></span></div>
+    <span class="count" id="count">0 / 0</span>
+    <button id="prev">◀ PREV</button>
+    <button id="copy">[ COPY JSON ]</button>
+    <button id="export">[ EXPORT NOW ]</button>
+    <button id="reset">RESET</button>
+  </div>
+
+  <div class="main" id="main">
+    <div class="left">
+      <div class="pmeta">
+        <span class="price" id="price">—</span>
+        <span><b>POS</b> <span id="meta-pos">—</span></span>
+        <span><b>LAND</b> <span class="ccode" id="meta-cc">—</span></span>
+        <span id="meta-cname" style="color:#888"></span>
+      </div>
+      <p class="pname" id="pname">—</p>
+      <div class="pcurrent" id="pcurrent">
+        <span class="label">NUVARANDE KLUBB</span>
+        <p class="value" id="pcurrent-val">—</p>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="actions">
+        <button class="confirm" id="confirm">✓ KEEP <span class="kbd">↵</span></button>
+        <button class="skip"    id="skip">SKIP <span class="kbd">→</span></button>
+        <button class="clear"   id="clearone">CLEAR PICK</button>
+      </div>
+      <div class="pick">
+        <label>Type to search or set a new club:</label>
+        <input id="search" placeholder="t.ex. arsenal, real madrid, sporting…" autofocus />
+        <div class="options" id="options"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="done" id="doneScreen" hidden>
+    <h2>FÄRDIG ✓</h2>
+    <p style="color:#888;font-size:12px;max-width:600px;text-align:center;margin:16px 0;">
+      Click COPY JSON to grab the result, paste it back to Claude, who will apply the diffs to <code>src/data/player-clubs.ts</code>.
+    </p>
+    <button id="copyDone" style="background:#000;color:#00ff00;border:1px solid #00ff00;padding:8px 16px;cursor:pointer;font-family:inherit;margin-bottom:16px;">[ COPY JSON ]</button>
+    <pre id="doneJson"></pre>
+    <button id="back" style="background:#000;color:#888;border:1px solid #444;padding:6px 12px;cursor:pointer;font-family:inherit;margin-top:16px;">← back</button>
+  </div>
+
+  <script>
+    const STATE_KEY = "club-labels-v1";
+
+    let DATA = null;
+    let idx = 0;
+    // diff[externalId] = { club: string | null }
+    //   club: null  = explicit "no club"
+    //   missing key = no decision (skipped or untouched)
+    let diff = JSON.parse(localStorage.getItem(STATE_KEY) || "{}");
+
+    const $ = (id) => document.getElementById(id);
+
+    function save() {
+      localStorage.setItem(STATE_KEY, JSON.stringify(diff));
+    }
+    function effectiveClub(p) {
+      const k = p.externalId;
+      if (k in diff) return diff[k]; // explicit override (possibly null)
+      return p.currentClub;
+    }
+    function decidedCount() {
+      return Object.keys(diff).length;
+    }
+    function buildJSON() {
+      // Only include entries that actually change vs current.
+      const changes = {};
+      for (const p of DATA.players) {
+        if (!(p.externalId in diff)) continue;
+        const newVal = diff[p.externalId];
+        if (newVal === p.currentClub) continue; // confirmed unchanged → skip
+        changes[p.externalId] = newVal;
+      }
+      return changes;
+    }
+
+    function render() {
+      if (idx >= DATA.players.length) idx = 0;
+      const p = DATA.players[idx];
+      $("pname").textContent = p.name;
+      $("price").textContent = (p.priceSek / 1_000_000).toFixed(1) + "M";
+      $("meta-pos").textContent = "—"; // position not needed for labeler
+      $("meta-cc").textContent = p.countryCode || "—";
+      $("meta-cname").textContent = p.countryName || "";
+      const cur = effectiveClub(p);
+      const decided = p.externalId in diff;
+      $("pcurrent").className = "pcurrent " + (cur ? "has" : "none");
+      $("pcurrent-val").textContent = cur || "— (ingen klubb tilldelad)";
+
+      $("confirm").textContent = decided
+        ? "✓ CONFIRMED — KEEP"
+        : (cur ? "✓ KEEP " : "✓ NO CLUB ");
+      $("confirm").innerHTML += '<span class="kbd">↵</span>';
+
+      // count + progress
+      const decN = decidedCount();
+      $("bar").style.width = ((decN / DATA.players.length) * 100) + "%";
+      $("count").textContent = `${decN} / ${DATA.players.length} confirmed · #${idx + 1}`;
+
+      $("search").value = "";
+      renderOptions("");
+      $("search").focus();
+    }
+
+    function renderOptions(q) {
+      const wrap = $("options");
+      wrap.innerHTML = "";
+      const query = q.trim().toLowerCase();
+      const knownCounts = new Map();
+      for (const p of DATA.players) {
+        const c = effectiveClub(p);
+        if (c) knownCounts.set(c, (knownCounts.get(c) ?? 0) + 1);
+      }
+      const known = [...knownCounts.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "sv"))
+        .map(([name, count]) => ({ name, count }));
+      let shown = 0;
+      for (const { name, count } of known) {
+        if (query && !name.toLowerCase().includes(query)) continue;
+        if (++shown > 50) break;
+        const row = document.createElement("div");
+        row.className = "opt";
+        row.innerHTML = `<span>${name}</span><span class="ccount">${count}</span>`;
+        row.addEventListener("click", () => pick(name));
+        wrap.appendChild(row);
+      }
+      // Offer "add new" if the query doesn't exactly match anything
+      if (query && !known.some((k) => k.name.toLowerCase() === query)) {
+        const row = document.createElement("div");
+        row.className = "opt new";
+        row.innerHTML = `<span>+ NEW: ${escapeHtml(q.trim())}</span><span class="ccount">↵</span>`;
+        row.addEventListener("click", () => pick(q.trim()));
+        wrap.appendChild(row);
+      }
+    }
+    function escapeHtml(s) { return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+    function pick(name) {
+      const p = DATA.players[idx];
+      diff[p.externalId] = name;
+      save();
+      advance();
+    }
+    function confirmCurrent() {
+      const p = DATA.players[idx];
+      // Lock whatever is currently effective (may be null = no club).
+      const eff = effectiveClub(p);
+      diff[p.externalId] = eff ?? null;
+      save();
+      advance();
+    }
+    function clearOne() {
+      const p = DATA.players[idx];
+      delete diff[p.externalId];
+      save();
+      render();
+    }
+    function advance() {
+      idx = (idx + 1) % DATA.players.length;
+      render();
+      if (decidedCount() === DATA.players.length) {
+        $("doneScreen").hidden = false;
+        $("doneJson").textContent = JSON.stringify(buildJSON(), null, 2);
+      }
+    }
+    function back() {
+      idx = (idx - 1 + DATA.players.length) % DATA.players.length;
+      render();
+    }
+
+    $("confirm").addEventListener("click", confirmCurrent);
+    $("skip").addEventListener("click", advance);
+    $("prev").addEventListener("click", back);
+    $("clearone").addEventListener("click", clearOne);
+    $("reset").addEventListener("click", () => {
+      if (!confirm("Wipe all decisions?")) return;
+      localStorage.removeItem(STATE_KEY);
+      diff = {};
+      idx = 0;
+      render();
+    });
+    $("copy").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(JSON.stringify(buildJSON(), null, 2));
+      $("copy").textContent = "[ COPIED! ]";
+      setTimeout(() => $("copy").textContent = "[ COPY JSON ]", 1500);
+    });
+    $("copyDone").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(JSON.stringify(buildJSON(), null, 2));
+      $("copyDone").textContent = "[ COPIED! ]";
+    });
+    $("export").addEventListener("click", () => {
+      $("doneScreen").hidden = false;
+      $("doneJson").textContent = JSON.stringify(buildJSON(), null, 2);
+    });
+    $("back").addEventListener("click", () => { $("doneScreen").hidden = true; });
+
+    $("search").addEventListener("input", (e) => renderOptions(e.target.value));
+    $("search").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        // If there's a typed query → pick first option (or new)
+        const first = $("options").querySelector(".opt");
+        if (first) {
+          first.click();
+        } else {
+          confirmCurrent();
+        }
+        e.preventDefault();
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.target.tagName === "INPUT") return;
+      if (!$("doneScreen").hidden) {
+        if (e.key === "Escape") { $("doneScreen").hidden = true; e.preventDefault(); }
+        return;
+      }
+      if (e.key === "Enter") { confirmCurrent(); e.preventDefault(); }
+      else if (e.key === "ArrowRight") { advance(); e.preventDefault(); }
+      else if (e.key === "ArrowLeft") { back(); e.preventDefault(); }
+      else if (e.key === "Backspace") { clearOne(); e.preventDefault(); }
+    });
+
+    fetch("./label-clubs-data.json").then((r) => r.json()).then((d) => {
+      DATA = d;
+      // Start on the first not-yet-decided player.
+      idx = DATA.players.findIndex((p) => !(p.externalId in diff));
+      if (idx < 0) idx = 0;
+      render();
+    });
+  </script>
+</body>
+</html>
