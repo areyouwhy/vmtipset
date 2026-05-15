@@ -45,10 +45,12 @@ export default async function Home() {
               Här hittar ni resten.
             </p>
             <p>
-              Istället för att betala onödiga cash till zionisterna erbjuds
-              istället ett alternativ här. Cashen tar jag,{" "}
-              <span className="text-foreground">Ruy</span>, hand om — det är
-              jag som vibeat den här grejen.
+              Istället för att betala onödiga cash till zionisterna erbjudst
+              ett alternativ här.
+            </p>
+            <p>
+              Cashen tar jag, <span className="text-foreground">Ruy</span>,
+              hand om. Det är jag som vibeat den här grejen.
             </p>
             <p>
               Checka{" "}
