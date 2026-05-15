@@ -27,18 +27,37 @@ export default async function Home() {
         </header>
 
         <section className="py-12 sm:py-16">
-          <h1 className="text-4xl font-bold uppercase tracking-tight text-yellow sm:text-6xl">
-            LA COPA
-            <br />
-            DEL MUNDO
-          </h1>
-          <p className="mt-6 max-w-md text-sm text-dim sm:text-base">
-            Vänner. Lag. Pengar.
-            <br />
-            En liga byggd kring fotbolls-VM 2026.
-            <br />
-            Bygg ditt drömlag. Jaga toppen. Vinn potten.
+          <p className="text-sm uppercase tracking-widest text-cyan">
+            Vänner, det är dax!
           </p>
+          <h1 className="mt-4 text-4xl font-bold uppercase tracking-tight text-yellow sm:text-6xl">
+            COPA DEL
+            <br />
+            MUNDO 2026
+          </h1>
+          <p className="mt-3 text-sm uppercase tracking-widest text-yellow/80 sm:text-base">
+            Må livets liv hända
+          </p>
+
+          <div className="mt-6 space-y-3 text-sm text-dim sm:text-base">
+            <p>
+              Hetsen hittar ni på <span className="text-foreground">WhatsApp</span>.
+              Här hittar ni resten.
+            </p>
+            <p>
+              Istället för att betala onödiga cash till zionisterna erbjuds
+              istället ett alternativ här. Cashen tar jag,{" "}
+              <span className="text-foreground">Ruy</span>, hand om — det är
+              jag som vibeat den här grejen.
+            </p>
+            <p>
+              Checka{" "}
+              <Link href="/hur" className="text-cyan hover:text-yellow">
+                HUR
+              </Link>{" "}
+              om du vill fatta hur det funkar och hur jag gjort.
+            </p>
+          </div>
         </section>
 
         <div className="space-y-3 border-y border-border py-6">
@@ -84,7 +103,22 @@ export default async function Home() {
           <p>
             <span className="text-yellow">URVAL</span> &nbsp; ADMIN APPROVAL
           </p>
+          <p>
+            <span className="text-yellow">MAX</span> &nbsp; 100 SPELARE
+          </p>
           <p>──────────────────────────────────</p>
+        </section>
+
+        <section className="mt-8 space-y-2 text-center text-sm">
+          <p className="text-yellow font-bold tracking-wider">
+            KOMIIIGEEENNNUUU SVERIGE!
+          </p>
+          <p className="text-cyan font-bold tracking-wider">
+            UUUUURUUUGUUUUAYY NOMAAAAAA!
+          </p>
+          <p className="mt-4 text-xs uppercase tracking-widest text-dim">
+            — Ruy
+          </p>
         </section>
 
         <p className="mt-6 flex flex-wrap justify-center gap-4 text-center text-xs">
