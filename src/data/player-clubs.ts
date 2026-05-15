@@ -333,7 +333,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:251592": "FC Porto",
   "ab:p:251595": "AC Milan",
   "ab:p:251596": "Fenerbahçe Istanbul",
-  "ab:p:251597": "Al-Hilal SFC",
+  "ab:p:251597": "Futbol Club Barcelona",
   "ab:p:251599": "Manchester City F.C.",
   "ab:p:251603": "Tottenham Hotspur F.C.",
   "ab:p:251605": "Paris Saint-Germain FC",
