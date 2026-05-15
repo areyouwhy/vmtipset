@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Leaderboard, LeaderboardRow } from "@/lib/leaderboard";
+import { teamSlug } from "@/lib/team-slug";
 
 const MAX_COMPARE = 3;
 
@@ -105,7 +106,7 @@ export function TabellClient({
                   </td>
                   <td className="min-w-0 px-2 py-2">
                     <Link
-                      href={`/team/${row.teamId}`}
+                      href={`/team/${teamSlug(row.teamName)}`}
                       className="block truncate text-foreground hover:text-cyan"
                     >
                       {row.teamName}

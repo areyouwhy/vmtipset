@@ -3,17 +3,20 @@ import { auth } from "@clerk/nextjs/server";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isAdmin } from "@/lib/auth";
 import { getTeamDetail, type TeamDetailPlayer } from "@/lib/leaderboard";
+import { findTeamBySlug } from "@/lib/team-slug.server";
 
 export const dynamic = "force-dynamic";
 
 export default async function TeamPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  const { slug } = await params;
+  const team = await findTeamBySlug(slug);
+  if (!team) notFound();
   const [{ userId }, admin] = await Promise.all([auth(), isAdmin()]);
-  const detail = await getTeamDetail(id, {
+  const detail = await getTeamDetail(team.id, {
     viewerUserId: userId,
     viewerIsAdmin: admin,
   });

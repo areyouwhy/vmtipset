@@ -24,20 +24,11 @@ export const DEFAULT_POOLS: PrizePoolInput[] = [
   {
     key: "main_league",
     label: "MAIN LEAGUE",
-    allocationBps: 8000,
+    allocationBps: 10000,
     places: [
       { place: 1, shareBps: 5000 },
       { place: 2, shareBps: 3000 },
       { place: 3, shareBps: 2000 },
-    ],
-  },
-  {
-    key: "daily_bets",
-    label: "DAILY BETS",
-    allocationBps: 2000,
-    places: [
-      { place: 1, shareBps: 6000 },
-      { place: 2, shareBps: 4000 },
     ],
   },
 ];

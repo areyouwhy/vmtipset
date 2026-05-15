@@ -4,6 +4,7 @@ import { count, eq } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
 import { teams, users } from "@/db/schema";
+import { ensureDefaultPrizes, getPotPayout } from "@/lib/prize-config";
 
 async function getStats() {
   const [created] = await db.select({ n: count() }).from(teams);
@@ -16,7 +17,14 @@ async function getStats() {
 }
 
 export default async function Home() {
-  const [{ userId }, stats] = await Promise.all([auth(), getStats()]);
+  await ensureDefaultPrizes();
+  const [{ userId }, stats, payout] = await Promise.all([
+    auth(),
+    getStats(),
+    getPotPayout(),
+  ]);
+  const mainPool = payout.pools.find((p) => p.key === "main_league");
+  const topPlaces = mainPool?.places.slice(0, 3) ?? [];
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
@@ -41,8 +49,16 @@ export default async function Home() {
 
           <div className="mt-6 space-y-3 text-sm text-dim sm:text-base">
             <p>
-              Hetsen hittar ni på <span className="text-foreground">WhatsApp</span>.
-              Här hittar ni resten.
+              Hetsen hittar ni på{" "}
+              <a
+                href="https://chat.whatsapp.com/LGL6yZKMdtl7GTJKZrEKeX"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground hover:text-yellow"
+              >
+                WhatsApp
+              </a>
+              . Här hittar ni resten.
             </p>
             <p>
               Istället för att betala onödiga cash till zionisterna erbjudst
@@ -94,20 +110,39 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="mt-6 space-y-1 text-xs text-dim">
+        <section className="mt-6 text-xs text-dim">
           <p>──────────────────────────────────</p>
-          <p>
-            <span className="text-yellow">INSATS</span> &nbsp; 300 KR
-          </p>
-          <p>
-            <span className="text-yellow">BETALA</span> &nbsp; SWISH
-          </p>
-          <p>
-            <span className="text-yellow">URVAL</span> &nbsp; ADMIN APPROVAL
-          </p>
-          <p>
-            <span className="text-yellow">MAX</span> &nbsp; 100 SPELARE
-          </p>
+          <div className="grid grid-cols-2 gap-x-6 py-1">
+            <div className="space-y-1">
+              <p>
+                <span className="text-yellow">INSATS</span> &nbsp; 300 KR
+              </p>
+              <p>
+                <span className="text-yellow">BETALA</span> &nbsp; SWISH
+              </p>
+              <p>
+                <span className="text-yellow">URVAL</span> &nbsp; ADMIN APPROVAL
+              </p>
+              <p>
+                <span className="text-yellow">MAX</span> &nbsp; 100 SPELARE
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-yellow">POTT &nbsp; PLATS 1–3</p>
+              {topPlaces.length > 0 ? (
+                topPlaces.map((p) => (
+                  <p key={p.place} className="tabular-nums">
+                    <span className="text-foreground">#{p.place}</span>
+                    <span className="ml-2 text-yellow">
+                      {formatSek(p.amountSek)} KR
+                    </span>
+                  </p>
+                ))
+              ) : (
+                <p className="text-dim">— SÄTTS NÄR LAGEN GODKÄNTS —</p>
+              )}
+            </div>
+          </div>
           <p>──────────────────────────────────</p>
         </section>
 
@@ -137,4 +172,8 @@ export default async function Home() {
       </div>
     </main>
   );
+}
+
+function formatSek(n: number): string {
+  return n.toLocaleString("sv-SE").replace(/ /g, " ");
 }

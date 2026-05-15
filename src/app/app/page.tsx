@@ -9,6 +9,7 @@ import { getOrCreateDbUser, isAdmin } from "@/lib/auth";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { getOpenBetsForUser } from "@/lib/bets-data";
 import { getActiveRound, getCurrentSquad } from "@/lib/squad-data";
+import { teamSlug } from "@/lib/team-slug";
 import { BetsSection } from "./bets-section";
 import { CreateTeamForm } from "./create-team-form";
 import { PendingPanel } from "./pending-panel";
@@ -38,7 +39,7 @@ export default async function AppPage() {
 
   const statusLabel: Record<typeof user.status, string> = {
     pending: "VÄNTAR PÅ GODKÄNNANDE",
-    approved: "GODKÄND",
+    approved: "SWISHAD & KLAR",
     rejected: "AVVISAD",
   };
   const statusColor: Record<typeof user.status, string> = {
@@ -46,6 +47,27 @@ export default async function AppPage() {
     approved: "text-green",
     rejected: "text-red",
   };
+
+  // Squad chip in the identity row — only meaningful once the user is approved
+  // and there's an active round. Mirrors SquadStatusPanel's tone logic.
+  let squadChip: { label: string; color: string } | null = null;
+  if (team && user.status === "approved" && activeRound) {
+    const total = squad?.playerIds.length ?? 0;
+    const dropped = squad?.droppedPlayers.length ?? 0;
+    const active = total - dropped;
+    const locked = squad?.lockedAt != null;
+    if (locked) {
+      squadChip = { label: "TRUPP LÅST", color: "text-dim" };
+    } else if (dropped > 0) {
+      squadChip = { label: "ERSÄTT BORTPLOCKADE", color: "text-yellow" };
+    } else if (active === 11) {
+      squadChip = { label: "TRUPP REDO", color: "text-green" };
+    } else if (active === 0) {
+      squadChip = { label: "INGEN TRUPP", color: "text-red" };
+    } else {
+      squadChip = { label: `TRUPP ${active}/11`, color: "text-yellow" };
+    }
+  }
 
   // Leaderboard powers both the standing panel and the league table. Fetch
   // once for any signed-in user (cheap; only teams + scores reads).
@@ -86,34 +108,45 @@ export default async function AppPage() {
           }
         />
 
-        <section className="border-b border-border py-4 text-xs uppercase tracking-widest">
-          <p>
-            <span className="text-dim">LOGGAD IN </span>
+        <section className="border-b border-border py-2 text-[11px] uppercase tracking-widest">
+          <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span className="text-yellow">{handle}</span>
             {team ? (
               <>
-                <span className="text-dim"> · </span>
-                <span className="text-foreground">{team.name}</span>
-                <span className="text-dim"> · </span>
+                <span className="text-dim">·</span>
+                <Link
+                  href={`/team/${teamSlug(team.name)}`}
+                  className="text-foreground hover:text-yellow"
+                >
+                  {team.name}
+                </Link>
+                <span className="text-dim">·</span>
                 <span className={statusColor[user.status]}>
                   {statusLabel[user.status]}
                 </span>
               </>
             ) : (
               <>
-                <span className="text-dim"> · </span>
+                <span className="text-dim">·</span>
                 <span className="text-dim">INGET LAG</span>
               </>
             )}
-          </p>
-          <p className="mt-2">
-            <span className="text-dim">AKTIV ROND </span>
+            <span className="text-dim">·</span>
             {activeRound ? (
-              <span className="text-yellow">
-                #{activeRound.number} · {activeRound.name}
-              </span>
+              <Link
+                href={`/vm/omgang/${activeRound.number}`}
+                className="text-yellow hover:text-cyan"
+              >
+                ROND #{activeRound.number}
+              </Link>
             ) : (
-              <span className="text-dim">— ingen öppen —</span>
+              <span className="text-dim">INGEN ROND</span>
+            )}
+            {squadChip && (
+              <>
+                <span className="text-dim">·</span>
+                <span className={squadChip.color}>{squadChip.label}</span>
+              </>
             )}
           </p>
         </section>
@@ -138,7 +171,7 @@ export default async function AppPage() {
               />
               {myStanding && (
                 <StandingPanel
-                  teamId={team.id}
+                  teamSlug={teamSlug(team.name)}
                   rank={myStanding.rank}
                   total={myStanding.total}
                   lastRoundPoints={myStanding.lastRoundPoints}
@@ -241,7 +274,7 @@ function LeagueRow({
         {String(row.rank).padStart(2, "0")}
       </span>
       <Link
-        href={`/team/${row.teamId}`}
+        href={`/team/${teamSlug(row.teamName)}`}
         className={`min-w-0 truncate ${
           mine ? "text-yellow" : "text-foreground"
         } hover:text-cyan`}
@@ -259,12 +292,12 @@ function LeagueRow({
 }
 
 function StandingPanel({
-  teamId,
+  teamSlug: slug,
   rank,
   total,
   lastRoundPoints,
 }: {
-  teamId: string;
+  teamSlug: string;
   rank: number;
   total: number;
   lastRoundPoints: number | null;
@@ -304,7 +337,7 @@ function StandingPanel({
         <Link href="/tabell" className="text-cyan hover:underline">
           [ HELA TABELLEN ]
         </Link>
-        <Link href={`/team/${teamId}`} className="text-cyan hover:underline">
+        <Link href={`/team/${slug}`} className="text-cyan hover:underline">
           [ MITT LAG ]
         </Link>
       </div>

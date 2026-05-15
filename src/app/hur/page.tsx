@@ -73,14 +73,7 @@ export default async function HowPage() {
               </span>
             </li>
             <li>
-              <span className="text-yellow">B · DAGENS BET</span>{" "}
-              <span className="text-dim">
-                — admin lägger upp en fråga (spelare eller siffra), du svarar
-                före deadline, rätt svar ger poäng. Egen tabell.
-              </span>
-            </li>
-            <li>
-              <span className="text-yellow">C · SIDOSPEL</span>{" "}
+              <span className="text-yellow">B · SIDOSPEL</span>{" "}
               <span className="text-dim">
                 — visas på sajten men poäng/pengar hanteras offline.
               </span>
@@ -166,7 +159,7 @@ export default async function HowPage() {
           />
 
           <div className="mt-5 space-y-4">
-            {payout.pools.map((pool) => (
+            {payout.pools.filter((p) => p.allocationBps > 0).map((pool) => (
               <div key={pool.key} className="border border-border p-3">
                 <p className="flex items-baseline justify-between text-xs">
                   <span className="text-yellow">{pool.label}</span>

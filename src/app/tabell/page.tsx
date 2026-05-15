@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getLeaderboard } from "@/lib/leaderboard";
+import { teamSlug } from "@/lib/team-slug";
 import { TabellClient } from "./table-client";
 
 export const dynamic = "force-dynamic";
@@ -81,7 +82,7 @@ export default async function TabellPage() {
                     </td>
                     <td className="px-2 py-1.5">
                       <Link
-                        href={`/team/${row.teamId}`}
+                        href={`/team/${teamSlug(row.teamName)}`}
                         className="block truncate text-foreground hover:text-cyan"
                       >
                         {row.teamName}
