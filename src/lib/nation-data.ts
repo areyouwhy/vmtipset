@@ -12,6 +12,8 @@ import { currentRules } from "@/lib/rules";
 
 export type NationPlayer = {
   id: string;
+  /** Aftonbladet external id, e.g. "ab:p:248321" — used for club lookup. */
+  externalId: string | null;
   name: string;
   position: "GK" | "DEF" | "MID" | "FWD";
   /** Most recent snapshot price; falls back to baseline; null if none. */
@@ -216,6 +218,7 @@ export async function getNationDetail(
     .filter((p: Player) => p.active)
     .map((p: Player) => ({
       id: p.id,
+      externalId: p.externalId,
       name: p.name,
       position: p.position,
       priceSek: latest.get(p.id) ?? baseline.get(p.id) ?? null,
@@ -291,6 +294,7 @@ export async function getAllNations(): Promise<NationSummary[]> {
       const roster: NationPlayer[] = (playersByClub.get(c.id) ?? []).map(
         (p) => ({
           id: p.id,
+          externalId: p.externalId,
           name: p.name,
           position: p.position,
           priceSek: latest.get(p.id) ?? baseline.get(p.id) ?? null,

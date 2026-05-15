@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { clubFor } from "@/data/player-clubs";
+import { clubSlug } from "@/lib/clubs";
 import { Jersey, PitchJersey } from "@/lib/jersey";
 import { getNationDetail, type NationPlayer } from "@/lib/nation-data";
 import { fifaRank, FIFA_RANK_SOURCE_DATE } from "@/data/fifa-rank";
@@ -227,22 +229,39 @@ function RosterByPosition({ players }: { players: NationPlayer[] }) {
               {label} <span className="text-cyan">{inGroup.length}</span>
             </h3>
             <ul className="divide-y divide-border border border-border">
-              {inGroup.map((p) => (
-                <li key={p.id}>
-                  <Link
-                    href={`/spelare/${p.id}`}
-                    className="grid grid-cols-[auto_1fr_auto] items-baseline gap-3 p-2 text-sm transition hover:bg-yellow/5"
-                  >
-                    <span className="text-yellow tabular-nums">{p.position}</span>
-                    <span className="truncate text-foreground">{p.name}</span>
-                    <span className="tabular-nums text-foreground">
-                      {p.priceSek === null
-                        ? "—"
-                        : `${(p.priceSek / 1_000_000).toFixed(1)}M`}
-                    </span>
-                  </Link>
-                </li>
-              ))}
+              {inGroup.map((p) => {
+                const club = clubFor(p.externalId);
+                return (
+                  <li key={p.id}>
+                    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 p-2 text-sm">
+                      <span className="text-yellow tabular-nums">
+                        {p.position}
+                      </span>
+                      <span className="min-w-0">
+                        <Link
+                          href={`/spelare/${p.id}`}
+                          className="block truncate text-foreground hover:text-cyan"
+                        >
+                          {p.name}
+                        </Link>
+                        {club && (
+                          <Link
+                            href={`/klubblag/${clubSlug(club)}`}
+                            className="block truncate text-[10px] uppercase tracking-widest text-cyan/80 hover:text-yellow"
+                          >
+                            {club}
+                          </Link>
+                        )}
+                      </span>
+                      <span className="tabular-nums text-foreground">
+                        {p.priceSek === null
+                          ? "—"
+                          : `${(p.priceSek / 1_000_000).toFixed(1)}M`}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         );
