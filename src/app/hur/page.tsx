@@ -216,12 +216,36 @@ export default async function HowPage() {
             <li>
               <span className="text-yellow">·</span> Varje rondpoäng pekar på
               den exakta spelar-snapshot som användes (se{" "}
-              <span className="text-foreground">/audit</span> när det finns).
+              <a href="/hur/audit" className="text-cyan hover:underline">
+                /hur/audit
+              </a>{" "}
+              när det finns).
             </li>
             <li>
               <span className="text-yellow">·</span> Avvikelser från
               Aftonbladets regler loggas i{" "}
-              <span className="text-foreground">RULES.md</span> i repo-historiken.
+              <a
+                href="https://github.com/areyouwhy/vmtipset/blob/main/RULES.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan hover:underline"
+              >
+                RULES.md
+              </a>
+              .
+            </li>
+            <li>
+              <span className="text-yellow">·</span> Hela kodbasen är öppen{" "}
+              —{" "}
+              <a
+                href="https://github.com/areyouwhy/vmtipset"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan hover:underline"
+              >
+                github.com/areyouwhy/vmtipset
+              </a>
+              .
             </li>
           </ul>
         </Block>
