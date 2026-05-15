@@ -2,7 +2,7 @@
  * Pure scoring for daily / round bets (game mode B).
  *
  * For now, "correct" = exact match for both player_ref and numeric. Numeric
- * bets do NOT support tolerance/closest-wins yet (per BACKLOG default).
+ * bets do NOT support tolerance/closest-wins yet.
  */
 
 import type { BetAnswerType } from "@/db/schema";
