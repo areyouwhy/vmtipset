@@ -97,6 +97,9 @@ export default async function Home() {
           <Link href="/spelare" className="text-cyan">
             [ SPELARE ]
           </Link>
+          <Link href="/klubblag" className="text-cyan">
+            [ KLUBBLAG ]
+          </Link>
           <Link href="/side-bets" className="text-cyan">
             [ SIDOSPEL ]
           </Link>

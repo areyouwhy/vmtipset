@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { clubFor } from "@/data/player-clubs";
+import { clubSlug } from "@/lib/clubs";
 import { Jersey } from "@/lib/jersey";
 import { getPlayerDetail } from "@/lib/players-data";
 
@@ -55,7 +56,12 @@ export default async function PublicPlayerPage({
                   <>
                     <span className="mx-2 text-dim">·</span>
                     <span className="text-cyan/80">KLUBB: </span>
-                    <span className="text-foreground">{domesticClub}</span>
+                    <Link
+                      href={`/klubblag/${clubSlug(domesticClub)}`}
+                      className="text-foreground hover:text-cyan"
+                    >
+                      {domesticClub}
+                    </Link>
                   </>
                 )}
               </p>
