@@ -2,14 +2,16 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getGroupsView, getKnockoutView } from "@/lib/wc-tournament";
 import { getAllNations } from "@/lib/nation-data";
+import { getAllClubs } from "@/lib/clubs";
 
 export const dynamic = "force-dynamic";
 
 export default async function VMHomePage() {
-  const [groups, knockout, nations] = await Promise.all([
+  const [groups, knockout, nations, clubs] = await Promise.all([
     getGroupsView(),
     getKnockoutView(),
     getAllNations(),
+    getAllClubs(),
   ]);
   const groupMatchCount = groups.reduce((n, g) => n + g.matches.length, 0);
   const knockoutMatchCount = knockout.stages.reduce(
@@ -59,6 +61,13 @@ export default async function VMHomePage() {
             title="SPELARE"
             subtitle="Alla aktiva"
             blurb="Filtrera på position, land och pris. Klicka för rondvärden."
+            accent="cyan"
+          />
+          <HubCard
+            href="/klubblag"
+            title="KLUBBLAG"
+            subtitle={`${clubs.length} klubbar`}
+            blurb="Se vilka VM-spelare som spelar i varje inhemsk klubb."
             accent="cyan"
           />
         </nav>

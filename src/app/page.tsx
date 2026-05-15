@@ -88,20 +88,11 @@ export default async function Home() {
         </section>
 
         <p className="mt-6 flex flex-wrap justify-center gap-4 text-center text-xs">
-          <Link href="/tabell" className="text-cyan">
-            [ TABELL ]
-          </Link>
           <Link href="/vm" className="text-cyan">
             [ VM ]
           </Link>
-          <Link href="/spelare" className="text-cyan">
-            [ SPELARE ]
-          </Link>
-          <Link href="/klubblag" className="text-cyan">
-            [ KLUBBLAG ]
-          </Link>
-          <Link href="/side-bets" className="text-cyan">
-            [ SIDOSPEL ]
+          <Link href="/tabell" className="text-cyan">
+            [ TABELL ]
           </Link>
           <Link href="/hur" className="text-cyan">
             [ HUR FUNKAR DET? ]
