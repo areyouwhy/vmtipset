@@ -387,8 +387,8 @@ export function SquadPicker({
         </div>
       )}
 
-      {/* View tabs */}
-      <div className="mt-2 grid grid-cols-2 border border-border">
+      {/* View tabs — only on mobile/tablet. Desktop renders both side-by-side. */}
+      <div className="mt-2 grid grid-cols-2 border border-border lg:hidden">
         <button
           type="button"
           onClick={() => {
@@ -420,28 +420,27 @@ export function SquadPicker({
         </button>
       </div>
 
-      {view === "plan" && (
-        <PitchView
-          selectedPlayers={selectedPlayers}
-          captainId={captainId}
-          locked={locked}
-          formation={formation}
-          metric={metric}
-          onChangeFormation={setFormation}
-          onRemove={toggle}
-          onSetCaptain={setCaptain}
-          onOpenSlot={openSlotPicker}
-        />
-      )}
+      <div className="lg:grid lg:grid-cols-2 lg:gap-6 lg:mt-2">
+        <div className={`${view === "plan" ? "" : "hidden"} lg:block`}>
+          <PitchView
+            selectedPlayers={selectedPlayers}
+            captainId={captainId}
+            locked={locked}
+            formation={formation}
+            metric={metric}
+            onChangeFormation={setFormation}
+            onRemove={toggle}
+            onSetCaptain={setCaptain}
+            onOpenSlot={openSlotPicker}
+          />
+        </div>
 
-      {view === "lista" && pickedSlotPosition !== null && (
-        <p className="mt-3 border border-cyan bg-cyan/10 px-3 py-2 text-xs uppercase tracking-widest text-cyan">
-          VÄLJ EN {pickedSlotPosition} — DU FÖRS TILLBAKA TILL PLAN
-        </p>
-      )}
-
-      {view === "lista" && (
-        <>
+        <div className={`${view === "lista" ? "" : "hidden"} lg:block`}>
+          {pickedSlotPosition !== null && (
+            <p className="mt-3 border border-cyan bg-cyan/10 px-3 py-2 text-xs uppercase tracking-widest text-cyan lg:mt-0">
+              VÄLJ EN {pickedSlotPosition} — DU FÖRS TILLBAKA TILL PLAN
+            </p>
+          )}
           {/* Filters */}
           <div className="mt-4 space-y-2">
             <input
@@ -516,8 +515,8 @@ export function SquadPicker({
               </li>
             )}
           </ul>
-        </>
-      )}
+        </div>
+      </div>
 
       {errors.length > 0 && (
         <ul className="mt-4 space-y-1 border border-red bg-red/10 px-3 py-2 text-sm text-red">
@@ -543,7 +542,7 @@ export function SquadPicker({
 
       {/* Sticky save bar at viewport bottom */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background px-4 py-3 sm:px-6">
-        <div className="mx-auto w-full max-w-3xl">
+        <div className="mx-auto w-full max-w-3xl lg:max-w-6xl">
           <button
             type="button"
             onClick={save}
