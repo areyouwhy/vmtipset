@@ -131,12 +131,45 @@ async function SquadPickerWrapper({
     );
   }
 
+  // Strip dropped players from the initial selection so the picker's
+  // counters and pitch reflect reality. The IDs still exist in the DB —
+  // only the visual squad state is corrected. The user re-picks; on save
+  // the squad_players rows are rewritten anyway.
+  const dropped = current?.droppedPlayers ?? [];
+  const droppedIds = new Set(dropped.map((d) => d.id));
+  const cleanIds = (current?.playerIds ?? []).filter(
+    (id) => !droppedIds.has(id),
+  );
+  const cleanCaptainId =
+    current?.captainPlayerId && droppedIds.has(current.captainPlayerId)
+      ? null
+      : (current?.captainPlayerId ?? null);
+
   return (
-    <SquadPicker
-      players={pickable}
-      initialPlayerIds={current?.playerIds ?? []}
-      initialCaptainId={current?.captainPlayerId ?? null}
-      locked={current?.lockedAt != null}
-    />
+    <>
+      {dropped.length > 0 && current?.lockedAt == null && (
+        <section className="mt-3 border border-yellow bg-yellow/5 p-3 text-xs">
+          <p className="text-yellow uppercase tracking-widest">
+            ! AFTONBLADET HAR PLOCKAT UT {dropped.length} SPELARE
+          </p>
+          <ul className="mt-2 ml-3 list-disc text-foreground">
+            {dropped.map((d) => (
+              <li key={d.id}>{d.name}</li>
+            ))}
+          </ul>
+          <p className="mt-2 text-dim">
+            {dropped.length === 1 ? "Spelaren är" : "Spelarna är"} borttagna
+            ur landslagstruppen. Välj ersättare — bytet kostar inget innan
+            första ronden startar.
+          </p>
+        </section>
+      )}
+      <SquadPicker
+        players={pickable}
+        initialPlayerIds={cleanIds}
+        initialCaptainId={cleanCaptainId}
+        locked={current?.lockedAt != null}
+      />
+    </>
   );
 }

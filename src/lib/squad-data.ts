@@ -151,7 +151,14 @@ export async function getPickablePlayers(
 
 export type CurrentSquad = {
   squadId: string;
+  /** All squad_players rows, including any whose underlying player is now
+   *  inactive (dropped from the WC pool by Aftonbladet). The picker filters
+   *  these out before display; use droppedPlayers to surface the fact. */
   playerIds: string[];
+  /** Subset of playerIds whose player.active = false. Pre-round-1 the user
+   *  needs to swap these for free; mid-tournament they get auto-replaced
+   *  via the normal transfer flow. */
+  droppedPlayers: { id: string; name: string }[];
   captainPlayerId: string | null;
   lockedAt: Date | null;
 };
@@ -171,10 +178,24 @@ export async function getCurrentSquad(
     .select()
     .from(squadPlayers)
     .where(eq(squadPlayers.squadId, squad.id));
+  const ids = sps.map((sp) => sp.playerId);
+
+  // Look up which of these have been deactivated.
+  const dropped: { id: string; name: string }[] = [];
+  if (ids.length > 0) {
+    const rows = await db
+      .select({ id: players.id, name: players.name, active: players.active })
+      .from(players)
+      .where(inArray(players.id, ids));
+    for (const r of rows) {
+      if (!r.active) dropped.push({ id: r.id, name: r.name });
+    }
+  }
 
   return {
     squadId: squad.id,
-    playerIds: sps.map((sp) => sp.playerId),
+    playerIds: ids,
+    droppedPlayers: dropped,
     captainPlayerId: squad.captainPlayerId,
     lockedAt: squad.lockedAt,
   };
