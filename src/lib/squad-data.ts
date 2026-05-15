@@ -37,8 +37,6 @@ export type PickablePlayer = {
   ourPopularityPct: number;
   /** -1 / 0 / +1. */
   trend: number;
-  skinColor: string | null;
-  hairColor: string | null;
   /** Domestic club at WC time (e.g. "Inter Miami CF"). null if unknown.
    *  Static lookup keyed by Aftonbladet player externalId. */
   domesticClub: string | null;
@@ -140,8 +138,6 @@ export async function getPickablePlayers(
           abPopularityPct: abPct,
           ourPopularityPct: ourPct,
           trend: snap.trend,
-          skinColor: p.skinColor ?? null,
-          hairColor: p.hairColor ?? null,
           domesticClub: clubFor(p.externalId),
         },
       ];

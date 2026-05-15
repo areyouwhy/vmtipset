@@ -66,11 +66,6 @@ type RawPerson = {
   id: number;
   fullName: string;
   nationality?: { code?: string };
-  properties?: {
-    skinColor?: string | null;
-    hairColor?: string | null;
-    hairCut?: string | null;
-  };
 };
 
 type RawRoundValue = {
@@ -223,8 +218,6 @@ export const aftonbladetSource: DataSource = {
           name: person?.fullName ?? "—",
           clubExternalId: `ab:club:${p.team.id}`,
           position,
-          skinColor: person?.properties?.skinColor ?? null,
-          hairColor: person?.properties?.hairColor ?? null,
         },
       ];
     });

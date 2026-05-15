@@ -19,10 +19,6 @@ export type ExternalPlayer = {
   clubExternalId: string;
   position: Position;
   active?: boolean;
-  /** Hex colour for the stylised avatar head. */
-  skinColor?: string | null;
-  /** Hex colour for the stylised avatar hair cap. */
-  hairColor?: string | null;
 };
 
 export type ExternalRound = {

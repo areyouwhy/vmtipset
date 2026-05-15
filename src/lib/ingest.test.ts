@@ -57,8 +57,6 @@ describe("planIngest — idempotency", () => {
         clubExternalId: p.clubExternalId,
         position: p.position,
         active: p.active ?? true,
-        skinColor: p.skinColor ?? null,
-        hairColor: p.hairColor ?? null,
       })),
       rounds: mockDataset.rounds.map((r) => ({
         externalId: r.externalId,
@@ -119,8 +117,6 @@ describe("planIngest — change detection", () => {
           clubExternalId: "club:bra", // was liv
           position: "FWD",
           active: true,
-          skinColor: null,
-          hairColor: null,
         },
       ],
       rounds: [],
@@ -255,8 +251,6 @@ describe("planIngest — orphans", () => {
           clubExternalId: p.clubExternalId,
           position: p.position,
           active: true,
-          skinColor: null,
-          hairColor: null,
         })),
         {
           externalId: "p:retired-1",
@@ -264,8 +258,6 @@ describe("planIngest — orphans", () => {
           clubExternalId: "club:arg",
           position: "FWD",
           active: true,
-          skinColor: null,
-          hairColor: null,
         },
       ],
       rounds: [],

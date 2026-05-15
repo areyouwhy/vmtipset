@@ -28,8 +28,6 @@ export type PlayerKnown = {
   clubExternalId: string | null;
   position: Position;
   active: boolean;
-  skinColor: string | null;
-  hairColor: string | null;
 };
 
 export type RoundKnown = {
@@ -193,9 +191,7 @@ function playerChanged(prev: PlayerKnown, next: ExternalPlayer): boolean {
     prev.name !== next.name ||
     prev.clubExternalId !== next.clubExternalId ||
     prev.position !== next.position ||
-    prev.active !== (next.active ?? true) ||
-    (prev.skinColor ?? null) !== (next.skinColor ?? null) ||
-    (prev.hairColor ?? null) !== (next.hairColor ?? null)
+    prev.active !== (next.active ?? true)
   );
 }
 

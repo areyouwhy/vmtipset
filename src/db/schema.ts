@@ -95,11 +95,6 @@ export const players = pgTable("players", {
   clubId: uuid("club_id").references(() => clubs.id, { onDelete: "set null" }),
   position: playerPosition("position").notNull(),
   active: boolean("active").notNull().default(true),
-  /** Hex color used to fill the stylised avatar head. Sourced from
-   *  Aftonbladet's person.properties.skinColor. Nullable for mock data. */
-  skinColor: text("skin_color"),
-  /** Hex color used to fill the avatar's hair cap. */
-  hairColor: text("hair_color"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -62,8 +62,6 @@ export async function loadExistingState(): Promise<ExistingState> {
           clubExternalId: clubExt,
           position: p.position,
           active: p.active,
-          skinColor: p.skinColor ?? null,
-          hairColor: p.hairColor ?? null,
         },
       ];
     }),
@@ -169,8 +167,6 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
         clubId,
         position: op.player.position,
         active: op.player.active ?? true,
-        skinColor: op.player.skinColor ?? null,
-        hairColor: op.player.hairColor ?? null,
       });
       playersInserted++;
     } else {
@@ -181,8 +177,6 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
           clubId,
           position: op.player.position,
           active: op.player.active ?? true,
-          skinColor: op.player.skinColor ?? null,
-          hairColor: op.player.hairColor ?? null,
           updatedAt: new Date(),
         })
         .where(eq(players.externalId, op.externalId));
