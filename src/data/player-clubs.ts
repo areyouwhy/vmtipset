@@ -838,6 +838,11 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:255506": "Deportivo Toluca FC",
   "ab:p:255667": "Chicago Fire FC",
   "ab:p:255668": "C.D. Guadalajara",
+  "ab:p:254938": "Arsenal F.C.",
+  "ab:p:249882": "Futbol Club Barcelona",
+  "ab:p:255168": "Sporting CP",
+  "ab:p:249404": "Real Madrid CF",
+  "ab:p:248561": "Feyenoord Rotterdam",
 };
 
 export function clubFor(externalId: string | null | undefined): string | null {
