@@ -1060,7 +1060,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:255233": "Sunderland",
   "ab:p:255234": "Lille",
   "ab:p:255235": "Montpellier",
-  "ab:p:255236": "Castellón"
+  "ab:p:255236": "Castellón",
   "ab:p:250481": "Al-Nassr",
   "ab:p:249146": "Arsenal",
   "ab:p:254435": "Bayern Munich",
