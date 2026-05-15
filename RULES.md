@@ -38,34 +38,34 @@ Living document. The values that the app actually uses live in `src/lib/rules.ts
 |---|---|---|---|
 | Free transfers per round | 0 | IMPLEMENTED | Aftonbladet historically gives 0 free; every transfer charges the fee. |
 | Transfer fee | 1% of the outgoing player's price | IMPLEMENTED | Matches Aftonbladet's UI behaviour. |
-| Transfer window | between rounds only (squad locked at deadline) | PLANNED | Implementation lands in Epic 5. |
+| Transfer window | between rounds only (squad locked at deadline) | IMPLEMENTED | Cron `/api/cron/lock-deadlines` flips `squads.lockedAt` once a round's deadline passes; the picker hides edit controls past the lock. |
 
 ## Scoring
 
 | Rule | Value | Status | Notes |
 |---|---|---|---|
-| Per-player score | player price growth in that round (from Aftonbladet API) | PLANNED | Lands in Epic 7. |
-| Captain bonus | `(multiplier - 1) × captain growth`, only if positive | PLANNED | |
+| Per-player score | player price growth in that round (from Aftonbladet API) | IMPLEMENTED | `src/lib/scoring.ts` sums `growthSek` across the squad. |
+| Captain bonus | `(multiplier - 1) × captain growth`, only if positive | IMPLEMENTED | `src/lib/scoring.ts` (captainBonus path); floored at 0 when `captainBonusOnlyPositive` is true. |
 | Bank interest | 1% on unspent budget per round | IMPLEMENTED | Carry-over from prior project; not in the ruleset JSON. |
-| Transfer fees | deducted from round score | PLANNED | |
-| Tie-breakers | shared place, prize money split equally | PLANNED | Per BACKLOG default. |
+| Transfer fees | deducted from round score | IMPLEMENTED | `transferFeesSek` line in the round score breakdown; visible on `/team/[id]`. |
+| Tie-breakers | shared place, prize money split equally | IMPLEMENTED | `getLeaderboard` ranks with shared placements (`1, 2, 2, 4`); prize distributor splits equally across tied seats. |
 
 ## Money
 
 | Rule | Value | Status | Notes |
 |---|---|---|---|
 | Stake per user | 300 SEK | IMPLEMENTED | Configured in `src/lib/swish.ts`. |
-| Pot allocation: main league | 80% (default) | PLANNED | Editable in admin until first scoring run. |
-| Pot allocation: daily/round bets | 20% (default) | PLANNED | |
-| Place distribution | configurable per pool | PLANNED | Admin UI lands in Epic 4. |
+| Pot allocation: main league | 80% (default) | IMPLEMENTED | Configured in `prize_pools.allocationBps = 8000`; editable at `/admin/config` until the first scored round. |
+| Pot allocation: daily/round bets | 20% (default) | IMPLEMENTED | `prize_pools.allocationBps = 2000`; same editor. |
+| Place distribution | configurable per pool | IMPLEMENTED | `prize_places` rows per pool, edited at `/admin/config`. |
 
 ## Bet of the day / round (mode B)
 
 | Rule | Value | Status | Notes |
 |---|---|---|---|
-| Bet types | `player_ref` or `numeric` | PLANNED | |
-| Numeric scoring | exact match only | PLANNED | Per BACKLOG default. May revisit. |
-| Edit window | until bet deadline | PLANNED | Per BACKLOG default. |
+| Bet types | `player_ref` or `numeric` | IMPLEMENTED | `bet_answer_type` enum + `bets.answer_type` column drive the UI in `/admin/bets`. |
+| Numeric scoring | exact match only | IMPLEMENTED | `src/lib/bets.ts` — "correct" is exact match for both `player_ref` and `numeric`. |
+| Edit window | until bet deadline | IMPLEMENTED | `submitBetAnswerAction` rejects answers past `bet.deadline`. |
 
 ## Side bets (mode C)
 
