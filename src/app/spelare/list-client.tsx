@@ -15,6 +15,7 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
   const [search, setSearch] = useState("");
   const [position, setPosition] = useState<PositionFilter>("ALL");
   const [country, setCountry] = useState<string>("ALL");
+  const [club, setClub] = useState<string>("ALL");
   const [sort, setSort] = useState<SortKey>("price");
 
   // Build the team list once, alphabetically by name — same shape the
@@ -31,12 +32,35 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
       .sort((a, b) => a.name.localeCompare(b.name, "sv"));
   }, [rows]);
 
+  // Domestic-club list pulled from PLAYER_CLUBS values that actually appear
+  // in this row set. Sorted by player-count desc, then alphabetical.
+  const clubsList = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of rows) {
+      if (r.domesticClub) {
+        counts.set(r.domesticClub, (counts.get(r.domesticClub) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()]
+      .sort(
+        (a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "sv"),
+      )
+      .map(([name]) => ({ code: name, name }));
+  }, [rows]);
+
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     const filtered = rows.filter((r) => {
       if (position !== "ALL" && r.position !== position) return false;
       if (country !== "ALL" && r.countryCode !== country) return false;
-      if (q && !r.name.toLowerCase().includes(q)) return false;
+      if (club !== "ALL" && r.domesticClub !== club) return false;
+      if (
+        q &&
+        !r.name.toLowerCase().includes(q) &&
+        !(r.domesticClub?.toLowerCase().includes(q) ?? false)
+      ) {
+        return false;
+      }
       return true;
     });
     const priceOf = (r: PlayerListRow) =>
@@ -52,7 +76,7 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
       );
     }
     return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
-  }, [rows, search, position, country, sort]);
+  }, [rows, search, position, country, club, sort]);
 
   return (
     <>
@@ -76,6 +100,16 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
         />
 
         <TeamComboBox teams={teams} value={country} onChange={setCountry} />
+
+        <TeamComboBox
+          teams={clubsList}
+          value={club}
+          onChange={setClub}
+          label="KLUBBLAG"
+          allLabel="ALLA KLUBBAR"
+          searchPlaceholder="SÖK KLUBB…"
+          showJersey={false}
+        />
 
         <FilterRow
           label="SORTERA"

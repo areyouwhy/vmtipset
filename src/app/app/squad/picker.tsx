@@ -45,6 +45,8 @@ export function SquadPicker({
   const [captainId, setCaptainId] = useState<string | null>(initialCaptainId);
   const [filter, setFilter] = useState<"ALL" | Position>("ALL");
   const [teamFilter, setTeamFilter] = useState<string>("ALL");
+  const [clubFilter, setClubFilter] = useState<string>("ALL");
+  const [search, setSearch] = useState("");
   const [onlyAffordable, setOnlyAffordable] = useState(false);
   const [onlyFits, setOnlyFits] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
@@ -133,9 +135,18 @@ export function SquadPicker({
   }
 
   const visiblePlayers = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return players.filter((p) => {
       if (filter !== "ALL" && p.position !== filter) return false;
       if (teamFilter !== "ALL" && p.countryCode !== teamFilter) return false;
+      if (clubFilter !== "ALL" && p.domesticClub !== clubFilter) return false;
+      if (
+        q &&
+        !p.name.toLowerCase().includes(q) &&
+        !(p.domesticClub?.toLowerCase().includes(q) ?? false)
+      ) {
+        return false;
+      }
       if (onlyAffordable) {
         const isSel = selected.has(p.id);
         if (!isSel && p.priceSek > summary.remainingBudgetSek) return false;
@@ -146,7 +157,7 @@ export function SquadPicker({
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [players, filter, teamFilter, onlyAffordable, onlyFits, selected, summary]);
+  }, [players, filter, teamFilter, clubFilter, search, onlyAffordable, onlyFits, selected, summary]);
 
   const teamsInOrder = useMemo(() => {
     // One entry per countryCode, first-seen club name wins.
@@ -159,6 +170,21 @@ export function SquadPicker({
     return Array.from(seen.entries())
       .map(([code, name]) => ({ code, name }))
       .sort((a, b) => a.name.localeCompare(b.name, "sv"));
+  }, [players]);
+
+  // Distinct domestic clubs across the player pool, sorted by # of players.
+  const clubsInOrder = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of players) {
+      if (p.domesticClub) {
+        counts.set(p.domesticClub, (counts.get(p.domesticClub) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()]
+      .sort(
+        (a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "sv"),
+      )
+      .map(([name]) => ({ code: name, name }));
   }, [players]);
 
   const selectedPlayers = useMemo(
@@ -418,6 +444,13 @@ export function SquadPicker({
         <>
           {/* Filters */}
           <div className="mt-4 space-y-2">
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="SÖK NAMN ELLER KLUBB…"
+              className="block w-full border border-border bg-transparent px-3 py-2 text-sm uppercase tracking-widest text-foreground placeholder:text-dim focus:border-yellow focus:outline-none"
+            />
             <FilterRow
               label="POSITION"
               options={POSITION_FILTERS.map((f) => ({
@@ -431,6 +464,15 @@ export function SquadPicker({
               teams={teamsInOrder}
               value={teamFilter}
               onChange={setTeamFilter}
+            />
+            <TeamComboBox
+              teams={clubsInOrder}
+              value={clubFilter}
+              onChange={setClubFilter}
+              label="KLUBBLAG"
+              allLabel="ALLA KLUBBAR"
+              searchPlaceholder="SÖK KLUBB…"
+              showJersey={false}
             />
             <div className="flex flex-wrap gap-2">
               <ToggleChip

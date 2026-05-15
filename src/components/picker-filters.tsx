@@ -45,20 +45,26 @@ export function FilterRow({
 }
 
 /**
- * Country combo-box: a button that opens a searchable dropdown of all
- * teams with their jerseys. "ALL" represents the no-filter state.
- * Used by the squad picker and /spelare to filter by nation.
+ * Searchable combo-box. Used by the squad picker and /spelare to filter
+ * by nation (with jerseys) — and reused for clubs/leagues with
+ * `showJersey={false}`. "ALL" is the no-filter sentinel.
  */
 export function TeamComboBox({
   teams,
   value,
   onChange,
   label = "LAG",
+  allLabel = "ALLA LAG",
+  searchPlaceholder = "SÖK LAND (T.EX. ARG, BRASILIEN)",
+  showJersey = true,
 }: {
   teams: { code: string; name: string }[];
   value: string;
   onChange: (v: string) => void;
   label?: string;
+  allLabel?: string;
+  searchPlaceholder?: string;
+  showJersey?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -109,10 +115,13 @@ export function TeamComboBox({
 
   const selectedLabel =
     value === "ALL"
-      ? "ALLA LAG"
+      ? allLabel
       : (() => {
           const t = teams.find((x) => x.code === value);
-          return t ? `${t.code} · ${t.name.toUpperCase()}` : value;
+          if (!t) return value;
+          return showJersey
+            ? `${t.code} · ${t.name.toUpperCase()}`
+            : t.name.toUpperCase();
         })();
 
   function pick(v: string) {
@@ -135,7 +144,9 @@ export function TeamComboBox({
         }`}
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">
-          {value !== "ALL" && <Jersey code={value} size={20} />}
+          {showJersey && value !== "ALL" && (
+            <Jersey code={value} size={20} />
+          )}
           <span className="truncate">{selectedLabel}</span>
         </span>
         <span aria-hidden="true" className="text-[10px]">
@@ -155,7 +166,7 @@ export function TeamComboBox({
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="SÖK LAND (T.EX. ARG, BRASILIEN)"
+              placeholder={searchPlaceholder}
               className="w-full border border-border bg-background px-2 py-1.5 text-xs uppercase tracking-widest text-foreground placeholder:text-dim focus:border-cyan focus:outline-none"
             />
           </div>
@@ -168,7 +179,7 @@ export function TeamComboBox({
                   value === "ALL" ? "bg-yellow/15 text-yellow" : "text-foreground"
                 }`}
               >
-                <span>ALLA LAG</span>
+                <span>{allLabel}</span>
                 <span className="text-[10px] text-dim tabular-nums">
                   {teams.length}
                 </span>
@@ -185,11 +196,18 @@ export function TeamComboBox({
                       active ? "bg-yellow/15 text-yellow" : "text-foreground"
                     }`}
                   >
-                    <Jersey code={t.code} size={24} />
+                    {showJersey && <Jersey code={t.code} size={24} />}
                     <span className="min-w-0 flex-1 truncate">
-                      <span className="text-yellow tabular-nums">{t.code}</span>{" "}
+                      {showJersey && (
+                        <>
+                          <span className="text-yellow tabular-nums">
+                            {t.code}
+                          </span>{" "}
+                        </>
+                      )}
                       <span className={active ? "text-yellow" : "text-dim"}>
-                        · {t.name}
+                        {showJersey ? "· " : ""}
+                        {t.name}
                       </span>
                     </span>
                   </button>
