@@ -1085,6 +1085,19 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:254404": "Tottenham",
   "ab:p:255731": "Athletic Bilbao",
   "ab:p:248555": "Monaco",
+  "ab:p:248810": "Mainz 05",
+  "ab:p:249139": "Manchester City",
+  "ab:p:249150": "Aston Villa",
+  "ab:p:249167": "Manchester City",
+  "ab:p:249319": "Bayern Munich",
+  "ab:p:250467": "Club Brugge",
+  "ab:p:251596": "Fenerbahçe",
+  "ab:p:251599": "Manchester City",
+  "ab:p:254392": "PSG",
+  "ab:p:254893": "Galatasaray",
+  "ab:p:254911": "Juventus",
+  "ab:p:255579": "Bayern Munich",
+  "ab:p:248379": "Roma",
 };
 
 export function clubFor(externalId: string | null | undefined): string | null {
