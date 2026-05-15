@@ -27,19 +27,27 @@ export type PlayerListRow = {
   manualOverrides: number;
   /** Domestic club at WC time (e.g. "Inter Miami CF"); null if unknown. */
   domesticClub: string | null;
+  /** Whether the player is in an active WC pool. Admin can see false ones;
+   *  public /spelare only ever calls this with includeInactive=false. */
+  active: boolean;
 };
 
 /**
- * Fetch every active player with derived list-friendly fields. Used by the
- * admin player browser and the public /players page.
+ * Fetch players with derived list-friendly fields. Public callers leave
+ * `includeInactive` off and get only active players; admin passes true to
+ * see everyone (used for finding players Aftonbladet has dropped).
  */
-export async function getPlayerListRows(): Promise<PlayerListRow[]> {
+export async function getPlayerListRows(
+  opts: { includeInactive?: boolean } = {},
+): Promise<PlayerListRow[]> {
   const [allPlayers, allClubs, allRounds, allSnapshots] = await Promise.all([
-    db
-      .select()
-      .from(players)
-      .where(eq(players.active, true))
-      .orderBy(asc(players.name)),
+    opts.includeInactive
+      ? db.select().from(players).orderBy(asc(players.name))
+      : db
+          .select()
+          .from(players)
+          .where(eq(players.active, true))
+          .orderBy(asc(players.name)),
     db.select().from(clubs),
     db.select().from(rounds).orderBy(asc(rounds.number)),
     db.select().from(playerRoundSnapshots),
@@ -87,6 +95,7 @@ export async function getPlayerListRows(): Promise<PlayerListRow[]> {
       currentPriceSek: latestByPlayer.get(p.id)?.priceSek ?? null,
       manualOverrides: manualCountByPlayer.get(p.id) ?? 0,
       domesticClub: clubFor(p.externalId),
+      active: p.active,
     };
   });
 }

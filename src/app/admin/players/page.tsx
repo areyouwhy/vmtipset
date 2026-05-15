@@ -8,7 +8,9 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPlayersPage() {
   if (!(await isAdmin())) redirect("/app");
-  const rows = await getPlayerListRows();
+  // Admin gets the full list including inactive players, so they can find
+  // and re-enable a player who was dropped by Aftonbladet.
+  const rows = await getPlayerListRows({ includeInactive: true });
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">

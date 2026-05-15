@@ -2,39 +2,65 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { FilterRow, TeamComboBox } from "@/components/picker-filters";
+import { Jersey } from "@/lib/jersey";
+import type { PlayerListRow } from "@/lib/players-data";
 
-type Row = {
-  id: string;
-  name: string;
-  position: "GK" | "DEF" | "MID" | "FWD";
-  countryCode: string | null;
-  clubShortName: string;
-  basePriceSek: number | null;
-  manualOverrides: number;
-};
+const POSITION_FILTERS = ["ALL", "GK", "DEF", "MID", "FWD"] as const;
+type PositionFilter = (typeof POSITION_FILTERS)[number];
 
-const POSITIONS = ["ALL", "GK", "DEF", "MID", "FWD"] as const;
+type ActiveFilter = "ACTIVE" | "INACTIVE" | "ALL";
+type SortKey = "name" | "price" | "country";
 
-export function PlayerListClient({ rows }: { rows: Row[] }) {
+export function PlayerListClient({ rows }: { rows: PlayerListRow[] }) {
   const [search, setSearch] = useState("");
-  const [position, setPosition] = useState<(typeof POSITIONS)[number]>("ALL");
+  const [position, setPosition] = useState<PositionFilter>("ALL");
   const [country, setCountry] = useState<string>("ALL");
+  const [activeState, setActiveState] = useState<ActiveFilter>("ACTIVE");
+  const [sort, setSort] = useState<SortKey>("name");
 
-  const countries = useMemo(() => {
-    const s = new Set<string>();
-    for (const r of rows) if (r.countryCode) s.add(r.countryCode);
-    return Array.from(s).sort();
+  // Team list: prefer rows with a clubName, alphabetical on name.
+  const teams = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const r of rows) {
+      if (r.countryCode && !seen.has(r.countryCode)) {
+        seen.set(r.countryCode, r.clubName);
+      }
+    }
+    return [...seen.entries()]
+      .map(([code, name]) => ({ code, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, "sv"));
   }, [rows]);
+
+  const inactiveCount = useMemo(
+    () => rows.filter((r) => !r.active).length,
+    [rows],
+  );
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return rows.filter((r) => {
+    const filtered = rows.filter((r) => {
+      if (activeState === "ACTIVE" && !r.active) return false;
+      if (activeState === "INACTIVE" && r.active) return false;
       if (position !== "ALL" && r.position !== position) return false;
       if (country !== "ALL" && r.countryCode !== country) return false;
       if (q && !r.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [rows, search, position, country]);
+    const priceOf = (r: PlayerListRow) =>
+      r.currentPriceSek ?? r.basePriceSek ?? -Infinity;
+    if (sort === "price") {
+      return [...filtered].sort((a, b) => priceOf(b) - priceOf(a));
+    }
+    if (sort === "country") {
+      return [...filtered].sort(
+        (a, b) =>
+          (a.countryCode ?? "").localeCompare(b.countryCode ?? "") ||
+          a.name.localeCompare(b.name),
+      );
+    }
+    return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+  }, [rows, search, position, country, activeState, sort]);
 
   return (
     <>
@@ -43,55 +69,46 @@ export function PlayerListClient({ rows }: { rows: Row[] }) {
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Sök på namn..."
-          className="block w-full border border-border bg-transparent px-3 py-2 text-sm text-foreground focus:border-yellow focus:outline-none"
+          placeholder="SÖK SPELARE…"
+          className="block w-full border border-border bg-transparent px-3 py-2 text-sm uppercase tracking-widest text-foreground placeholder:text-dim focus:border-yellow focus:outline-none"
         />
-        <div className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1">
-          {POSITIONS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPosition(p)}
-              className={`shrink-0 snap-start border px-3 py-1.5 text-[10px] uppercase tracking-widest transition ${
-                position === p
-                  ? "border-yellow bg-yellow text-black"
-                  : "border-border text-dim hover:border-cyan hover:text-cyan"
-              }`}
-            >
-              {p === "ALL" ? "ALLA" : p}
-            </button>
-          ))}
-        </div>
-        <div className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1">
-          <button
-            type="button"
-            onClick={() => setCountry("ALL")}
-            className={`shrink-0 snap-start border px-3 py-1.5 text-[10px] uppercase tracking-widest transition ${
-              country === "ALL"
-                ? "border-yellow bg-yellow text-black"
-                : "border-border text-dim hover:border-cyan hover:text-cyan"
-            }`}
-          >
-            ALLA LAG
-          </button>
-          {countries.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setCountry(c)}
-              className={`shrink-0 snap-start border px-3 py-1.5 text-[10px] uppercase tracking-widest transition ${
-                country === c
-                  ? "border-yellow bg-yellow text-black"
-                  : "border-border text-dim hover:border-cyan hover:text-cyan"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
+
+        <FilterRow
+          label="POSITION"
+          options={POSITION_FILTERS.map((p) => ({
+            value: p,
+            label: p === "ALL" ? "ALLA" : p,
+          }))}
+          value={position}
+          onChange={(v) => setPosition(v as PositionFilter)}
+        />
+
+        <TeamComboBox teams={teams} value={country} onChange={setCountry} />
+
+        <FilterRow
+          label={`STATUS (${inactiveCount} INAKTIVA)`}
+          options={[
+            { value: "ACTIVE", label: "AKTIVA" },
+            { value: "INACTIVE", label: "INAKTIVA" },
+            { value: "ALL", label: "ALLA" },
+          ]}
+          value={activeState}
+          onChange={(v) => setActiveState(v as ActiveFilter)}
+        />
+
+        <FilterRow
+          label="SORTERA"
+          options={[
+            { value: "name", label: "NAMN" },
+            { value: "price", label: "PRIS" },
+            { value: "country", label: "LAND" },
+          ]}
+          value={sort}
+          onChange={(v) => setSort(v as SortKey)}
+        />
       </div>
 
-      <p className="text-[10px] uppercase tracking-widest text-dim">
+      <p className="mt-3 text-[10px] uppercase tracking-widest text-dim">
         {visible.length} SPELARE
       </p>
 
@@ -100,19 +117,35 @@ export function PlayerListClient({ rows }: { rows: Row[] }) {
           <li key={r.id}>
             <Link
               href={`/admin/players/${r.id}`}
-              className="grid grid-cols-[auto_1fr_auto_auto] items-baseline gap-3 p-3 text-sm transition hover:bg-yellow/5"
+              className={`grid grid-cols-[auto_auto_1fr_auto_auto] items-center gap-3 p-3 text-sm transition hover:bg-yellow/5 ${
+                r.active ? "" : "opacity-60"
+              }`}
             >
-              <span className="text-yellow">{r.position}</span>
+              <Jersey code={r.countryCode} size={24} />
+              <span className="text-yellow tabular-nums">{r.position}</span>
               <span className="min-w-0">
-                <span className="truncate text-foreground">{r.name}</span>
-                <span className="ml-2 text-[10px] uppercase tracking-widest text-dim">
+                <span className="block truncate text-foreground">
+                  {r.name}
+                  {!r.active && (
+                    <span className="ml-2 border border-red px-1 text-[9px] uppercase tracking-widest text-red">
+                      INAKTIV
+                    </span>
+                  )}
+                </span>
+                <span className="block text-[10px] uppercase tracking-widest text-dim">
                   {r.countryCode ?? "—"} · {r.clubShortName}
+                  {r.domesticClub && (
+                    <>
+                      {" · "}
+                      <span className="text-cyan/80">{r.domesticClub}</span>
+                    </>
+                  )}
                 </span>
               </span>
               <span className="tabular-nums text-foreground">
-                {r.basePriceSek === null
+                {r.currentPriceSek === null && r.basePriceSek === null
                   ? "—"
-                  : `${(r.basePriceSek / 1_000_000).toFixed(1)}M`}
+                  : `${((r.currentPriceSek ?? r.basePriceSek ?? 0) / 1_000_000).toFixed(1)}M`}
               </span>
               <span
                 className={
