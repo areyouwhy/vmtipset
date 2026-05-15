@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { playerRoundSnapshots } from "@/db/schema";
+import { players, playerRoundSnapshots } from "@/db/schema";
 import { isAdmin } from "@/lib/auth";
 
 async function requireAdmin() {
@@ -58,6 +58,27 @@ export async function upsertManualSnapshotAction(args: {
     });
   }
 
+  revalidatePath(`/admin/players/${args.playerId}`);
+  revalidatePath("/admin/players");
+  return { ok: true, errors: [] };
+}
+
+/**
+ * Toggle a player's active flag. Useful for testing the
+ * dropped-from-squad banner on /app/squad, or for forcing a player
+ * out of the pool when Aftonbladet hasn't caught up. Note: the
+ * Aftonbladet ingest will overwrite this on its next run — admin
+ * override isn't sticky in the current schema.
+ */
+export async function setPlayerActiveAction(args: {
+  playerId: string;
+  active: boolean;
+}): Promise<ActionResult> {
+  await requireAdmin();
+  await db
+    .update(players)
+    .set({ active: args.active })
+    .where(eq(players.id, args.playerId));
   revalidatePath(`/admin/players/${args.playerId}`);
   revalidatePath("/admin/players");
   return { ok: true, errors: [] };

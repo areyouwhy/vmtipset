@@ -9,6 +9,7 @@ import {
 } from "@/db/schema";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isAdmin } from "@/lib/auth";
+import { ActiveToggle } from "./active-toggle";
 import { SnapshotEditor } from "./snapshot-editor";
 
 export const dynamic = "force-dynamic";
@@ -78,6 +79,14 @@ export default async function PlayerDetailPage({
           <p className="mt-2 text-xs text-dim">
             External id: <span className="text-foreground">{player.externalId ?? "—"}</span>
           </p>
+          <div className="mt-3">
+            <ActiveToggle playerId={player.id} active={player.active} />
+            <p className="mt-1 text-[10px] text-dim">
+              Inaktiva spelare försvinner ur picker:n och triggar varningen
+              på /app/squad. Aftonbladets ingest skriver över denna flagga
+              vid nästa körning.
+            </p>
+          </div>
         </section>
 
         <section className="space-y-6">
