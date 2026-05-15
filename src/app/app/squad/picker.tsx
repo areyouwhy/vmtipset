@@ -875,8 +875,11 @@ function renderMetric(
     };
   }
   if (metric === "club") {
+    // Show the player's domestic club (e.g. "Inter Miami CF"). The
+    // legacy clubName field is the national team in this data model,
+    // which would just duplicate the country code already in the row.
     return {
-      primary: player.clubName,
+      primary: player.domesticClub ?? "",
       primaryClass: "text-foreground",
     };
   }
