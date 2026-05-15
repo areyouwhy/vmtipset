@@ -127,7 +127,13 @@ export default async function AppPage() {
             <>
               <SquadStatusPanel
                 activeRound={activeRound}
-                squadPlayerCount={squad?.playerIds.length ?? 0}
+                squadPlayerCount={
+                  // Count only still-active picks so dropped players don't
+                  // inflate the "DU ÄR KLAR" check.
+                  (squad?.playerIds.length ?? 0) -
+                  (squad?.droppedPlayers.length ?? 0)
+                }
+                droppedPlayers={squad?.droppedPlayers ?? []}
                 locked={squad?.lockedAt != null}
               />
               {myStanding && (
@@ -318,10 +324,12 @@ function fmtSek(n: number): string {
 function SquadStatusPanel({
   activeRound,
   squadPlayerCount,
+  droppedPlayers,
   locked,
 }: {
   activeRound: { number: number; name: string; deadline: Date | null } | null;
   squadPlayerCount: number;
+  droppedPlayers: { id: string; name: string }[];
   locked: boolean;
 }) {
   if (!activeRound) {
@@ -340,8 +348,15 @@ function SquadStatusPanel({
     );
   }
 
-  const isReady = squadPlayerCount === 11;
-  const tone: "green" | "yellow" | "dim" = locked ? "dim" : isReady ? "green" : "yellow";
+  const hasDropped = !locked && droppedPlayers.length > 0;
+  const isReady = squadPlayerCount === 11 && !hasDropped;
+  // Dropped picks ALWAYS dominate the panel colour pre-lock — yellow even
+  // if the user technically had 11 selected, because they no longer do.
+  const tone: "green" | "yellow" | "dim" = locked
+    ? "dim"
+    : isReady
+      ? "green"
+      : "yellow";
   const borderClass = {
     green: "border-green",
     yellow: "border-yellow",
@@ -355,22 +370,28 @@ function SquadStatusPanel({
 
   const headline = locked
     ? "TRUPP LÅST"
-    : isReady
-      ? "DU ÄR KLAR"
-      : "INTE KLAR";
+    : hasDropped
+      ? "ERSÄTT BORTPLOCKADE"
+      : isReady
+        ? "DU ÄR KLAR"
+        : "INTE KLAR";
   const subline = locked
     ? `Truppen är låst för ${activeRound.name}. Inväntar matcher.`
-    : isReady
-      ? `Du har valt ${squadPlayerCount} av 11 spelare för ${activeRound.name}. Du kan fortsätta justera tills deadline.`
-      : squadPlayerCount === 0
-        ? `Du har inte byggt din trupp för ${activeRound.name} än.`
-        : `Du har bara valt ${squadPlayerCount} av 11 spelare för ${activeRound.name}.`;
+    : hasDropped
+      ? `Aftonbladet har plockat ut ${droppedPlayers.length} av dina spelare ur landslagstruppen — välj ersättare innan deadline. Bytet är gratis innan första ronden startar.`
+      : isReady
+        ? `Du har valt ${squadPlayerCount} av 11 spelare för ${activeRound.name}. Du kan fortsätta justera tills deadline.`
+        : squadPlayerCount === 0
+          ? `Du har inte byggt din trupp för ${activeRound.name} än.`
+          : `Du har bara valt ${squadPlayerCount} av 11 spelare för ${activeRound.name}.`;
 
   const ctaLabel = locked
     ? "[ VISA TRUPP ]"
-    : isReady
-      ? "[ REDIGERA TRUPP → ]"
-      : "[ BYGG TRUPP → ]";
+    : hasDropped
+      ? "[ ERSÄTT SPELARE → ]"
+      : isReady
+        ? "[ REDIGERA TRUPP → ]"
+        : "[ BYGG TRUPP → ]";
 
   return (
     <section className={`border ${borderClass} p-5`}>
@@ -385,6 +406,14 @@ function SquadStatusPanel({
         {headline}
       </p>
       <p className="mt-2 text-sm text-dim">{subline}</p>
+
+      {hasDropped && (
+        <ul className="mt-3 ml-4 list-disc text-xs text-foreground">
+          {droppedPlayers.map((d) => (
+            <li key={d.id}>{d.name}</li>
+          ))}
+        </ul>
+      )}
 
       {!locked && activeRound.deadline && (
         <CountdownLine deadline={activeRound.deadline} />
