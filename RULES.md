@@ -22,7 +22,7 @@ Living document. The values that the app actually uses live in `src/lib/rules.ts
 | Midfielders | 3–5 | IMPLEMENTED | Ruleset 197 — formations span 3–5 MID. (Was `2–5` in v0; corrected.) |
 | Forwards | 1–3 | IMPLEMENTED | Ruleset 197. |
 | Legal formations | 3-4-3, 3-5-2, 4-3-3, 4-4-2, 4-5-1, 5-3-2, 5-4-1 | IMPLEMENTED | Ruleset 197 — exactly these seven. |
-| Max from same club | 3 | IMPLEMENTED | In WC fantasy a "club" is a national team, so this is effectively a max-3-per-country cap. League decision; not in ruleset JSON. |
+| Max from same club | 4 | IMPLEMENTED | Aftonbladet WC 2026 rule. In our data model "club" = national team (Aftonbladet's WC `team`), so this is effectively max-4-per-country. Not in the ruleset JSON itself but enforced in Aftonbladet's UI. |
 | Max from same country | none (yet) | SKIPPED | Redundant — see `Max from same club`. |
 
 ## Captain
@@ -36,8 +36,8 @@ Living document. The values that the app actually uses live in `src/lib/rules.ts
 
 | Rule | Value | Status | Notes |
 |---|---|---|---|
-| Free transfers per round | 0 | IMPLEMENTED | Aftonbladet historically gives 0 free; every transfer charges the fee. |
-| Transfer fee | 1% of the outgoing player's price | IMPLEMENTED | Matches Aftonbladet's UI behaviour. |
+| Free transfers per round | 0 | IMPLEMENTED | Aftonbladet WC: no free in-round transfers from round 2 onward; round 1 is implicitly free because the initial pick has no prior squad to diff against. |
+| Transfer fee | 0.7% of the INCOMING player's price | IMPLEMENTED | Matches Aftonbladet WC rules: "0,7% av den köpta spelarens aktuella värde". |
 | Transfer window | between rounds only (squad locked at deadline) | IMPLEMENTED | Cron `/api/cron/lock-deadlines` flips `squads.lockedAt` once a round's deadline passes; the picker hides edit controls past the lock. |
 
 ## Team value (the ranking metric)
@@ -53,7 +53,7 @@ The leaderboard ranks by **TEAM VALUE = SQUAD VALUE + BANK** (DESC). Whoever has
 | Captain bonus | `(multiplier − 1) × captain growth`, credited to bank | IMPLEMENTED | Floored at 0 when `captainBonusOnlyPositive`. Doesn't move squad value — it's a separate cash credit. |
 | Round score | Δ team value this round | IMPLEMENTED | = sumGrowth (squad drift) + captain + interest + cashFlow − fees. Sum across all rounds equals (current team value − initial 50M). |
 | Per-player growth | Aftonbladet `growth` field — equals the player's price delta | IMPLEMENTED | Each player's growth automatically moves squad value via Aftonbladet's next-round price. |
-| Transfer fees | 1% of outgoing player's market price | IMPLEMENTED | Debited from bank at transfer-window close. See [transfers](#transfers). |
+| Transfer fees | 0.7% of incoming player's market price | IMPLEMENTED | Debited from bank at transfer-window close. See [transfers](#transfers). |
 | Tie-breakers | shared placement, prize money split equally | IMPLEMENTED | `getLeaderboard` shares ranks (`1, 2, 2, 4`); prize distributor splits equally across tied seats. |
 
 ## Money

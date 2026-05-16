@@ -168,14 +168,15 @@ describe("validateSquad — budget", () => {
 });
 
 describe("validateSquad — same-club limit", () => {
-  it("rejects 4 players from one club", () => {
+  it("rejects 5 players from one club (max 4)", () => {
     const s = legalSquad();
-    // Push four liv players in a row.
+    // Push five liv players in a row.
     s.players[0] = p("gk1", "GK", 5_500_000, "club:liv");
     s.players[1] = p("def1", "DEF", 6_500_000, "club:liv");
     s.players[2] = p("def2", "DEF", 5_000_000, "club:liv");
-    s.players[3] = p("def3", "DEF", 4_000_000, "club:liv"); // 4th from liv
-    expect(validateSquad(s).some((e) => /klubb/i.test(e))).toBe(true);
+    s.players[3] = p("def3", "DEF", 4_000_000, "club:liv");
+    s.players[4] = p("def4", "DEF", 4_000_000, "club:liv"); // 5th from liv
+    expect(validateSquad(s).some((e) => /landslag/i.test(e))).toBe(true);
   });
 });
 

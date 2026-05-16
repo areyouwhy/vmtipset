@@ -57,7 +57,7 @@ describe("autoPickSquad", () => {
     ).toBe(true);
   });
 
-  it("respects the per-club limit (max 3)", () => {
+  it("respects the per-club limit (max 4)", () => {
     // All cheap players concentrated in one club. Auto-pick must spread.
     const concentrated: SquadCandidatePlayer[] = [];
     for (let i = 0; i < 8; i++) {
@@ -86,7 +86,7 @@ describe("autoPickSquad", () => {
       const club = byId.get(id)?.clubExternalId ?? "";
       counts[club] = (counts[club] ?? 0) + 1;
     }
-    for (const c of Object.values(counts)) expect(c).toBeLessThanOrEqual(3);
+    for (const c of Object.values(counts)) expect(c).toBeLessThanOrEqual(4);
   });
 
   it("returns ok: false when the pool can't fill a position", () => {

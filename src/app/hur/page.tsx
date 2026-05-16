@@ -123,12 +123,16 @@ export default async function HowPage() {
 
         <Block title="BYTEN">
           <KV k="GRATIS BYTEN / ROND" v={`${r.freeTransfersPerRound}`} />
-          <KV k="BYTAVGIFT" v={`${pct(r.transferFeePct)} AV SÅLD SPELARE`} />
+          <KV
+            k="BYTAVGIFT"
+            v={`${pct(r.transferFeePct)} AV KÖPT SPELARE`}
+          />
           <p className="mt-3 text-xs text-dim">
             När du säljer en spelare får banken pengar = säljpriset. När du
-            köper en spelare betalar banken köppriset. Avgiften (1% av
-            säljpriset) dras dessutom från banken. Allt sker när bytfönstret
-            stänger — inte under matcherna.
+            köper en spelare betalar banken köppriset PLUS{" "}
+            {pct(r.transferFeePct)} avgift på köppriset. Allt sker när
+            bytfönstret stänger — inte under matcherna. Före första rondens
+            matcher är alla byten gratis.
           </p>
         </Block>
 

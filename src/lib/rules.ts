@@ -39,7 +39,10 @@ export type RuleSet = {
   /** Interest paid on unspent budget per round, as a fraction (0.01 = 1%). */
   bankInterestPctPerRound: number;
 
-  /** Transfer fee as fraction of out-going player's price (0.01 = 1%). */
+  /** Transfer fee as fraction of the INCOMING player's price (0.007 = 0.7%).
+   *  Matches Aftonbladet's WC rules: "0,7% av den köpta spelarens aktuella
+   *  värde". Round-1 transfers are free regardless (we have no prior squad
+   *  to diff against, so no transfers are written). */
   transferFeePct: number;
 
   /** Free transfers per round before fees apply. */
@@ -94,11 +97,12 @@ export const currentRules: RuleSet = {
   captainMultiplier: 2,
   captainBonusOnlyPositive: true,
   bankInterestPctPerRound: 0.01,
-  transferFeePct: 0.01,
+  transferFeePct: 0.007,
   freeTransfersPerRound: 0,
-  // In the WC fantasy data model each "club" is a national team, so the
-  // per-club cap is effectively a per-country cap of 3.
-  maxFromSameClub: 3,
+  // Aftonbladet's WC 2026 rules cap squads at 4 players per national team.
+  // In our data model "club" = national team (Aftonbladet's WC `team`),
+  // so the per-club cap is effectively the per-country cap.
+  maxFromSameClub: 4,
   maxFromSameCountry: null,
   stakePerUserSek: 300,
   meta: {

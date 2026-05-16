@@ -118,9 +118,11 @@ export function SquadPicker({
       const inId = added[i];
       const outPlayer = playersById.get(outId);
       const inPlayer = playersById.get(inId);
-      const sellPrice = outPlayer?.priceSek ?? 0;
+      const buyPrice = inPlayer?.priceSek ?? 0;
       const isFree = i < currentRules.freeTransfersPerRound;
-      const feeSek = isFree ? 0 : Math.floor(sellPrice * currentRules.transferFeePct);
+      const feeSek = isFree
+        ? 0
+        : Math.floor(buyPrice * currentRules.transferFeePct);
       pairs.push({ outId, inId, outPlayer, inPlayer, feeSek });
     }
     return pairs;

@@ -7,7 +7,7 @@ describe("computeTransfers", () => {
       previousPlayerIds: ["a", "b", "c"],
       newPlayerIds: ["a", "b", "c"],
       priceByPlayerId: new Map(),
-      transferFeePct: 0.01,
+      transferFeePct: 0.007,
       freeTransfersPerRound: 0,
     });
     expect(r.rows).toEqual([]);
@@ -15,7 +15,7 @@ describe("computeTransfers", () => {
     expect(r.totalCashFlowSek).toBe(0);
   });
 
-  it("one swap (same price): fee 50k, cash flow 0", () => {
+  it("one swap (same price): fee 0.7% × buy = 35k, cash flow 0", () => {
     const r = computeTransfers({
       previousPlayerIds: ["a", "b", "c"],
       newPlayerIds: ["a", "b", "x"],
@@ -23,7 +23,7 @@ describe("computeTransfers", () => {
         ["c", 5_000_000],
         ["x", 5_000_000],
       ]),
-      transferFeePct: 0.01,
+      transferFeePct: 0.007,
       freeTransfersPerRound: 0,
     });
     expect(r.rows).toHaveLength(1);
@@ -31,29 +31,12 @@ describe("computeTransfers", () => {
     expect(r.rows[0].playerInId).toBe("x");
     expect(r.rows[0].sellPriceSek).toBe(5_000_000);
     expect(r.rows[0].buyPriceSek).toBe(5_000_000);
-    expect(r.rows[0].feeSek).toBe(50_000);
-    expect(r.totalFeeSek).toBe(50_000);
+    expect(r.rows[0].feeSek).toBe(35_000); // floor(5M × 0.007)
+    expect(r.totalFeeSek).toBe(35_000);
     expect(r.totalCashFlowSek).toBe(0);
   });
 
-  it("one swap (sell high, buy low): positive cash flow + fee on outgoing", () => {
-    const r = computeTransfers({
-      previousPlayerIds: ["a"],
-      newPlayerIds: ["x"],
-      priceByPlayerId: new Map([
-        ["a", 10_000_000],
-        ["x", 3_000_000],
-      ]),
-      transferFeePct: 0.01,
-      freeTransfersPerRound: 0,
-    });
-    expect(r.rows[0].sellPriceSek).toBe(10_000_000);
-    expect(r.rows[0].buyPriceSek).toBe(3_000_000);
-    expect(r.rows[0].feeSek).toBe(100_000); // 1% × 10M
-    expect(r.totalCashFlowSek).toBe(7_000_000); // sell − buy
-  });
-
-  it("one swap (sell low, buy high): negative cash flow", () => {
+  it("upgrade (sell low, buy high): negative cash flow, fee on buy price", () => {
     const r = computeTransfers({
       previousPlayerIds: ["a"],
       newPlayerIds: ["x"],
@@ -61,11 +44,28 @@ describe("computeTransfers", () => {
         ["a", 3_000_000],
         ["x", 10_000_000],
       ]),
-      transferFeePct: 0.01,
+      transferFeePct: 0.007,
       freeTransfersPerRound: 0,
     });
-    expect(r.rows[0].feeSek).toBe(30_000);
+    expect(r.rows[0].sellPriceSek).toBe(3_000_000);
+    expect(r.rows[0].buyPriceSek).toBe(10_000_000);
+    expect(r.rows[0].feeSek).toBe(70_000); // floor(10M × 0.007)
     expect(r.totalCashFlowSek).toBe(-7_000_000);
+  });
+
+  it("downgrade (sell high, buy low): positive cash flow, smaller fee", () => {
+    const r = computeTransfers({
+      previousPlayerIds: ["a"],
+      newPlayerIds: ["x"],
+      priceByPlayerId: new Map([
+        ["a", 10_000_000],
+        ["x", 3_000_000],
+      ]),
+      transferFeePct: 0.007,
+      freeTransfersPerRound: 0,
+    });
+    expect(r.rows[0].feeSek).toBe(21_000); // floor(3M × 0.007)
+    expect(r.totalCashFlowSek).toBe(7_000_000);
   });
 
   it("free transfer pays no fee but cash flow still counts", () => {
@@ -76,7 +76,7 @@ describe("computeTransfers", () => {
         ["b", 5_000_000],
         ["x", 4_000_000],
       ]),
-      transferFeePct: 0.01,
+      transferFeePct: 0.007,
       freeTransfersPerRound: 1,
     });
     expect(r.rows[0].feeSek).toBe(0);
@@ -84,7 +84,7 @@ describe("computeTransfers", () => {
     expect(r.totalCashFlowSek).toBe(1_000_000); // sold 5M, bought 4M
   });
 
-  it("two transfers, freeTransfersPerRound = 1 → first free, second charged", () => {
+  it("two transfers, freeTransfersPerRound = 1 → first free, second charged on buy", () => {
     const r = computeTransfers({
       previousPlayerIds: ["a", "b", "c"],
       newPlayerIds: ["a", "x", "y"],
@@ -94,28 +94,30 @@ describe("computeTransfers", () => {
         ["x", 5_000_000],
         ["y", 6_000_000],
       ]),
-      transferFeePct: 0.01,
+      transferFeePct: 0.007,
       freeTransfersPerRound: 1,
     });
     expect(r.rows).toHaveLength(2);
     expect(r.rows[0].feeSek).toBe(0);
-    expect(r.rows[1].feeSek).toBe(70_000);
-    expect(r.totalFeeSek).toBe(70_000);
-    expect(r.totalCashFlowSek).toBe(5_000_000 - 5_000_000 + (7_000_000 - 6_000_000));
+    expect(r.rows[1].feeSek).toBe(42_000); // floor(6M × 0.007)
+    expect(r.totalFeeSek).toBe(42_000);
+    expect(r.totalCashFlowSek).toBe(
+      5_000_000 - 5_000_000 + (7_000_000 - 6_000_000),
+    );
   });
 
-  it("uses floor when fraction × price is not whole", () => {
+  it("uses floor when fraction × buy is not whole", () => {
     const r = computeTransfers({
       previousPlayerIds: ["b"],
       newPlayerIds: ["x"],
       priceByPlayerId: new Map([
-        ["b", 4_999_999],
-        ["x", 4_999_999],
+        ["b", 5_000_000],
+        ["x", 4_999_999], // 0.007 × 4_999_999 = 34_999.993
       ]),
-      transferFeePct: 0.01,
+      transferFeePct: 0.007,
       freeTransfersPerRound: 0,
     });
-    expect(r.rows[0].feeSek).toBe(49_999);
+    expect(r.rows[0].feeSek).toBe(34_999);
   });
 
   it("missing price for either side defaults to 0", () => {
@@ -123,7 +125,7 @@ describe("computeTransfers", () => {
       previousPlayerIds: ["b"],
       newPlayerIds: ["x"],
       priceByPlayerId: new Map(),
-      transferFeePct: 0.01,
+      transferFeePct: 0.007,
       freeTransfersPerRound: 0,
     });
     expect(r.rows[0].sellPriceSek).toBe(0);
@@ -141,7 +143,7 @@ describe("computeTransfers", () => {
         ["c", 7_000_000],
         ["x", 5_000_000],
       ]),
-      transferFeePct: 0.01,
+      transferFeePct: 0.007,
       freeTransfersPerRound: 0,
     });
     expect(r.rows).toHaveLength(1);

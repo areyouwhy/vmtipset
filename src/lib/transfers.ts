@@ -2,7 +2,8 @@
  * Pure transfer-diff calculation. Compares a previous squad to a new squad
  * and returns the list of transfer rows to write, with their fees.
  *
- * Fee model: `feeSek = floor(sellPrice × transferFeePct)`. The first
+ * Fee model (Aftonbladet WC 2026): `feeSek = floor(buyPrice × transferFeePct)`
+ * — 0.7 % of the INCOMING player's market price. The first
  * `freeTransfersPerRound` transfers in a single submission are free.
  *
  * Pairing: outgoing and incoming player ids are zipped in iteration order.
@@ -35,7 +36,7 @@ export function computeTransfers(args: {
   newPlayerIds: string[];
   /** Current-round market prices by player id. */
   priceByPlayerId: Map<string, number>;
-  transferFeePct: number; // 0.01 = 1%
+  transferFeePct: number; // 0.007 = 0.7%
   freeTransfersPerRound: number;
 }): TransferDiff {
   const prev = new Set(args.previousPlayerIds);
@@ -57,7 +58,8 @@ export function computeTransfers(args: {
     const sellPrice = args.priceByPlayerId.get(outId) ?? 0;
     const buyPrice = args.priceByPlayerId.get(inId) ?? 0;
     const isFree = freeUsed < args.freeTransfersPerRound;
-    const feeSek = isFree ? 0 : Math.floor(sellPrice * args.transferFeePct);
+    // Aftonbladet's WC rule: fee = transferFeePct × INCOMING player's price.
+    const feeSek = isFree ? 0 : Math.floor(buyPrice * args.transferFeePct);
     if (isFree) freeUsed++;
     else paid++;
     rows.push({
