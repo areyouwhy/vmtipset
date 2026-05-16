@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import type { Position } from "@/db/schema";
 import {
@@ -976,6 +977,18 @@ function MetricToggle({
   );
 }
 
+// Local copy of lib/clubs.ts:clubSlug — that module imports @/db so we can't
+// pull it into this client component without dragging server code along.
+function clubSlugLocal(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[.'’"]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function fmtSekShort(n: number): string {
   if (n === 0) return "0";
   const abs = Math.abs(n);
@@ -1081,14 +1094,33 @@ function PlayerRow({
       <div className="min-w-0">
         <p className="truncate text-sm">
           <span className="text-yellow">{player.position}</span>{" "}
-          {player.name}
+          <Link
+            href={`/spelare/${player.id}`}
+            className="text-foreground hover:text-cyan"
+          >
+            {player.name}
+          </Link>
         </p>
         <p className="truncate text-[10px] uppercase tracking-widest text-dim">
-          {player.countryCode ?? "—"}
+          {player.countryCode ? (
+            <Link
+              href={`/landslag/${player.countryCode}`}
+              className="hover:text-cyan"
+            >
+              {player.countryCode}
+            </Link>
+          ) : (
+            "—"
+          )}
           {player.domesticClub && (
             <>
               {" · "}
-              <span className="text-cyan/80">{player.domesticClub}</span>
+              <Link
+                href={`/klubblag/${clubSlugLocal(player.domesticClub)}`}
+                className="text-cyan/80 hover:text-cyan"
+              >
+                {player.domesticClub}
+              </Link>
             </>
           )}
           {greyed && reason && (
