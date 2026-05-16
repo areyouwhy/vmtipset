@@ -7,6 +7,8 @@ import {
   playerRoundSnapshots,
   players,
   rounds,
+  squadPlayers,
+  squads,
   type Player,
   type Club,
   type EventType,
@@ -54,6 +56,13 @@ export type PlayerListRow = {
   popularity: number;
   /** −1 / 0 / +1 trend indicator from the latest snapshot. */
   trend: number;
+  /** Number of OUR squads (in the latest round with picks) owning this player. */
+  ourPickCount: number;
+  /** Number of OUR squads (in the latest round) with this player as captain. */
+  ourCaptainCount: number;
+  /** Denominator for the two above — how many squads exist in the latest
+   *  round with picks. 0 if nobody has picked yet. */
+  ourSquadDenominator: number;
   stats: PlayerSeasonStats;
 };
 
@@ -154,7 +163,7 @@ function aggregateStats(
 export async function getPlayerListRows(
   opts: { includeInactive?: boolean } = {},
 ): Promise<PlayerListRow[]> {
-  const [allPlayers, allClubs, allRounds, allSnapshots, allEventTypeRows] = await Promise.all([
+  const [allPlayers, allClubs, allRounds, allSnapshots, allEventTypeRows, allSquads, allSquadPlayers] = await Promise.all([
     opts.includeInactive
       ? db.select().from(players).orderBy(asc(players.name))
       : db
@@ -166,10 +175,46 @@ export async function getPlayerListRows(
     db.select().from(rounds).orderBy(asc(rounds.number)),
     db.select().from(playerRoundSnapshots),
     db.select({ id: eventTypes.id, name: eventTypes.name }).from(eventTypes),
+    db.select().from(squads),
+    db.select().from(squadPlayers),
   ]);
 
   const clubById = new Map(allClubs.map((c) => [c.id, c]));
   const statsByPlayer = aggregateStats(allSnapshots, allEventTypeRows);
+
+  // OUR popularity / captain counts: use the latest round that has any
+  // squad rows, so the number reflects "current state" of friend picks.
+  const roundOrderIndex = new Map(allRounds.map((r, i) => [r.id, i] as const));
+  let latestSquadRoundId: string | null = null;
+  let latestSquadRoundIdx = -1;
+  for (const sq of allSquads) {
+    const idx = roundOrderIndex.get(sq.roundId) ?? -1;
+    if (idx > latestSquadRoundIdx) {
+      latestSquadRoundIdx = idx;
+      latestSquadRoundId = sq.roundId;
+    }
+  }
+  const latestSquads = latestSquadRoundId
+    ? allSquads.filter((s) => s.roundId === latestSquadRoundId)
+    : [];
+  const latestSquadIds = new Set(latestSquads.map((s) => s.id));
+  const ourPickCountByPlayer = new Map<string, number>();
+  for (const sp of allSquadPlayers) {
+    if (!latestSquadIds.has(sp.squadId)) continue;
+    ourPickCountByPlayer.set(
+      sp.playerId,
+      (ourPickCountByPlayer.get(sp.playerId) ?? 0) + 1,
+    );
+  }
+  const ourCaptainCountByPlayer = new Map<string, number>();
+  for (const sq of latestSquads) {
+    if (!sq.captainPlayerId) continue;
+    ourCaptainCountByPlayer.set(
+      sq.captainPlayerId,
+      (ourCaptainCountByPlayer.get(sq.captainPlayerId) ?? 0) + 1,
+    );
+  }
+  const ourSquadDenominator = latestSquads.length;
   const baseRoundId = allRounds[0]?.id;
   const latestRoundId = allRounds[allRounds.length - 1]?.id;
 
@@ -215,6 +260,9 @@ export async function getPlayerListRows(
       latestGrowthSek: latestByPlayer.get(p.id)?.growthSek ?? 0,
       popularity: latestByPlayer.get(p.id)?.popularity ?? 0,
       trend: latestByPlayer.get(p.id)?.trend ?? 0,
+      ourPickCount: ourPickCountByPlayer.get(p.id) ?? 0,
+      ourCaptainCount: ourCaptainCountByPlayer.get(p.id) ?? 0,
+      ourSquadDenominator,
       stats: statsByPlayer.get(p.id) ?? emptyStats(),
     };
   });

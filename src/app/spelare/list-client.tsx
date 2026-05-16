@@ -43,7 +43,9 @@ type SortKey =
   | "shots"
   | "saves"
   | "motm"
-  | "pop";
+  | "pop"
+  | "ourPick"
+  | "ourCaptain";
 type ViewMode = "list" | "table";
 
 export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
@@ -171,6 +173,18 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
     if (sort === "pop") {
       return [...filtered].sort(
         (a, b) => b.popularity - a.popularity || a.name.localeCompare(b.name),
+      );
+    }
+    if (sort === "ourPick") {
+      return [...filtered].sort(
+        (a, b) =>
+          b.ourPickCount - a.ourPickCount || a.name.localeCompare(b.name),
+      );
+    }
+    if (sort === "ourCaptain") {
+      return [...filtered].sort(
+        (a, b) =>
+          b.ourCaptainCount - a.ourCaptainCount || a.name.localeCompare(b.name),
       );
     }
     if (sort === "country") {
@@ -436,6 +450,12 @@ function StatsTable({
             <Th align="right" sortKey="pop" current={sort} onSort={onSort}>
               POP
             </Th>
+            <Th align="right" sortKey="ourPick" current={sort} onSort={onSort}>
+              OSS
+            </Th>
+            <Th align="right" sortKey="ourCaptain" current={sort} onSort={onSort}>
+              © OSS
+            </Th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border/60">
@@ -514,11 +534,21 @@ function StatsTable({
               <td className="px-2 py-1.5 text-right text-dim">
                 {r.popularity || "—"}
               </td>
+              <td className="px-2 py-1.5 text-right text-cyan">
+                {r.ourPickCount > 0
+                  ? `${r.ourPickCount}/${r.ourSquadDenominator}`
+                  : "—"}
+              </td>
+              <td className="px-2 py-1.5 text-right text-yellow">
+                {r.ourCaptainCount > 0
+                  ? `${r.ourCaptainCount}/${r.ourSquadDenominator}`
+                  : "—"}
+              </td>
             </tr>
           ))}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={15} className="px-2 py-3 text-center text-dim">
+              <td colSpan={17} className="px-2 py-3 text-center text-dim">
                 — inga matcher —
               </td>
             </tr>
