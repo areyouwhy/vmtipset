@@ -423,10 +423,19 @@ function StatsTable({
                 )}
               </td>
               <td className="px-2 py-1.5 text-left text-dim">
-                <span className="inline-flex items-center gap-1">
-                  <Jersey code={r.countryCode} size={16} />
-                  {r.countryCode ?? "—"}
-                </span>
+                {r.countryCode ? (
+                  <Link
+                    href={`/landslag/${r.countryCode}`}
+                    className="inline-flex items-center gap-1 hover:text-cyan"
+                  >
+                    <Jersey code={r.countryCode} size={16} />
+                    {r.countryCode}
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1">
+                    <Jersey code={r.countryCode} size={16} />—
+                  </span>
+                )}
               </td>
               <td className="px-2 py-1.5 text-center text-yellow">
                 {r.position}

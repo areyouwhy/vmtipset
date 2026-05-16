@@ -115,10 +115,24 @@ export default async function OmgangPage({
               — inga matcher i denna omgång ännu —
             </p>
           )}
-          {sections.map(({ group, matches: ms }) => (
+          {sections.map(({ group, matches: ms }) => {
+            // Group names look like "Group A". Last char is the group letter,
+            // so we can deep-link to the standings anchor on /vm/gruppspel.
+            const letterMatch = group.name.match(/([A-Z])\s*$/);
+            const letter = letterMatch?.[1] ?? null;
+            return (
             <section key={group.externalId}>
               <h2 className="border-b border-border pb-1 text-[10px] uppercase tracking-widest text-cyan">
-                {group.name}
+                {letter && !isKnockout ? (
+                  <Link
+                    href={`/vm/gruppspel#grupp-${letter}`}
+                    className="hover:text-yellow"
+                  >
+                    {group.name}
+                  </Link>
+                ) : (
+                  group.name
+                )}
                 <span className="ml-2 text-dim">{ms.length}</span>
               </h2>
               <ul className="divide-y divide-border/40">
@@ -127,7 +141,8 @@ export default async function OmgangPage({
                 ))}
               </ul>
             </section>
-          ))}
+            );
+          })}
         </div>
       </div>
     </main>

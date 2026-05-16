@@ -46,15 +46,13 @@ export default async function NationPage({
             </h1>
             <p className="mt-2 flex flex-wrap items-baseline gap-4 text-[11px] uppercase tracking-widest">
               {group && (
-                <span>
+                <Link
+                  href={`/vm/gruppspel#grupp-${group}`}
+                  className="text-cyan hover:text-yellow"
+                >
                   <span className="text-dim">GRUPP </span>
-                  <Link
-                    href={`/vm/gruppspel#grupp-${group}`}
-                    className="text-cyan tabular-nums hover:text-yellow"
-                  >
-                    {group}
-                  </Link>
-                </span>
+                  <span className="tabular-nums">{group}</span>
+                </Link>
               )}
               <span>
                 <span className="text-dim">FIFA-RANKING </span>

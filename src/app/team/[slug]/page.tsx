@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -198,9 +199,21 @@ function PlayerLine({ p }: { p: TeamDetailPlayer }) {
       <span className="text-yellow">{p.position}</span>
       <span className="truncate text-foreground">
         {p.isCaptain && <span className="text-yellow">© </span>}
-        {p.name}{" "}
+        <Link href={`/spelare/${p.id}`} className="hover:text-cyan">
+          {p.name}
+        </Link>{" "}
         <span className="text-dim">
-          {p.countryCode ?? "—"} · {p.clubShortName}
+          {p.countryCode ? (
+            <Link
+              href={`/landslag/${p.countryCode}`}
+              className="hover:text-cyan"
+            >
+              {p.countryCode}
+            </Link>
+          ) : (
+            "—"
+          )}{" "}
+          · {p.clubShortName}
         </span>
       </span>
       <span className="text-foreground">
