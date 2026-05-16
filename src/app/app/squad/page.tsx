@@ -8,6 +8,7 @@ import {
   getActiveRound,
   getCurrentSquad,
   getPickablePlayers,
+  getPreviousRoundSquadPlayerIds,
 } from "@/lib/squad-data";
 import { SquadPicker } from "./picker";
 
@@ -62,7 +63,11 @@ export default async function SquadPage() {
         </section>
 
         {round && (
-          <SquadPickerWrapper teamId={team.id} roundId={round.id} />
+          <SquadPickerWrapper
+            teamId={team.id}
+            roundId={round.id}
+            roundNumber={round.number}
+          />
         )}
       </div>
     </main>
@@ -113,13 +118,16 @@ function DeadlineBanner({ deadline }: { deadline: Date | null }) {
 async function SquadPickerWrapper({
   teamId,
   roundId,
+  roundNumber,
 }: {
   teamId: string;
   roundId: string;
+  roundNumber: number;
 }) {
-  const [pickable, current] = await Promise.all([
+  const [pickable, current, referenceIds] = await Promise.all([
     getPickablePlayers(roundId),
     getCurrentSquad(teamId, roundId),
+    getPreviousRoundSquadPlayerIds(teamId, roundNumber),
   ]);
 
   if (pickable.length === 0) {
@@ -169,6 +177,7 @@ async function SquadPickerWrapper({
         initialPlayerIds={cleanIds}
         initialCaptainId={cleanCaptainId}
         locked={current?.lockedAt != null}
+        referencePlayerIds={referenceIds}
       />
     </>
   );

@@ -8,7 +8,12 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getOrCreateDbUser, isAdmin } from "@/lib/auth";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { getOpenBetsForUser } from "@/lib/bets-data";
-import { getActiveRound, getCurrentSquad } from "@/lib/squad-data";
+import {
+  getActiveRound,
+  getCurrentSquad,
+  getPendingTransfersForTeamRound,
+  type PendingTransfersForRound,
+} from "@/lib/squad-data";
 import { teamSlug } from "@/lib/team-slug";
 import { BetsSection } from "./bets-section";
 import { CreateTeamForm } from "./create-team-form";
@@ -35,6 +40,10 @@ export default async function AppPage() {
   const squad =
     team && activeRound && user.status === "approved"
       ? await getCurrentSquad(team.id, activeRound.id)
+      : null;
+  const pendingTransfers =
+    team && activeRound && user.status === "approved"
+      ? await getPendingTransfersForTeamRound(team.id, activeRound.id)
       : null;
 
   const statusLabel: Record<typeof user.status, string> = {
@@ -168,6 +177,7 @@ export default async function AppPage() {
                 }
                 droppedPlayers={squad?.droppedPlayers ?? []}
                 locked={squad?.lockedAt != null}
+                pendingTransfers={pendingTransfers}
               />
               {myStanding && (
                 <StandingPanel
@@ -359,11 +369,13 @@ function SquadStatusPanel({
   squadPlayerCount,
   droppedPlayers,
   locked,
+  pendingTransfers,
 }: {
   activeRound: { number: number; name: string; deadline: Date | null } | null;
   squadPlayerCount: number;
   droppedPlayers: { id: string; name: string }[];
   locked: boolean;
+  pendingTransfers: PendingTransfersForRound | null;
 }) {
   if (!activeRound) {
     return (
@@ -406,14 +418,14 @@ function SquadStatusPanel({
     : hasDropped
       ? "ERSÄTT BORTPLOCKADE"
       : isReady
-        ? "DU ÄR KLAR"
+        ? "TRUPP SPARAD"
         : "INTE KLAR";
   const subline = locked
     ? `Truppen är låst för ${activeRound.name}. Inväntar matcher.`
     : hasDropped
       ? `Aftonbladet har plockat ut ${droppedPlayers.length} av dina spelare ur landslagstruppen — välj ersättare innan deadline. Bytet är gratis innan första ronden startar.`
       : isReady
-        ? `Du har valt ${squadPlayerCount} av 11 spelare för ${activeRound.name}. Du kan fortsätta justera tills deadline.`
+        ? `Du har valt 11 spelare för ${activeRound.name}. Inget är låst — du kan byta så mycket du vill fram tills deadline. När den passerar låses det du har sparat.`
         : squadPlayerCount === 0
           ? `Du har inte byggt din trupp för ${activeRound.name} än.`
           : `Du har bara valt ${squadPlayerCount} av 11 spelare för ${activeRound.name}.`;
@@ -448,6 +460,10 @@ function SquadStatusPanel({
         </ul>
       )}
 
+      {pendingTransfers && pendingTransfers.transfers.length > 0 && (
+        <PendingTransfersList data={pendingTransfers} />
+      )}
+
       {!locked && activeRound.deadline && (
         <CountdownLine deadline={activeRound.deadline} />
       )}
@@ -464,6 +480,50 @@ function SquadStatusPanel({
       >
         {ctaLabel}
       </Link>
+    </section>
+  );
+}
+
+function PendingTransfersList({ data }: { data: PendingTransfersForRound }) {
+  return (
+    <section className="mt-4 border border-cyan/40 bg-cyan/5 p-3">
+      <header className="flex items-baseline justify-between text-[10px] uppercase tracking-widest">
+        <span className="text-cyan">DINA BYTEN · {data.transfers.length} ST</span>
+        <span className="text-dim">
+          AVGIFT {fmtSek(data.totalFeeSek)} · KASSAFLÖDE{" "}
+          <span
+            className={
+              data.totalCashFlowSek > 0
+                ? "text-green"
+                : data.totalCashFlowSek < 0
+                  ? "text-red"
+                  : "text-foreground"
+            }
+          >
+            {data.totalCashFlowSek > 0 ? "+" : ""}
+            {fmtSek(data.totalCashFlowSek)}
+          </span>
+        </span>
+      </header>
+      <ul className="mt-2 divide-y divide-cyan/20 text-[11px] tabular-nums">
+        {data.transfers.map((t) => (
+          <li
+            key={t.id}
+            className="grid grid-cols-[auto_1fr_auto] items-baseline gap-2 py-1.5"
+          >
+            <span className="text-yellow">{t.playerOut.position}</span>
+            <span className="truncate">
+              <span className="text-red">{t.playerOut.name}</span>
+              <span className="mx-2 text-dim">→</span>
+              <span className="text-green">{t.playerIn.name}</span>
+            </span>
+            <span className="text-right text-dim">
+              {fmtSek(t.sellPriceSek)} → {fmtSek(t.buyPriceSek)} ·{" "}
+              <span className="text-red">−{fmtSek(t.feeSek)}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

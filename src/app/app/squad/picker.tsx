@@ -33,11 +33,15 @@ export function SquadPicker({
   initialPlayerIds,
   initialCaptainId,
   locked,
+  referencePlayerIds,
 }: {
   players: PickablePlayer[];
   initialPlayerIds: string[];
   initialCaptainId: string | null;
   locked: boolean;
+  /** Squad from the previous round. Used to display pending transfers + offer
+   *  undo. null = round 1 (no transfers possible). */
+  referencePlayerIds: string[] | null;
 }) {
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(initialPlayerIds),
@@ -91,6 +95,46 @@ export function SquadPicker({
     () => new Map(players.map((p) => [p.id, p])),
     [players],
   );
+
+  // Pending transfers: current selection vs reference (previous-round) squad.
+  // Pairs are zipped by iteration order — same algorithm the server uses, so
+  // the displayed list matches what gets written on save.
+  const pendingTransfers = useMemo(() => {
+    if (!referencePlayerIds) return [];
+    const next = selected;
+    const removed = referencePlayerIds.filter((id) => !next.has(id));
+    const added = Array.from(next).filter(
+      (id) => !referencePlayerIds.includes(id),
+    );
+    const pairs: {
+      outId: string;
+      inId: string;
+      outPlayer: PickablePlayer | undefined;
+      inPlayer: PickablePlayer | undefined;
+      feeSek: number;
+    }[] = [];
+    for (let i = 0; i < Math.min(removed.length, added.length); i++) {
+      const outId = removed[i];
+      const inId = added[i];
+      const outPlayer = playersById.get(outId);
+      const inPlayer = playersById.get(inId);
+      const sellPrice = outPlayer?.priceSek ?? 0;
+      const isFree = i < currentRules.freeTransfersPerRound;
+      const feeSek = isFree ? 0 : Math.floor(sellPrice * currentRules.transferFeePct);
+      pairs.push({ outId, inId, outPlayer, inPlayer, feeSek });
+    }
+    return pairs;
+  }, [referencePlayerIds, selected, playersById]);
+
+  function undoTransfer(outId: string, inId: string) {
+    setSelected((cur) => {
+      const next = new Set(cur);
+      next.delete(inId);
+      next.add(outId);
+      return next;
+    });
+    setCaptainId((cur) => (cur === inId ? null : cur));
+  }
 
   const candidate: SquadCandidate = useMemo(
     () => ({
@@ -357,6 +401,102 @@ export function SquadPicker({
           </ul>
         )}
       </section>
+
+      {/* Pending transfers — only relevant when reference squad exists (round 2+)
+          and current selection actually differs. */}
+      {!locked && pendingTransfers.length > 0 && (
+        <section className="mt-2 border border-cyan/40 bg-cyan/5 p-3 text-[11px]">
+          <header className="flex items-baseline justify-between text-[10px] uppercase tracking-widest">
+            <span className="text-cyan">
+              BYTEN · {pendingTransfers.length} ST
+            </span>
+            <span className="text-dim">
+              AVGIFT{" "}
+              <span className="text-red">
+                {fmtSekShort(
+                  pendingTransfers.reduce((acc, t) => acc + t.feeSek, 0),
+                )}
+              </span>{" "}
+              · KASSAFLÖDE{" "}
+              <span
+                className={(() => {
+                  const cf = pendingTransfers.reduce(
+                    (acc, t) =>
+                      acc + ((t.outPlayer?.priceSek ?? 0) - (t.inPlayer?.priceSek ?? 0)),
+                    0,
+                  );
+                  return cf > 0 ? "text-green" : cf < 0 ? "text-red" : "text-foreground";
+                })()}
+              >
+                {(() => {
+                  const cf = pendingTransfers.reduce(
+                    (acc, t) =>
+                      acc + ((t.outPlayer?.priceSek ?? 0) - (t.inPlayer?.priceSek ?? 0)),
+                    0,
+                  );
+                  return `${cf > 0 ? "+" : ""}${fmtSekShort(cf)}`;
+                })()}
+              </span>
+            </span>
+          </header>
+          <ul className="mt-2 space-y-1">
+            {pendingTransfers.map((t) => {
+              const cashFlow =
+                (t.outPlayer?.priceSek ?? 0) - (t.inPlayer?.priceSek ?? 0);
+              return (
+                <li
+                  key={`${t.outId}-${t.inId}`}
+                  className="grid grid-cols-[1fr_auto] items-baseline gap-3 border-b border-cyan/10 py-1 last:border-b-0"
+                >
+                  <span className="truncate tabular-nums">
+                    <span className="text-red">
+                      {t.outPlayer?.name ?? "?"}
+                    </span>{" "}
+                    <span className="text-dim">
+                      ({fmtSekShort(t.outPlayer?.priceSek ?? 0)})
+                    </span>
+                    <span className="mx-2 text-dim">→</span>
+                    <span className="text-green">
+                      {t.inPlayer?.name ?? "?"}
+                    </span>{" "}
+                    <span className="text-dim">
+                      ({fmtSekShort(t.inPlayer?.priceSek ?? 0)})
+                    </span>
+                    <span className="ml-2 text-dim">
+                      · avgift{" "}
+                      <span className="text-red">−{fmtSekShort(t.feeSek)}</span>
+                      , kassa{" "}
+                      <span
+                        className={
+                          cashFlow > 0
+                            ? "text-green"
+                            : cashFlow < 0
+                              ? "text-red"
+                              : "text-foreground"
+                        }
+                      >
+                        {cashFlow > 0 ? "+" : ""}
+                        {fmtSekShort(cashFlow)}
+                      </span>
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => undoTransfer(t.outId, t.inId)}
+                    className="border border-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-dim transition hover:border-yellow hover:text-yellow"
+                  >
+                    [ ÅNGRA ]
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-2 text-[10px] text-dim">
+            Inget är låst. Du kan ångra varje byte eller fortsätta justera
+            tills deadline. Spara för att skriva ner det aktuella läget.
+          </p>
+        </section>
+      )}
 
       {/* Auto-pick / clear + metric toggle on the same line on phones. */}
       {!locked && (
@@ -832,6 +972,15 @@ function MetricToggle({
       ))}
     </div>
   );
+}
+
+function fmtSekShort(n: number): string {
+  if (n === 0) return "0";
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "−" : "";
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(2)}M`;
+  if (abs >= 1_000) return `${sign}${Math.round(abs / 1_000)}k`;
+  return `${sign}${abs}`;
 }
 
 function fmtKSek(n: number): string {

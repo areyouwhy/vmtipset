@@ -8,6 +8,7 @@ import {
   rounds,
   squadPlayers,
   squads,
+  transfers,
   type Position,
   type Round,
 } from "@/db/schema";
@@ -158,6 +159,95 @@ export type CurrentSquad = {
   captainPlayerId: string | null;
   lockedAt: Date | null;
 };
+
+export type PendingTransfer = {
+  /** `transfers` row id — useful for keys. */
+  id: string;
+  playerOut: { id: string; name: string; position: "GK" | "DEF" | "MID" | "FWD" };
+  playerIn: { id: string; name: string; position: "GK" | "DEF" | "MID" | "FWD" };
+  sellPriceSek: number;
+  buyPriceSek: number;
+  feeSek: number;
+};
+
+export type PendingTransfersForRound = {
+  transfers: PendingTransfer[];
+  totalFeeSek: number;
+  /** Σ (sell − buy) — positive = cash into bank, negative = bank shrinks. */
+  totalCashFlowSek: number;
+};
+
+/**
+ * Transfer rows currently saved for this team's round. These are "pending"
+ * in the sense that the round isn't locked yet — the user can still revise
+ * (each save replaces the whole set), but once the deadline passes whatever's
+ * saved here becomes final.
+ */
+export async function getPendingTransfersForTeamRound(
+  teamId: string,
+  roundId: string,
+): Promise<PendingTransfersForRound> {
+  const rows = await db
+    .select()
+    .from(transfers)
+    .where(and(eq(transfers.teamId, teamId), eq(transfers.roundId, roundId)));
+  if (rows.length === 0) {
+    return { transfers: [], totalFeeSek: 0, totalCashFlowSek: 0 };
+  }
+  const playerIds = Array.from(
+    new Set(rows.flatMap((r) => [r.playerInId, r.playerOutId])),
+  );
+  const playerRows = await db
+    .select({ id: players.id, name: players.name, position: players.position })
+    .from(players)
+    .where(inArray(players.id, playerIds));
+  const byId = new Map(playerRows.map((p) => [p.id, p]));
+
+  const out: PendingTransfer[] = rows.map((r) => ({
+    id: r.id,
+    playerOut: byId.get(r.playerOutId) ?? {
+      id: r.playerOutId,
+      name: "?",
+      position: "GK" as const,
+    },
+    playerIn: byId.get(r.playerInId) ?? {
+      id: r.playerInId,
+      name: "?",
+      position: "GK" as const,
+    },
+    sellPriceSek: r.sellPriceSek,
+    buyPriceSek: r.buyPriceSek,
+    feeSek: r.feeSek,
+  }));
+  return {
+    transfers: out,
+    totalFeeSek: out.reduce((acc, t) => acc + t.feeSek, 0),
+    totalCashFlowSek: out.reduce(
+      (acc, t) => acc + (t.sellPriceSek - t.buyPriceSek),
+      0,
+    ),
+  };
+}
+
+/**
+ * Returns the squad's player ids from the round PRECEDING the given round,
+ * for transfer-diff purposes. null if there is no prior round (Round 1) or
+ * the team didn't have a squad in any prior round.
+ */
+export async function getPreviousRoundSquadPlayerIds(
+  teamId: string,
+  currentRoundNumber: number,
+): Promise<string[] | null> {
+  if (currentRoundNumber <= 1) return null;
+  const earlier = await db
+    .select()
+    .from(rounds)
+    .where(eq(rounds.number, currentRoundNumber - 1))
+    .limit(1);
+  if (earlier.length === 0) return null;
+  const prev = await getCurrentSquad(teamId, earlier[0].id);
+  return prev?.playerIds ?? null;
+}
 
 export async function getCurrentSquad(
   teamId: string,
