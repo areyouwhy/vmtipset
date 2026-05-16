@@ -88,21 +88,30 @@ export default async function AuditPage({
                     <span className="text-yellow">{team.teamName}</span>{" "}
                     <span className="text-dim">· {team.ownerHandle}</span>
                   </span>
-                  <span className="tabular-nums text-yellow">
-                    {fmtSek(team.total.totalPointsSek)}
+                  <span className="text-right tabular-nums">
+                    <span className="block text-[9px] text-dim">LAGVÄRDE</span>
+                    <span className="text-yellow">{fmtSek(team.teamValueSek)}</span>
                   </span>
                 </header>
 
-                <dl className="mt-2 grid grid-cols-2 gap-2 text-[10px] uppercase tracking-widest tabular-nums text-dim sm:grid-cols-6">
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-[10px] uppercase tracking-widest tabular-nums text-dim sm:grid-cols-3">
+                  <KV k="SQUAD" v={fmtSek(team.squadValueSek)} />
+                  <KV k="BANK" v={fmtSek(team.total.bankSekEnd)} />
+                  <KV k="Δ VÄRDE (ROND)" v={fmtSek(team.total.totalPointsSek)} />
+                </dl>
+
+                <p className="mt-3 text-[10px] uppercase tracking-widest text-dim">
+                  RONDENS NEDBRYTNING
+                </p>
+                <dl className="mt-1 grid grid-cols-2 gap-2 text-[10px] uppercase tracking-widest tabular-nums text-dim sm:grid-cols-5">
                   <KV k="TILLVÄXT" v={fmtSek(team.total.sumGrowthSek)} />
                   <KV k="© BONUS" v={fmtSek(team.total.captainBonusSek)} />
                   <KV k="RÄNTA" v={fmtSek(team.total.bankInterestSek)} />
                   <KV k="AVGIFT" v={fmtSek(-team.total.transferFeesSek)} />
                   <KV
-                    k="TRANSFER"
+                    k="KASSAFLÖDE"
                     v={fmtSek(team.total.transferCashFlowSek)}
                   />
-                  <KV k="BANK SLUT" v={fmtSek(team.total.bankSekEnd)} />
                 </dl>
 
                 <table className="mt-4 w-full text-[11px] tabular-nums">

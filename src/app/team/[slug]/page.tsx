@@ -133,7 +133,7 @@ function RoundSection({
           <KV k="RÄNTA" v={fmtSek(line.score.bankInterestSek)} />
           <KV k="AVGIFT" v={fmtSek(-line.score.transferFeesSek)} />
           <KV
-            k="TRANSFER"
+            k="KASSAFLÖDE"
             v={fmtSek(line.score.transferCashFlowSek)}
             tone={line.score.transferCashFlowSek < 0 ? "red" : undefined}
           />

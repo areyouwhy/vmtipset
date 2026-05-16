@@ -590,6 +590,10 @@ export type AuditTeamLine = {
   ownerHandle: string;
   total: TeamRoundScore;
   perPlayer: AuditPlayerLine[];
+  /** Σ priceSek for the squad at this round = squad value at round end. */
+  squadValueSek: number;
+  /** squadValueSek + total.bankSekEnd — total team value at end of this round. */
+  teamValueSek: number;
 };
 
 export type RoundAudit = {
@@ -664,16 +668,19 @@ export async function getRoundAudit(roundId: string): Promise<RoundAudit | null>
           },
         ];
       });
+      const squadValueSek = perPlayer.reduce((acc, pl) => acc + pl.priceSek, 0);
       return {
         teamId: team.id,
         teamName: team.name,
         ownerHandle: handle,
         total: score,
         perPlayer,
+        squadValueSek,
+        teamValueSek: squadValueSek + score.bankSekEnd,
       } satisfies AuditTeamLine;
     })
     .filter((x): x is AuditTeamLine => x !== null)
-    .sort((a, b) => b.total.totalPointsSek - a.total.totalPointsSek);
+    .sort((a, b) => b.teamValueSek - a.teamValueSek);
 
   return { round, teams: teamsLines };
 }
