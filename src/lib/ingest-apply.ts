@@ -2,6 +2,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
   clubs,
+  eventTypes,
   fantasyEventTypes,
   players,
   playerRoundSnapshots,
@@ -298,9 +299,32 @@ export async function runIngest(source: DataSource): Promise<IngestSummary> {
   const plan = planIngest(incoming, existing);
   const summary = await applyPlan(plan);
 
-  // Upsert the fantasy event-types catalog. Independent of the snapshot
-  // diffing flow — it's just a small reference table. Source can omit
-  // (mock source, etc.) and we leave existing rows alone.
+  // Upsert raw event taxonomy. Independent of the snapshot diffing flow.
+  if (incoming.eventTypes && incoming.eventTypes.length > 0) {
+    for (const t of incoming.eventTypes) {
+      await db
+        .insert(eventTypes)
+        .values({
+          id: t.id,
+          name: t.name,
+          title: t.title,
+          abbreviation: t.abbreviation ?? null,
+          imageUrl: t.imageUrl ?? null,
+        })
+        .onConflictDoUpdate({
+          target: eventTypes.id,
+          set: {
+            name: t.name,
+            title: t.title,
+            abbreviation: t.abbreviation ?? null,
+            imageUrl: t.imageUrl ?? null,
+            updatedAt: new Date(),
+          },
+        });
+    }
+  }
+
+  // Upsert fantasy scoring catalog (SEK values).
   if (incoming.fantasyEventTypes && incoming.fantasyEventTypes.length > 0) {
     for (const t of incoming.fantasyEventTypes) {
       await db

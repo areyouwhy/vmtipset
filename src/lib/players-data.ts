@@ -3,13 +3,13 @@ import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
 import {
   clubs,
-  fantasyEventTypes,
+  eventTypes,
   playerRoundSnapshots,
   players,
   rounds,
   type Player,
   type Club,
-  type FantasyEventType,
+  type EventType,
   type Round,
   type PlayerRoundSnapshot,
 } from "@/db/schema";
@@ -114,9 +114,9 @@ export type PlayerDetail = {
   player: Player;
   club: Club | null;
   rounds: PlayerDetailRoundSnapshot[];
-  /** Catalog of fantasy event types from Aftonbladet — name + SEK value.
-   *  Keyed by event type id. Empty if ingest hasn't run yet. */
-  eventTypes: Map<number, FantasyEventType>;
+  /** Raw event-type catalog from Aftonbladet — id → {name, title, …}. Used
+   *  to resolve human-friendly names for events stored on snapshots. */
+  eventTypes: Map<number, EventType>;
 };
 
 /**
@@ -147,7 +147,7 @@ export async function getPlayerDetail(
           .limit(1)
           .then((r) => r[0] ?? null)
       : Promise.resolve<Club | null>(null),
-    db.select().from(fantasyEventTypes),
+    db.select().from(eventTypes),
   ]);
 
   const byRound = new Map<

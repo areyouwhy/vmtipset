@@ -1,4 +1,4 @@
-import { asc } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { db } from "@/db";
 import { fantasyEventTypes } from "@/db/schema";
@@ -23,13 +23,16 @@ export const dynamic = "force-dynamic";
 export default async function HowPage() {
   const r = currentRules;
   await ensureDefaultPrizes();
-  const [payout, eventTypeRows] = await Promise.all([
+  const [payout, scoringRules] = await Promise.all([
     getPotPayout(),
     db
       .select()
       .from(fantasyEventTypes)
-      .orderBy(asc(fantasyEventTypes.valueSek)),
+      .orderBy(desc(fantasyEventTypes.valueSek)),
   ]);
+  // Drop entries Aftonbladet keeps at 0 value (lineup, substitute in/out) —
+  // they're status markers, not scoring rules.
+  const scored = scoringRules.filter((t) => t.valueSek !== 0);
   const lastVerified = r.meta.lastVerifiedAt
     ? new Date(r.meta.lastVerifiedAt).toISOString().slice(0, 10)
     : "ALDRIG VERIFIERAD";
@@ -177,27 +180,24 @@ BANK_N       =  BANK_{N−1}
           </p>
         </Block>
 
-        {eventTypeRows.length > 0 && (
-          <Block title="HÄNDELSER — VAD AFTONBLADET RAPPORTERAR PER ROND">
+        {scored.length > 0 && (
+          <Block title="POÄNGSYSTEM — AFTONBLADETS REGLER">
             <p className="text-xs text-dim">
-              Varje rond rapporterar Aftonbladet vad varje spelare gjorde
-              (mål, assist, kort, räddningar, lineup …). Vi visar dessa
-              händelser per spelare på <span className="text-cyan">/spelare/[id]</span>.
-              Den faktiska SEK-poängen är dock <em>positionsberoende</em> hos
-              Aftonbladet — t.ex. mål av försvarare väger tyngre än mål av
-              anfallare — så de SEK-värden vi visar nedan är en indikativ
-              koppling, inte exakt scoring.
+              Komplett scoring-katalog från Aftonbladets ruleset.
+              Spelarens tillväxt i SEK per rond är summan av dessa värden för
+              de händelser hen är inblandad i. Vi visar händelser per spelare
+              på <span className="text-cyan">/spelare/[id]</span>.
             </p>
             <div className="mt-3 overflow-x-auto border border-border">
               <table className="w-full text-[11px] tabular-nums">
                 <thead className="text-[9px] uppercase tracking-widest text-dim">
                   <tr className="border-b border-border">
                     <th className="px-2 py-1.5 text-left">HÄNDELSE</th>
-                    <th className="px-2 py-1.5 text-right">RIKTVÄRDE (SEK)</th>
+                    <th className="px-2 py-1.5 text-right">VÄRDE (SEK)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {eventTypeRows.map((t) => (
+                  {scored.map((t) => (
                     <tr
                       key={t.id}
                       className="border-b border-dotted border-border/40"
@@ -212,9 +212,8 @@ BANK_N       =  BANK_{N−1}
                               : "text-dim"
                         }`}
                       >
-                        {t.valueSek === 0
-                          ? "—"
-                          : `${t.valueSek > 0 ? "+" : ""}${t.valueSek.toLocaleString("sv-SE").replace(/ /g, " ")}`}
+                        {t.valueSek > 0 ? "+" : ""}
+                        {t.valueSek.toLocaleString("sv-SE").replace(/ /g, " ")}
                       </td>
                     </tr>
                   ))}
@@ -222,7 +221,7 @@ BANK_N       =  BANK_{N−1}
               </table>
             </div>
             <p className="mt-2 text-[10px] uppercase tracking-widest text-dim">
-              {eventTypeRows.length} HÄNDELSETYPER · KÄLLA: AFTONBLADETS RULESET
+              {scored.length} REGLER · KÄLLA: AFTONBLADETS RULESET
             </p>
           </Block>
         )}

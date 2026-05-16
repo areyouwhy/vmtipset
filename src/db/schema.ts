@@ -160,10 +160,27 @@ export const playerRoundSnapshots = pgTable(
 );
 
 /**
- * Aftonbladet's fantasy scoring catalog. Each event type has a SEK value
- * — sum of (event count × value) across a player's events in a round
- * equals their growthSek for that round. Seeded from `/rulesets/{id}`
- * during ingest. Keyed by Aftonbladet's numeric type id.
+ * Raw event taxonomy from Aftonbladet (Goal, Lineup, Assist, Benched, …).
+ * These are the IDs that appear inside `player_round_snapshots.events[].typeId`.
+ * Used purely to resolve a human-readable name when rendering events per
+ * player per round. SEK values are NOT here — see `fantasyEventTypes`.
+ */
+export const eventTypes = pgTable("event_types", {
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  title: text("title").notNull(),
+  abbreviation: text("abbreviation"),
+  imageUrl: text("image_url"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * Aftonbladet's fantasy SCORING catalog — the position-aware rules that
+ * decide how much each event is worth in SEK. e.g., SoccerStrikerGoal=125k,
+ * SoccerDefenseGoal=175k. Surfaced on `/hur` as the canonical "rules of
+ * the game" table. IDs are independent from `eventTypes`.
  */
 export const fantasyEventTypes = pgTable("fantasy_event_types", {
   id: integer("id").primaryKey(),
@@ -419,6 +436,8 @@ export type Round = typeof rounds.$inferSelect;
 export type NewRound = typeof rounds.$inferInsert;
 export type PlayerRoundSnapshot = typeof playerRoundSnapshots.$inferSelect;
 export type NewPlayerRoundSnapshot = typeof playerRoundSnapshots.$inferInsert;
+export type EventType = typeof eventTypes.$inferSelect;
+export type NewEventType = typeof eventTypes.$inferInsert;
 export type FantasyEventType = typeof fantasyEventTypes.$inferSelect;
 export type NewFantasyEventType = typeof fantasyEventTypes.$inferInsert;
 export type PrizePool = typeof prizePools.$inferSelect;

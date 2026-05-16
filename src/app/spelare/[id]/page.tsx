@@ -154,7 +154,7 @@ function EventBreakdown({
   eventTypes,
 }: {
   events: Array<{ typeId: number; amount: number }>;
-  eventTypes: Map<number, { title: string; valueSek: number }>;
+  eventTypes: Map<number, { title: string }>;
   growthSek: number;
 }) {
   const rows = events.map((e) => {

@@ -50,6 +50,15 @@ export type ExternalSnapshot = {
   events?: ExternalEvent[];
 };
 
+export type ExternalEventType = {
+  /** Raw event-type id from the source. References match snapshot.events[].typeId. */
+  id: number;
+  name: string;
+  title: string;
+  abbreviation?: string | null;
+  imageUrl?: string | null;
+};
+
 export type ExternalFantasyEventType = {
   id: number;
   name: string;
@@ -64,8 +73,11 @@ export type ExternalDataset = {
   players: ExternalPlayer[];
   rounds: ExternalRound[];
   snapshots: ExternalSnapshot[];
-  /** Fantasy-scoring event catalog from the source's ruleset. Optional —
-   *  mock sources can omit. */
+  /** Raw event taxonomy from the source's ruleset. Used to resolve names
+   *  for events stored on snapshots. */
+  eventTypes?: ExternalEventType[];
+  /** Fantasy-scoring catalog with SEK values. Surfaced on /hur as the
+   *  canonical scoring rules. */
   fantasyEventTypes?: ExternalFantasyEventType[];
 };
 

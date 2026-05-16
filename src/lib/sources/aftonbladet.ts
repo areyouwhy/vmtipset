@@ -150,15 +150,9 @@ export const aftonbladetSource: DataSource = {
       };
     });
 
-    // 2. Ruleset — position-id → enum mapping by slug, plus event taxonomy.
+    // 2. Ruleset — position mapping + the two event catalogs.
     let positionByApiId: Record<number, Position> = {};
-    // We populate `fantasyEventTypes` from `ruleset.eventTypes` (the RAW
-    // event taxonomy) because that's the ID space that appears in
-    // /statistics events.round[]. The ruleset's own `fantasyEventTypes`
-    // uses different IDs and depends on player position (Goal by Defender
-    // ≠ Goal by Striker), so we don't try to bridge them — we just store
-    // the raw event names for display. The SEK-valued scoring catalog
-    // is referenced on /hur as informational.
+    let eventTypes: NonNullable<ExternalDataset["eventTypes"]> = [];
     let fantasyEventTypes: NonNullable<ExternalDataset["fantasyEventTypes"]> = [];
     if (game.ruleset?.id) {
       const ruleset = await tryGetJson<RawRuleset>(
@@ -168,19 +162,19 @@ export const aftonbladetSource: DataSource = {
         const mapped = POSITION_BY_SLUG[p.slug];
         if (mapped) positionByApiId[p.id] = mapped;
       }
-      // Best-effort SEK value lookup: pattern-match `Soccer<EventName>` in
-      // the fantasy scoring catalog. Falls back to 0 if no match — display
-      // code uses null in that case.
-      const fantasyByName = new Map<string, number>();
-      for (const ft of ruleset?.fantasyEventTypes ?? []) {
-        fantasyByName.set(ft.name, ft.value);
-      }
-      fantasyEventTypes = (ruleset?.eventTypes ?? []).map((t) => ({
+      eventTypes = (ruleset?.eventTypes ?? []).map((t) => ({
         id: t.id,
         name: t.name,
         title: t.title,
-        shortTitle: t.abbreviation ?? null,
-        valueSek: fantasyByName.get(`Soccer${t.name}`) ?? 0,
+        abbreviation: t.abbreviation ?? null,
+        imageUrl: t.imageUrl ?? null,
+      }));
+      fantasyEventTypes = (ruleset?.fantasyEventTypes ?? []).map((t) => ({
+        id: t.id,
+        name: t.name,
+        title: t.title,
+        shortTitle: t.shortTitle ?? null,
+        valueSek: t.value,
         imageUrl: t.imageUrl ?? null,
       }));
     }
@@ -279,6 +273,6 @@ export const aftonbladetSource: DataSource = {
       ];
     });
 
-    return { clubs, players, rounds, snapshots, fantasyEventTypes };
+    return { clubs, players, rounds, snapshots, eventTypes, fantasyEventTypes };
   },
 };
