@@ -62,7 +62,6 @@ export function TabellClient({
               <th className="px-2 py-2 text-right text-yellow">VÄRDE</th>
               <th className="px-2 py-2 text-right">SQUAD</th>
               <th className="px-2 py-2 text-right">BANK</th>
-              <th className="px-2 py-2 text-right text-cyan">D</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/60">
@@ -124,9 +123,6 @@ export function TabellClient({
                   >
                     {row.bankSek === null ? "—" : fmtSek(row.bankSek)}
                   </td>
-                  <td className="px-2 py-2 text-right text-cyan">
-                    {row.dailyBetsPoints || "—"}
-                  </td>
                 </tr>
               );
             })}
@@ -135,7 +131,7 @@ export function TabellClient({
       </div>
 
       <p className="mt-2 text-[10px] uppercase tracking-widest text-dim">
-        VÄRDE = SQUAD + BANK · D = DAGENS BET · {pinned.size}/{MAX_COMPARE} VALDA FÖR JÄMFÖRELSE
+        VÄRDE = SQUAD + BANK · {pinned.size}/{MAX_COMPARE} VALDA FÖR JÄMFÖRELSE
       </p>
     </>
   );
@@ -210,11 +206,6 @@ function ComparePanel({
             <CompareStat
               label="Δ TOT"
               cells={rows.map((r) => fmtSek(r.totalPointsSek))}
-            />
-            <CompareStat
-              label="DAGENS BET"
-              accent="cyan"
-              cells={rows.map((r) => (r.dailyBetsPoints || 0).toString())}
             />
             {rounds.map((round) => (
               <CompareStat

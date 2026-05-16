@@ -61,19 +61,14 @@ export default async function TabellPage() {
           </>
         )}
 
-        <section className="mt-10">
-          <h2 className="text-xs uppercase tracking-widest text-yellow">
-            DAGENS BET — POOL
-          </h2>
-          <p className="mt-1 text-xs text-dim">
-            Egen pott (20% av totalpotten enligt standardkonfig). Endast lag
-            som vunnit poäng visas.
-          </p>
-          {lb.dailyBets.length === 0 ? (
-            <p className="mt-3 border border-border p-3 text-sm text-dim">
-              Inga poängsatta bet ännu.
+        {lb.dailyBets.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-xs uppercase tracking-widest text-yellow">
+              DAGENS BET — POOL
+            </h2>
+            <p className="mt-1 text-xs text-dim">
+              Egen pott. Endast lag som vunnit poäng visas.
             </p>
-          ) : (
             <table className="mt-3 w-full border border-border text-sm tabular-nums">
               <tbody className="divide-y divide-border">
                 {lb.dailyBets.map((row) => (
@@ -99,8 +94,8 @@ export default async function TabellPage() {
                 ))}
               </tbody>
             </table>
-          )}
-        </section>
+          </section>
+        )}
 
         <p className="mt-8 text-center text-[10px] uppercase tracking-widest text-dim">
           ──── EOF ────
