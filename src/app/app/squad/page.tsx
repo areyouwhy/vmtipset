@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { teams } from "@/db/schema";
@@ -49,9 +50,12 @@ export default async function SquadPage() {
             <>
               <p className="mt-2 text-sm text-dim">
                 Aktiv rond:{" "}
-                <span className="text-foreground">
-                  {round.name} (#{round.number})
-                </span>
+                <Link
+                  href={`/vm/omgang/${round.number}`}
+                  className="text-foreground hover:text-cyan"
+                >
+                  {round.name} (#{round.number}) →
+                </Link>
               </p>
               <DeadlineBanner deadline={round.deadline} />
             </>
