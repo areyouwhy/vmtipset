@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isAdmin } from "@/lib/auth";
+import { clubSlug as clubSlugLocal } from "@/lib/clubs";
 import { getTeamDetail, type TeamDetailPlayer } from "@/lib/leaderboard";
 import { findTeamBySlug } from "@/lib/team-slug.server";
 
@@ -212,8 +213,18 @@ function PlayerLine({ p }: { p: TeamDetailPlayer }) {
             </Link>
           ) : (
             "—"
-          )}{" "}
-          · {p.clubShortName}
+          )}
+          {p.domesticClub && (
+            <>
+              {" · "}
+              <Link
+                href={`/klubblag/${clubSlugLocal(p.domesticClub)}`}
+                className="text-cyan/80 hover:text-cyan"
+              >
+                {p.domesticClub}
+              </Link>
+            </>
+          )}
         </span>
       </span>
       <span className="text-foreground">

@@ -15,6 +15,18 @@ function fmtSekShort(n: number): string {
   return `${sign}${abs}`;
 }
 
+// Local copy of lib/clubs.ts:clubSlug — that file imports @/db, can't pull
+// into this client component.
+function clubSlugLocal(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[.'’"]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 const POSITION_FILTERS = ["ALL", "GK", "DEF", "MID", "FWD"] as const;
 type PositionFilter = (typeof POSITION_FILTERS)[number];
 
@@ -263,73 +275,94 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
             r.stats.saves > 0 ||
             r.stats.manOfTheMatch > 0;
           return (
-            <li key={r.id}>
+            <li
+              key={r.id}
+              className="grid grid-cols-[auto_auto_1fr_auto] items-center gap-3 p-3 text-sm transition hover:bg-yellow/5"
+            >
               <Link
                 href={`/spelare/${r.id}`}
-                className="grid grid-cols-[auto_auto_1fr_auto] items-center gap-3 p-3 text-sm transition hover:bg-yellow/5"
+                aria-label={`Visa ${r.name}`}
+                className="shrink-0"
               >
                 <Jersey code={r.countryCode} size={28} />
-                <span className="text-yellow tabular-nums">{r.position}</span>
-                <span className="min-w-0">
-                  <span className="block truncate text-foreground">
-                    {r.name}
-                  </span>
-                  <span className="block truncate text-[10px] uppercase tracking-widest text-dim">
-                    {r.countryCode ?? "—"}
-                    {r.domesticClub && (
-                      <>
-                        {" · "}
-                        <span className="text-cyan/80">{r.domesticClub}</span>
-                      </>
-                    )}
-                  </span>
-                  {hasStats && (
-                    <span className="mt-1 block text-[10px] uppercase tracking-widest tabular-nums text-dim">
-                      <span
-                        className={
-                          r.stats.totalGrowthSek > 0
-                            ? "text-green"
-                            : r.stats.totalGrowthSek < 0
-                              ? "text-red"
-                              : "text-dim"
-                        }
+              </Link>
+              <span className="text-yellow tabular-nums">{r.position}</span>
+              <span className="min-w-0">
+                <Link
+                  href={`/spelare/${r.id}`}
+                  className="block truncate text-foreground hover:text-cyan"
+                >
+                  {r.name}
+                </Link>
+                <span className="block truncate text-[10px] uppercase tracking-widest text-dim">
+                  {r.countryCode ? (
+                    <Link
+                      href={`/landslag/${r.countryCode}`}
+                      className="hover:text-cyan"
+                    >
+                      {r.countryCode}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                  {r.domesticClub && (
+                    <>
+                      {" · "}
+                      <Link
+                        href={`/klubblag/${clubSlugLocal(r.domesticClub)}`}
+                        className="text-cyan/80 hover:text-cyan"
                       >
-                        Δ {fmtSekShort(r.stats.totalGrowthSek)}
-                      </span>
-                      {r.stats.goals > 0 && (
-                        <span className="ml-2 text-foreground">
-                          ⚽ {r.stats.goals}
-                        </span>
-                      )}
-                      {r.stats.assists > 0 && (
-                        <span className="ml-2 text-foreground">
-                          🅰 {r.stats.assists}
-                        </span>
-                      )}
-                      {r.stats.yellowCards > 0 && (
-                        <span className="ml-2 text-yellow">
-                          🟨 {r.stats.yellowCards}
-                        </span>
-                      )}
-                      {r.stats.redCards > 0 && (
-                        <span className="ml-2 text-red">
-                          🟥 {r.stats.redCards}
-                        </span>
-                      )}
-                      {r.stats.saves > 0 && (
-                        <span className="ml-2 text-foreground">
-                          ✋ {r.stats.saves}
-                        </span>
-                      )}
-                    </span>
+                        {r.domesticClub}
+                      </Link>
+                    </>
                   )}
                 </span>
-                <span className="tabular-nums text-foreground">
-                  {r.currentPriceSek === null && r.basePriceSek === null
-                    ? "—"
-                    : `${((r.currentPriceSek ?? r.basePriceSek ?? 0) / 1_000_000).toFixed(1)}M`}
-                </span>
-              </Link>
+                {hasStats && (
+                  <span className="mt-1 block text-[10px] uppercase tracking-widest tabular-nums text-dim">
+                    <span
+                      className={
+                        r.stats.totalGrowthSek > 0
+                          ? "text-green"
+                          : r.stats.totalGrowthSek < 0
+                            ? "text-red"
+                            : "text-dim"
+                      }
+                    >
+                      Δ {fmtSekShort(r.stats.totalGrowthSek)}
+                    </span>
+                    {r.stats.goals > 0 && (
+                      <span className="ml-2 text-foreground">
+                        ⚽ {r.stats.goals}
+                      </span>
+                    )}
+                    {r.stats.assists > 0 && (
+                      <span className="ml-2 text-foreground">
+                        🅰 {r.stats.assists}
+                      </span>
+                    )}
+                    {r.stats.yellowCards > 0 && (
+                      <span className="ml-2 text-yellow">
+                        🟨 {r.stats.yellowCards}
+                      </span>
+                    )}
+                    {r.stats.redCards > 0 && (
+                      <span className="ml-2 text-red">
+                        🟥 {r.stats.redCards}
+                      </span>
+                    )}
+                    {r.stats.saves > 0 && (
+                      <span className="ml-2 text-foreground">
+                        ✋ {r.stats.saves}
+                      </span>
+                    )}
+                  </span>
+                )}
+              </span>
+              <span className="tabular-nums text-foreground">
+                {r.currentPriceSek === null && r.basePriceSek === null
+                  ? "—"
+                  : `${((r.currentPriceSek ?? r.basePriceSek ?? 0) / 1_000_000).toFixed(1)}M`}
+              </span>
             </li>
           );
         })}

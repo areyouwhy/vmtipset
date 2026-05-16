@@ -1,4 +1,5 @@
 import { asc, eq, inArray } from "drizzle-orm";
+import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
 import {
   clubs,
@@ -329,6 +330,8 @@ export type TeamDetailPlayer = {
   clubName: string;
   clubShortName: string;
   countryCode: string | null;
+  /** Domestic club at WC time (e.g. "Inter Miami CF"). null if unknown. */
+  domesticClub: string | null;
   isCaptain: boolean;
   priceSek: number | null;
   growthSek: number | null;
@@ -465,6 +468,7 @@ export async function getTeamDetail(
           clubName: club?.name ?? "—",
           clubShortName: club?.shortName ?? club?.name ?? "—",
           countryCode: club?.countryCode ?? null,
+          domesticClub: clubFor(p.externalId),
           isCaptain: sq?.captainPlayerId === pid,
           priceSek: snap?.priceSek ?? null,
           // Anti-spoiler: only reveal growth for rounds that have actually
