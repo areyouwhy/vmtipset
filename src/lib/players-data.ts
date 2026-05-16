@@ -14,6 +14,20 @@ import {
   type PlayerRoundSnapshot,
 } from "@/db/schema";
 
+export type PlayerSeasonStats = {
+  /** Aggregate event counts across all rounds (manual wins over api per round).
+   *  Zero pre-match. */
+  goals: number;
+  assists: number;
+  yellowCards: number;
+  redCards: number; // includes 2nd yellow
+  shotsOnGoal: number;
+  saves: number;
+  manOfTheMatch: number;
+  /** Σ growthSek across rounds, signed. */
+  totalGrowthSek: number;
+};
+
 export type PlayerListRow = {
   id: string;
   name: string;
@@ -32,7 +46,97 @@ export type PlayerListRow = {
   /** Whether the player is in an active WC pool. Admin can see false ones;
    *  public /spelare only ever calls this with includeInactive=false. */
   active: boolean;
+  stats: PlayerSeasonStats;
 };
+
+/** Names from Aftonbladet's eventTypes catalog that we track as stats. */
+const STAT_EVENT_NAMES = {
+  goals: "Goal",
+  assists: "Assist",
+  yellowCards: "YellowCard",
+  redCards: "RedCard",
+  secondYellowCards: "SecondYellowCard",
+  shotsOnGoal: "ShotOnGoal",
+  saves: "SaveByGoalkeeper",
+  manOfTheMatch: "ManOfTheMatch",
+} as const;
+
+function emptyStats(): PlayerSeasonStats {
+  return {
+    goals: 0,
+    assists: 0,
+    yellowCards: 0,
+    redCards: 0,
+    shotsOnGoal: 0,
+    saves: 0,
+    manOfTheMatch: 0,
+    totalGrowthSek: 0,
+  };
+}
+
+/** Pick the best (manual > api) snapshot per (player, round). Then build a
+ *  stat-name → eventTypeId map from the in-memory catalog and tally event
+ *  amounts across rounds per player. */
+function aggregateStats(
+  snapshots: PlayerRoundSnapshot[],
+  eventTypeRows: { id: number; name: string }[],
+): Map<string, PlayerSeasonStats> {
+  // Pick best snapshot per (player, round)
+  const bestByPlayerRound = new Map<string, PlayerRoundSnapshot>();
+  for (const s of snapshots) {
+    const k = `${s.playerId}::${s.roundId}`;
+    const cur = bestByPlayerRound.get(k);
+    if (!cur || (cur.source === "api" && s.source === "manual")) {
+      bestByPlayerRound.set(k, s);
+    }
+  }
+  const idByName = new Map(eventTypeRows.map((t) => [t.name, t.id]));
+  const ids = {
+    goal: idByName.get(STAT_EVENT_NAMES.goals),
+    assist: idByName.get(STAT_EVENT_NAMES.assists),
+    yellow: idByName.get(STAT_EVENT_NAMES.yellowCards),
+    red: idByName.get(STAT_EVENT_NAMES.redCards),
+    yellow2: idByName.get(STAT_EVENT_NAMES.secondYellowCards),
+    shot: idByName.get(STAT_EVENT_NAMES.shotsOnGoal),
+    save: idByName.get(STAT_EVENT_NAMES.saves),
+    motm: idByName.get(STAT_EVENT_NAMES.manOfTheMatch),
+  };
+
+  const byPlayer = new Map<string, PlayerSeasonStats>();
+  for (const s of bestByPlayerRound.values()) {
+    const cur = byPlayer.get(s.playerId) ?? emptyStats();
+    cur.totalGrowthSek += s.growthSek;
+    for (const e of s.events ?? []) {
+      const a = e.amount;
+      switch (e.typeId) {
+        case ids.goal:
+          cur.goals += a;
+          break;
+        case ids.assist:
+          cur.assists += a;
+          break;
+        case ids.yellow:
+          cur.yellowCards += a;
+          break;
+        case ids.red:
+        case ids.yellow2:
+          cur.redCards += a;
+          break;
+        case ids.shot:
+          cur.shotsOnGoal += a;
+          break;
+        case ids.save:
+          cur.saves += a;
+          break;
+        case ids.motm:
+          cur.manOfTheMatch += a;
+          break;
+      }
+    }
+    byPlayer.set(s.playerId, cur);
+  }
+  return byPlayer;
+}
 
 /**
  * Fetch players with derived list-friendly fields. Public callers leave
@@ -42,7 +146,7 @@ export type PlayerListRow = {
 export async function getPlayerListRows(
   opts: { includeInactive?: boolean } = {},
 ): Promise<PlayerListRow[]> {
-  const [allPlayers, allClubs, allRounds, allSnapshots] = await Promise.all([
+  const [allPlayers, allClubs, allRounds, allSnapshots, allEventTypeRows] = await Promise.all([
     opts.includeInactive
       ? db.select().from(players).orderBy(asc(players.name))
       : db
@@ -53,9 +157,11 @@ export async function getPlayerListRows(
     db.select().from(clubs),
     db.select().from(rounds).orderBy(asc(rounds.number)),
     db.select().from(playerRoundSnapshots),
+    db.select({ id: eventTypes.id, name: eventTypes.name }).from(eventTypes),
   ]);
 
   const clubById = new Map(allClubs.map((c) => [c.id, c]));
+  const statsByPlayer = aggregateStats(allSnapshots, allEventTypeRows);
   const baseRoundId = allRounds[0]?.id;
   const latestRoundId = allRounds[allRounds.length - 1]?.id;
 
@@ -98,6 +204,7 @@ export async function getPlayerListRows(
       manualOverrides: manualCountByPlayer.get(p.id) ?? 0,
       domesticClub: clubFor(p.externalId),
       active: p.active,
+      stats: statsByPlayer.get(p.id) ?? emptyStats(),
     };
   });
 }
@@ -117,6 +224,8 @@ export type PlayerDetail = {
   /** Raw event-type catalog from Aftonbladet — id → {name, title, …}. Used
    *  to resolve human-friendly names for events stored on snapshots. */
   eventTypes: Map<number, EventType>;
+  /** Season-aggregate event counts + total growth for this player. */
+  stats: PlayerSeasonStats;
 };
 
 /**
@@ -172,10 +281,15 @@ export async function getPlayerDetail(
     };
   });
 
+  const playerSnapshots = allSnapshots; // already filtered by playerId above
+  const eventTypeRows = allEventTypes.map((t) => ({ id: t.id, name: t.name }));
+  const statsMap = aggregateStats(playerSnapshots, eventTypeRows);
+
   return {
     player,
     club,
     rounds: roundLines,
     eventTypes: new Map(allEventTypes.map((t) => [t.id, t])),
+    stats: statsMap.get(player.id) ?? emptyStats(),
   };
 }

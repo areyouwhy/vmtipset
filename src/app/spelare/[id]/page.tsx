@@ -17,7 +17,7 @@ export default async function PublicPlayerPage({
   const detail = await getPlayerDetail(id);
   if (!detail) notFound();
 
-  const { player, club, rounds: roundLines, eventTypes } = detail;
+  const { player, club, rounds: roundLines, eventTypes, stats } = detail;
   const countryCode = club?.countryCode ?? null;
   const domesticClub = clubFor(player.externalId);
 
@@ -67,6 +67,22 @@ export default async function PublicPlayerPage({
               </p>
             )}
           </div>
+        </section>
+
+        <section className="mb-6 border border-yellow/40 p-4">
+          <p className="text-[10px] uppercase tracking-widest text-yellow">
+            TOTALT I VM 2026
+          </p>
+          <dl className="mt-2 grid grid-cols-4 gap-3 text-[11px] tabular-nums sm:grid-cols-8">
+            <StatCell label="TILLVÄXT" value={fmtSek(stats.totalGrowthSek)} tone={stats.totalGrowthSek > 0 ? "green" : stats.totalGrowthSek < 0 ? "red" : undefined} />
+            <StatCell label="MÅL" value={stats.goals.toString()} />
+            <StatCell label="ASSIST" value={stats.assists.toString()} />
+            <StatCell label="GULA" value={stats.yellowCards.toString()} />
+            <StatCell label="RÖDA" value={stats.redCards.toString()} />
+            <StatCell label="SK" value={stats.shotsOnGoal.toString()} />
+            <StatCell label="RÄ" value={stats.saves.toString()} />
+            <StatCell label="⭐" value={stats.manOfTheMatch.toString()} />
+          </dl>
         </section>
 
         <section className="space-y-4">
@@ -188,6 +204,29 @@ function EventBreakdown({
         försvarare ≠ mål av anfallare). Vi visar händelserna; tillväxten
         ovan är Aftonbladets aggregerade SEK för ronden.
       </p>
+    </div>
+  );
+}
+
+function StatCell({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "green" | "red";
+}) {
+  const c =
+    tone === "green"
+      ? "text-green"
+      : tone === "red"
+        ? "text-red"
+        : "text-foreground";
+  return (
+    <div>
+      <dt className="text-[9px] uppercase tracking-widest text-dim">{label}</dt>
+      <dd className={`mt-0.5 font-bold ${c}`}>{value}</dd>
     </div>
   );
 }

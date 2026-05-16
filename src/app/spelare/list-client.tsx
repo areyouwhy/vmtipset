@@ -6,10 +6,19 @@ import { FilterRow, TeamComboBox } from "@/components/picker-filters";
 import { Jersey } from "@/lib/jersey";
 import type { PlayerListRow } from "@/lib/players-data";
 
+function fmtSekShort(n: number): string {
+  if (n === 0) return "0";
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "−" : "+";
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}${Math.round(abs / 1_000)}k`;
+  return `${sign}${abs}`;
+}
+
 const POSITION_FILTERS = ["ALL", "GK", "DEF", "MID", "FWD"] as const;
 type PositionFilter = (typeof POSITION_FILTERS)[number];
 
-type SortKey = "price" | "name" | "country";
+type SortKey = "price" | "name" | "country" | "growth" | "goals";
 
 export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
   const [search, setSearch] = useState("");
@@ -68,6 +77,21 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
     if (sort === "price") {
       return [...filtered].sort((a, b) => priceOf(b) - priceOf(a));
     }
+    if (sort === "growth") {
+      return [...filtered].sort(
+        (a, b) =>
+          b.stats.totalGrowthSek - a.stats.totalGrowthSek ||
+          a.name.localeCompare(b.name),
+      );
+    }
+    if (sort === "goals") {
+      return [...filtered].sort(
+        (a, b) =>
+          b.stats.goals - a.stats.goals ||
+          b.stats.assists - a.stats.assists ||
+          a.name.localeCompare(b.name),
+      );
+    }
     if (sort === "country") {
       return [...filtered].sort(
         (a, b) =>
@@ -115,6 +139,8 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
           label="SORTERA"
           options={[
             { value: "price", label: "PRIS" },
+            { value: "growth", label: "TILLVÄXT" },
+            { value: "goals", label: "MÅL" },
             { value: "name", label: "NAMN" },
             { value: "country", label: "LAND" },
           ]}
@@ -128,34 +154,87 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
       </p>
 
       <ul className="mt-1 divide-y divide-border border border-border">
-        {visible.map((r) => (
-          <li key={r.id}>
-            <Link
-              href={`/spelare/${r.id}`}
-              className="grid grid-cols-[auto_auto_1fr_auto] items-center gap-3 p-3 text-sm transition hover:bg-yellow/5"
-            >
-              <Jersey code={r.countryCode} size={28} />
-              <span className="text-yellow tabular-nums">{r.position}</span>
-              <span className="min-w-0">
-                <span className="block truncate text-foreground">{r.name}</span>
-                <span className="block truncate text-[10px] uppercase tracking-widest text-dim">
-                  {r.countryCode ?? "—"}
-                  {r.domesticClub && (
-                    <>
-                      {" · "}
-                      <span className="text-cyan/80">{r.domesticClub}</span>
-                    </>
+        {visible.map((r) => {
+          const hasStats =
+            r.stats.totalGrowthSek !== 0 ||
+            r.stats.goals > 0 ||
+            r.stats.assists > 0 ||
+            r.stats.yellowCards > 0 ||
+            r.stats.redCards > 0 ||
+            r.stats.shotsOnGoal > 0 ||
+            r.stats.saves > 0 ||
+            r.stats.manOfTheMatch > 0;
+          return (
+            <li key={r.id}>
+              <Link
+                href={`/spelare/${r.id}`}
+                className="grid grid-cols-[auto_auto_1fr_auto] items-center gap-3 p-3 text-sm transition hover:bg-yellow/5"
+              >
+                <Jersey code={r.countryCode} size={28} />
+                <span className="text-yellow tabular-nums">{r.position}</span>
+                <span className="min-w-0">
+                  <span className="block truncate text-foreground">
+                    {r.name}
+                  </span>
+                  <span className="block truncate text-[10px] uppercase tracking-widest text-dim">
+                    {r.countryCode ?? "—"}
+                    {r.domesticClub && (
+                      <>
+                        {" · "}
+                        <span className="text-cyan/80">{r.domesticClub}</span>
+                      </>
+                    )}
+                  </span>
+                  {hasStats && (
+                    <span className="mt-1 block text-[10px] uppercase tracking-widest tabular-nums text-dim">
+                      <span
+                        className={
+                          r.stats.totalGrowthSek > 0
+                            ? "text-green"
+                            : r.stats.totalGrowthSek < 0
+                              ? "text-red"
+                              : "text-dim"
+                        }
+                      >
+                        Δ {fmtSekShort(r.stats.totalGrowthSek)}
+                      </span>
+                      {r.stats.goals > 0 && (
+                        <span className="ml-2 text-foreground">
+                          ⚽ {r.stats.goals}
+                        </span>
+                      )}
+                      {r.stats.assists > 0 && (
+                        <span className="ml-2 text-foreground">
+                          🅰 {r.stats.assists}
+                        </span>
+                      )}
+                      {r.stats.yellowCards > 0 && (
+                        <span className="ml-2 text-yellow">
+                          🟨 {r.stats.yellowCards}
+                        </span>
+                      )}
+                      {r.stats.redCards > 0 && (
+                        <span className="ml-2 text-red">
+                          🟥 {r.stats.redCards}
+                        </span>
+                      )}
+                      {r.stats.saves > 0 && (
+                        <span className="ml-2 text-foreground">
+                          ✋ {r.stats.saves}
+                        </span>
+                      )}
+                    </span>
                   )}
                 </span>
-              </span>
-              <span className="tabular-nums text-foreground">
-                {r.currentPriceSek === null && r.basePriceSek === null
-                  ? "—"
-                  : `${((r.currentPriceSek ?? r.basePriceSek ?? 0) / 1_000_000).toFixed(1)}M`}
-              </span>
-            </Link>
-          </li>
-        ))}
+                <span className="tabular-nums text-foreground">
+                  {r.currentPriceSek === null && r.basePriceSek === null
+                    ? "—"
+                    : `${((r.currentPriceSek ?? r.basePriceSek ?? 0) / 1_000_000).toFixed(1)}M`}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
         {visible.length === 0 && (
           <li className="p-4 text-center text-sm text-dim">
             — inga matcher —
