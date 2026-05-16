@@ -25,9 +25,10 @@ export default async function TabellPage() {
             LIGATABELL
           </h1>
           <p className="mt-2 text-sm text-dim">
-            Total = summa av rondpoäng. Bocka 2–3 lag för att jämföra dem
-            sida vid sida. Lika poäng delar placering, vinstpengar splittras
-            vid utbetalning.{" "}
+            VÄRDE = SQUAD + BANK. Det är vad varje lag är värt nu — vinnaren är den
+            med högst LAGVÄRDE när VM är slut. Bocka 2–3 lag för att jämföra sida
+            vid sida. Lika värde delar placering, vinstpengar splittras vid
+            utbetalning.{" "}
             <Link href="/hur/audit" className="text-cyan">
               SE AUDIT →
             </Link>

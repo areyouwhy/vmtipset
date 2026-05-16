@@ -40,15 +40,21 @@ Living document. The values that the app actually uses live in `src/lib/rules.ts
 | Transfer fee | 1% of the outgoing player's price | IMPLEMENTED | Matches Aftonbladet's UI behaviour. |
 | Transfer window | between rounds only (squad locked at deadline) | IMPLEMENTED | Cron `/api/cron/lock-deadlines` flips `squads.lockedAt` once a round's deadline passes; the picker hides edit controls past the lock. |
 
-## Scoring
+## Team value (the ranking metric)
+
+The leaderboard ranks by **TEAM VALUE = SQUAD VALUE + BANK** (DESC). Whoever has the highest team value at end of tournament wins.
 
 | Rule | Value | Status | Notes |
 |---|---|---|---|
-| Per-player score | player price growth in that round (from Aftonbladet API) | IMPLEMENTED | `src/lib/scoring.ts` sums `growthSek` across the squad. |
-| Captain bonus | `(multiplier - 1) × captain growth`, only if positive | IMPLEMENTED | `src/lib/scoring.ts` (captainBonus path); floored at 0 when `captainBonusOnlyPositive` is true. |
-| Bank interest | 1% on unspent budget per round | IMPLEMENTED | Carry-over from prior project; not in the ruleset JSON. |
-| Transfer fees | deducted from round score | IMPLEMENTED | `transferFeesSek` line in the round score breakdown; visible on `/team/[id]`. |
-| Tie-breakers | shared place, prize money split equally | IMPLEMENTED | `getLeaderboard` ranks with shared placements (`1, 2, 2, 4`); prize distributor splits equally across tied seats. |
+| Squad value | Σ current prices of the 11 players you own | IMPLEMENTED | Mirrors Aftonbladet's `value` field per snapshot. Updates automatically with their pricing. |
+| Bank | path-dependent cash ledger per team | IMPLEMENTED | Persisted as `team_round_scores.bank_sek_end`. Threaded forward by `src/lib/score-runner.ts`. |
+| Bank entering round N | `bank_end_{N-1} + Σ (sell − buy − fee)` for round-N transfers | IMPLEMENTED | Round 1 special: `budgetSek − Σ initial purchase prices`. |
+| Bank interest | `floor(bank_locked_N × 1%)` — only on cash, never on players | IMPLEMENTED | `src/lib/scoring.ts`. Bank-entering balance × `bankInterestPctPerRound`. |
+| Captain bonus | `(multiplier − 1) × captain growth`, credited to bank | IMPLEMENTED | Floored at 0 when `captainBonusOnlyPositive`. Doesn't move squad value — it's a separate cash credit. |
+| Round score | Δ team value this round | IMPLEMENTED | = sumGrowth (squad drift) + captain + interest + cashFlow − fees. Sum across all rounds equals (current team value − initial 50M). |
+| Per-player growth | Aftonbladet `growth` field — equals the player's price delta | IMPLEMENTED | Each player's growth automatically moves squad value via Aftonbladet's next-round price. |
+| Transfer fees | 1% of outgoing player's market price | IMPLEMENTED | Debited from bank at transfer-window close. See [transfers](#transfers). |
+| Tie-breakers | shared placement, prize money split equally | IMPLEMENTED | `getLeaderboard` shares ranks (`1, 2, 2, 4`); prize distributor splits equally across tied seats. |
 
 ## Money
 

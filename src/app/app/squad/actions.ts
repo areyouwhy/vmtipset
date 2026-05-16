@@ -100,7 +100,7 @@ export async function saveSquadAction(
       : computeTransfers({
           previousPlayerIds: referencePlayerIds,
           newPlayerIds: playerIds,
-          sellPriceByPlayerId: new Map(pickable.map((p) => [p.id, p.priceSek])),
+          priceByPlayerId: new Map(pickable.map((p) => [p.id, p.priceSek])),
           transferFeePct: currentRules.transferFeePct,
           freeTransfersPerRound: currentRules.freeTransfersPerRound,
         });
@@ -143,6 +143,8 @@ export async function saveSquadAction(
         roundId: round.id,
         playerInId: r.playerInId,
         playerOutId: r.playerOutId,
+        sellPriceSek: r.sellPriceSek,
+        buyPriceSek: r.buyPriceSek,
         feeSek: r.feeSek,
       })),
     );

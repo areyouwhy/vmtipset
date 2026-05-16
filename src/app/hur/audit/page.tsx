@@ -93,23 +93,16 @@ export default async function AuditPage({
                   </span>
                 </header>
 
-                <dl className="mt-2 grid grid-cols-2 gap-2 text-[10px] uppercase tracking-widest tabular-nums text-dim sm:grid-cols-4">
+                <dl className="mt-2 grid grid-cols-2 gap-2 text-[10px] uppercase tracking-widest tabular-nums text-dim sm:grid-cols-6">
+                  <KV k="TILLVÄXT" v={fmtSek(team.total.sumGrowthSek)} />
+                  <KV k="© BONUS" v={fmtSek(team.total.captainBonusSek)} />
+                  <KV k="RÄNTA" v={fmtSek(team.total.bankInterestSek)} />
+                  <KV k="AVGIFT" v={fmtSek(-team.total.transferFeesSek)} />
                   <KV
-                    k="TILLVÄXT"
-                    v={fmtSek(team.total.sumGrowthSek)}
+                    k="TRANSFER"
+                    v={fmtSek(team.total.transferCashFlowSek)}
                   />
-                  <KV
-                    k="© BONUS"
-                    v={fmtSek(team.total.captainBonusSek)}
-                  />
-                  <KV
-                    k="BANK"
-                    v={fmtSek(team.total.bankInterestSek)}
-                  />
-                  <KV
-                    k="AVGIFT"
-                    v={fmtSek(-team.total.transferFeesSek)}
-                  />
+                  <KV k="BANK SLUT" v={fmtSek(team.total.bankSekEnd)} />
                 </dl>
 
                 <table className="mt-4 w-full text-[11px] tabular-nums">

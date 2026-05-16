@@ -10,7 +10,6 @@ const MAX_COMPARE = 3;
 export function TabellClient({
   rows,
   rounds,
-  anyScored,
 }: {
   rows: LeaderboardRow[];
   rounds: Leaderboard["rounds"];
@@ -60,10 +59,9 @@ export function TabellClient({
               <th className="w-7 px-2 py-2 text-left"></th>
               <th className="w-10 px-2 py-2 text-left">#</th>
               <th className="px-2 py-2 text-left">LAG</th>
-              <th className="px-2 py-2 text-right">VÄRDE</th>
-              <th className="px-2 py-2 text-right text-yellow">
-                {anyScored ? "P" : "—"}
-              </th>
+              <th className="px-2 py-2 text-right text-yellow">VÄRDE</th>
+              <th className="px-2 py-2 text-right">SQUAD</th>
+              <th className="px-2 py-2 text-right">BANK</th>
               <th className="px-2 py-2 text-right text-cyan">D</th>
             </tr>
           </thead>
@@ -115,11 +113,16 @@ export function TabellClient({
                       {row.ownerHandle}
                     </span>
                   </td>
-                  <td className="px-2 py-2 text-right text-foreground">
+                  <td className="px-2 py-2 text-right text-yellow font-bold">
                     {row.teamValueSek === null ? "—" : fmtSek(row.teamValueSek)}
                   </td>
-                  <td className="px-2 py-2 text-right text-yellow font-bold">
-                    {anyScored ? fmtSek(row.totalPointsSek) : "—"}
+                  <td className="px-2 py-2 text-right text-foreground">
+                    {row.squadValueSek === null ? "—" : fmtSek(row.squadValueSek)}
+                  </td>
+                  <td
+                    className={`px-2 py-2 text-right ${row.bankSek !== null && row.bankSek < 0 ? "text-red" : "text-foreground"}`}
+                  >
+                    {row.bankSek === null ? "—" : fmtSek(row.bankSek)}
                   </td>
                   <td className="px-2 py-2 text-right text-cyan">
                     {row.dailyBetsPoints || "—"}
@@ -132,7 +135,7 @@ export function TabellClient({
       </div>
 
       <p className="mt-2 text-[10px] uppercase tracking-widest text-dim">
-        P = TOTAL POÄNG · D = DAGENS BET · {pinned.size}/{MAX_COMPARE} VALDA FÖR JÄMFÖRELSE
+        VÄRDE = SQUAD + BANK · D = DAGENS BET · {pinned.size}/{MAX_COMPARE} VALDA FÖR JÄMFÖRELSE
       </p>
     </>
   );
@@ -186,15 +189,27 @@ function ComparePanel({
           </thead>
           <tbody className="divide-y divide-cyan/20">
             <CompareStat
-              label="TOTAL"
-              accent="yellow"
-              cells={rows.map((r) => fmtSek(r.totalPointsSek))}
-            />
-            <CompareStat
               label="LAGVÄRDE"
+              accent="yellow"
               cells={rows.map((r) =>
                 r.teamValueSek === null ? "—" : fmtSek(r.teamValueSek),
               )}
+            />
+            <CompareStat
+              label="SQUAD"
+              cells={rows.map((r) =>
+                r.squadValueSek === null ? "—" : fmtSek(r.squadValueSek),
+              )}
+            />
+            <CompareStat
+              label="BANK"
+              cells={rows.map((r) =>
+                r.bankSek === null ? "—" : fmtSek(r.bankSek),
+              )}
+            />
+            <CompareStat
+              label="Δ TOT"
+              cells={rows.map((r) => fmtSek(r.totalPointsSek))}
             />
             <CompareStat
               label="DAGENS BET"

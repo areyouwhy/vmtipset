@@ -14,12 +14,18 @@
 export type TransferRow = {
   playerOutId: string;
   playerInId: string;
+  /** Outgoing player's market price at this round — bank credit. */
+  sellPriceSek: number;
+  /** Incoming player's market price at this round — bank debit. */
+  buyPriceSek: number;
   feeSek: number;
 };
 
 export type TransferDiff = {
   rows: TransferRow[];
   totalFeeSek: number;
+  /** Σ (sell − buy) across all transfers in this submission. Can be ±. */
+  totalCashFlowSek: number;
   freeUsed: number;
   paidCount: number;
 };
@@ -27,8 +33,8 @@ export type TransferDiff = {
 export function computeTransfers(args: {
   previousPlayerIds: string[];
   newPlayerIds: string[];
-  /** Sell-side price (typically the active round's snapshot price). */
-  sellPriceByPlayerId: Map<string, number>;
+  /** Current-round market prices by player id. */
+  priceByPlayerId: Map<string, number>;
   transferFeePct: number; // 0.01 = 1%
   freeTransfersPerRound: number;
 }): TransferDiff {
@@ -41,20 +47,35 @@ export function computeTransfers(args: {
   const pairs = Math.min(removed.length, added.length);
   const rows: TransferRow[] = [];
   let totalFee = 0;
+  let totalCashFlow = 0;
   let freeUsed = 0;
   let paid = 0;
 
   for (let i = 0; i < pairs; i++) {
     const outId = removed[i];
     const inId = added[i];
-    const sellPrice = args.sellPriceByPlayerId.get(outId) ?? 0;
+    const sellPrice = args.priceByPlayerId.get(outId) ?? 0;
+    const buyPrice = args.priceByPlayerId.get(inId) ?? 0;
     const isFree = freeUsed < args.freeTransfersPerRound;
     const feeSek = isFree ? 0 : Math.floor(sellPrice * args.transferFeePct);
     if (isFree) freeUsed++;
     else paid++;
-    rows.push({ playerOutId: outId, playerInId: inId, feeSek });
+    rows.push({
+      playerOutId: outId,
+      playerInId: inId,
+      sellPriceSek: sellPrice,
+      buyPriceSek: buyPrice,
+      feeSek,
+    });
     totalFee += feeSek;
+    totalCashFlow += sellPrice - buyPrice;
   }
 
-  return { rows, totalFeeSek: totalFee, freeUsed, paidCount: paid };
+  return {
+    rows,
+    totalFeeSek: totalFee,
+    totalCashFlowSek: totalCashFlow,
+    freeUsed,
+    paidCount: paid,
+  };
 }

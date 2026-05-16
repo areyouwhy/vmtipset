@@ -214,6 +214,11 @@ export const transfers = pgTable("transfers", {
   playerOutId: uuid("player_out_id")
     .notNull()
     .references(() => players.id, { onDelete: "restrict" }),
+  /** Market price of the outgoing player at the moment of the swap. Goes
+   *  into the bank as a credit. */
+  sellPriceSek: integer("sell_price_sek").notNull(),
+  /** Market price of the incoming player. Debits the bank. */
+  buyPriceSek: integer("buy_price_sek").notNull(),
   feeSek: integer("fee_sek").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -313,10 +318,20 @@ export const teamRoundScores = pgTable(
     roundId: uuid("round_id")
       .notNull()
       .references(() => rounds.id, { onDelete: "cascade" }),
+    /** Sum of player price growth this round = Δ squad value from price drift. */
     sumGrowthSek: integer("sum_growth_sek").notNull(),
+    /** Captain growth × (multiplier − 1), credited to bank. */
     captainBonusSek: integer("captain_bonus_sek").notNull(),
+    /** floor(bankLocked × interestRate), credited to bank. */
     bankInterestSek: integer("bank_interest_sek").notNull(),
+    /** Sum of transfer fees this round, debited from bank. */
     transferFeesSek: integer("transfer_fees_sek").notNull(),
+    /** Net cash impact of round-N transfers on bank: Σ(sell − buy). Excludes fees. */
+    transferCashFlowSek: integer("transfer_cash_flow_sek").notNull().default(0),
+    /** Bank balance after transfers + interest + captain credit. Persistent. */
+    bankSekEnd: integer("bank_sek_end").notNull().default(0),
+    /** Δ team value = sumGrowth (squad change) + captain + interest − fees + cashFlow.
+     *  Equals (squad_value_N + bank_end_N) − (squad_value_{N-1} + bank_end_{N-1}). */
     totalPointsSek: integer("total_points_sek").notNull(),
     snapshotIdsUsed: jsonb("snapshot_ids_used").notNull().$type<string[]>(),
     computedAt: timestamp("computed_at", { withTimezone: true })

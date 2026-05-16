@@ -44,13 +44,21 @@ export default async function TeamPage({
               label="PLACERING"
               value={detail.rank ? `#${detail.rank}` : "—"}
             />
-            <Stat label="TOTAL" value={fmtSek(detail.totalPointsSek)} />
             <Stat
               label="LAGVÄRDE"
               value={
                 detail.currentTeamValueSek === null
                   ? "—"
                   : fmtSek(detail.currentTeamValueSek)
+              }
+              tone="yellow"
+            />
+            <Stat
+              label="SQUAD"
+              value={
+                detail.currentSquadValueSek === null
+                  ? "—"
+                  : fmtSek(detail.currentSquadValueSek)
               }
             />
             <Stat
@@ -119,30 +127,36 @@ function RoundSection({
       </header>
 
       {line.score && (
-        <dl className="mt-3 grid grid-cols-2 gap-2 text-[11px] tabular-nums sm:grid-cols-5">
+        <dl className="mt-3 grid grid-cols-2 gap-2 text-[11px] tabular-nums sm:grid-cols-6">
           <KV k="TILLVÄXT" v={fmtSek(line.score.sumGrowthSek)} />
           <KV k="© BONUS" v={fmtSek(line.score.captainBonusSek)} />
-          <KV k="BANK" v={fmtSek(line.score.bankInterestSek)} />
+          <KV k="RÄNTA" v={fmtSek(line.score.bankInterestSek)} />
           <KV k="AVGIFT" v={fmtSek(-line.score.transferFeesSek)} />
           <KV
-            k="TOTAL"
+            k="TRANSFER"
+            v={fmtSek(line.score.transferCashFlowSek)}
+            tone={line.score.transferCashFlowSek < 0 ? "red" : undefined}
+          />
+          <KV
+            k="Δ VÄRDE"
             v={fmtSek(line.score.totalPointsSek)}
             tone="yellow"
           />
         </dl>
       )}
 
-      {line.hasSquad && line.teamValueSek !== null && (
-        <dl className="mt-3 grid grid-cols-2 gap-2 text-[11px] tabular-nums sm:grid-cols-2">
-          <KV k="LAGVÄRDE" v={fmtSek(line.teamValueSek)} />
+      {line.hasSquad && line.squadValueSek !== null && (
+        <dl className="mt-3 grid grid-cols-2 gap-2 text-[11px] tabular-nums sm:grid-cols-3">
+          <KV k="SQUAD" v={fmtSek(line.squadValueSek)} />
           <KV
-            k="BANK / OANVÄNT"
-            v={line.unusedSek === null ? "—" : fmtSek(line.unusedSek)}
-            tone={
-              line.unusedSek !== null && line.unusedSek < 0
-                ? "red"
-                : undefined
-            }
+            k="BANK"
+            v={line.bankSek === null ? "—" : fmtSek(line.bankSek)}
+            tone={line.bankSek !== null && line.bankSek < 0 ? "red" : undefined}
+          />
+          <KV
+            k="LAGVÄRDE"
+            v={line.teamValueSek === null ? "—" : fmtSek(line.teamValueSek)}
+            tone="yellow"
           />
         </dl>
       )}
@@ -173,6 +187,12 @@ function PlayerLine({ p }: { p: TeamDetailPlayer }) {
         : p.growthSek < 0
           ? "text-red"
           : "text-foreground";
+  const arrow =
+    p.growthSek === null || p.growthSek === 0
+      ? ""
+      : p.growthSek > 0
+        ? "↑ "
+        : "↓ ";
   return (
     <li className="grid grid-cols-[auto_1fr_auto_auto] items-baseline gap-3 p-2 text-xs tabular-nums">
       <span className="text-yellow">{p.position}</span>
@@ -187,7 +207,7 @@ function PlayerLine({ p }: { p: TeamDetailPlayer }) {
         {p.priceSek === null ? "—" : `${(p.priceSek / 1_000_000).toFixed(1)}M`}
       </span>
       <span className={growthColor}>
-        {p.growthSek === null ? "" : fmtSek(p.growthSek)}
+        {p.growthSek === null ? "" : `${arrow}${fmtSek(p.growthSek)}`}
       </span>
     </li>
   );
@@ -200,9 +220,14 @@ function Stat({
 }: {
   label: string;
   value: string;
-  tone?: "red";
+  tone?: "red" | "yellow";
 }) {
-  const valueClass = tone === "red" ? "text-red" : "text-yellow";
+  const valueClass =
+    tone === "red"
+      ? "text-red"
+      : tone === "yellow"
+        ? "text-yellow"
+        : "text-foreground";
   return (
     <div>
       <p className="text-[10px] uppercase tracking-widest text-dim">{label}</p>

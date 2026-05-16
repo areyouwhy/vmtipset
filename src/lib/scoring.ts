@@ -3,17 +3,34 @@ import type { Position } from "@/db/schema";
 /**
  * Pure scoring engine.
  *
- * Inputs in, score out. No DB calls inside. The whole point is that this
- * function can be unit-tested with hand-calculated expected values, and that
- * re-running it on the same inputs always produces the same outputs.
+ * Inputs in, deltas out. No DB calls. Hand-rolled test coverage; re-running
+ * with the same inputs is always identical.
  *
- * Scoring formula matches `/hur`:
+ * Model (matches `/hur` and `RULES.md`):
  *
- *   ROUND_POINTS =
- *     Σ (each player's price growth in this round)
- *     + (captain.growth × (multiplier − 1))   [floored at 0 if `captainBonusOnlyPositive`]
- *     + (leftover budget × bank-interest rate)
- *     − (sum of transfer fees this round)
+ *   TEAM VALUE  =  SQUAD VALUE  +  BANK
+ *
+ * Two parallel channels move team value each round:
+ *
+ *   1) SQUAD VALUE drifts with Aftonbladet's price updates. Per-player
+ *      `growth` IS the price delta — sum of growth across the squad equals
+ *      Δ squad value.
+ *
+ *   2) BANK is our path-dependent cash ledger:
+ *          bank_locked_N = bank_end_{N-1} + Σ (sell − buy − fee for round-N transfers)
+ *          interest_N    = floor(bank_locked_N × interest_pct)
+ *          bank_end_N    = bank_locked_N + interest_N + captain_bonus_N
+ *      Interest is only on cash. Captain bonus is credited to bank because it
+ *      doesn't affect the player's actual price. Transfer fees + cash flow
+ *      land in bank at lock time, before interest is computed.
+ *
+ *   round_score_N  ≡  Δ TEAM VALUE this round
+ *                  =  sumGrowth     (squad drift)
+ *                  +  captainBonus + interest + cashFlow − fees    (bank drift)
+ *
+ * Round 1 special case: there's no bank_end_0; the runner passes
+ * bankEnteringSek = budgetSek − sum(initial squad purchase prices), with
+ * cashFlow = 0 and fees = 0 (no transfers happen on the initial pick).
  */
 
 export type ScoringSquadPlayer = {
@@ -34,16 +51,19 @@ export type SnapshotForScoring = {
 
 export type ScoringInputs = {
   squad: ScoringSquad;
-  /** snapshot for this round, keyed by player id (DB uuid) */
+  /** Snapshot for THIS round, keyed by player id. */
   scoreSnapshots: Map<string, SnapshotForScoring>;
-  /** what each player cost when added to the squad (typically round-1 prices) */
-  purchasePrices: Map<string, number>;
-  budgetSek: number;
+  /** Bank cash AFTER this round's transfer window closed, before matches
+   *  start. Interest is computed against this. */
+  bankEnteringSek: number;
+  /** Σ (sell − buy) for this round's transfers. Excludes fees. Already baked
+   *  into bankEnteringSek; passed in only so we can store it for the audit. */
+  transferCashFlowSek: number;
+  /** Σ transfer fees this round. Also already baked into bankEnteringSek. */
+  transferFeesPaidSek: number;
   captainMultiplier: number;
   captainBonusOnlyPositive: boolean;
   bankInterestPctPerRound: number; // 0.01 = 1%
-  /** sum of transfer fees paid in this round; 0 in v1 */
-  transferFeesPaidSek: number;
 };
 
 export type PlayerScoreLine = {
@@ -54,10 +74,15 @@ export type PlayerScoreLine = {
 };
 
 export type ScoreResult = {
+  /** Sum of player growth = Δ squad value from price drift this round. */
   sumGrowthSek: number;
   captainBonusSek: number;
   bankInterestSek: number;
   transferFeesSek: number;
+  transferCashFlowSek: number;
+  /** Bank cash at end of round (after interest + captain credit). */
+  bankSekEnd: number;
+  /** Δ team value this round = sumGrowth + captain + interest + cashFlow − fees. */
   totalPointsSek: number;
   snapshotIdsUsed: string[];
   perPlayer: PlayerScoreLine[];
@@ -69,12 +94,12 @@ export function scoreSquadForRound(args: ScoringInputs): ScoreResult {
   const {
     squad,
     scoreSnapshots,
-    purchasePrices,
-    budgetSek,
+    bankEnteringSek,
+    transferCashFlowSek,
+    transferFeesPaidSek,
     captainMultiplier,
     captainBonusOnlyPositive,
     bankInterestPctPerRound,
-    transferFeesPaidSek,
   } = args;
 
   let sumGrowth = 0;
@@ -105,22 +130,33 @@ export function scoreSquadForRound(args: ScoringInputs): ScoreResult {
     }
   }
 
-  const totalSpent = squad.players.reduce(
-    (acc, p) => acc + (purchasePrices.get(p.id) ?? 0),
-    0,
-  );
-  const leftover = Math.max(0, budgetSek - totalSpent);
-  const bankInterest = Math.floor(leftover * bankInterestPctPerRound);
+  // Interest is only on cash. Floor at 0 if somehow negative.
+  const interestBase = Math.max(0, bankEnteringSek);
+  const bankInterest = Math.floor(interestBase * bankInterestPctPerRound);
 
-  const total =
-    sumGrowth + captainBonus + bankInterest - transferFeesPaidSek;
+  // Bank end = cash entering + interest credit + captain credit. Growth
+  // and transfer effects are NOT bank-side: growth moves the squad value,
+  // transfer fees + cashFlow were already taken at lock time (hence
+  // already in bankEnteringSek).
+  const bankSekEnd = bankEnteringSek + bankInterest + captainBonus;
+
+  // Δ team value this round = squad drift + bank drift.
+  //   squad drift  = sumGrowth
+  //   bank drift   = interest + captain + cashFlow − fees
+  // cashFlow and fees show up in bankEnteringSek as transfer-time changes;
+  // they ARE part of this round's Δ bank, so we restate them here for the
+  // round-score breakdown.
+  const totalPointsSek =
+    sumGrowth + captainBonus + bankInterest + transferCashFlowSek - transferFeesPaidSek;
 
   return {
     sumGrowthSek: sumGrowth,
     captainBonusSek: captainBonus,
     bankInterestSek: bankInterest,
     transferFeesSek: transferFeesPaidSek,
-    totalPointsSek: total,
+    transferCashFlowSek,
+    bankSekEnd,
+    totalPointsSek,
     snapshotIdsUsed: perPlayer.map((p) => p.snapshotId),
     perPlayer,
     missingSnapshots: missing,

@@ -111,35 +111,60 @@ export default async function HowPage() {
             k="ENDAST POSITIV"
             v={r.captainBonusOnlyPositive ? "JA" : "NEJ"}
           />
-          <p className="mt-3 text-xs text-dim">
-            Kaptenen får extra poäng motsvarande{" "}
-            <span className="text-foreground">
-              ({r.captainMultiplier} − 1) × spelarens tillväxt
-            </span>
-            {r.captainBonusOnlyPositive ? " — men bara om tillväxten är positiv." : "."}
-          </p>
         </Block>
 
         <Block title="BYTEN">
           <KV k="GRATIS BYTEN / ROND" v={`${r.freeTransfersPerRound}`} />
           <KV k="BYTAVGIFT" v={`${pct(r.transferFeePct)} AV SÅLD SPELARE`} />
           <p className="mt-3 text-xs text-dim">
-            Avgiften dras direkt från rondpoängen.
+            När du säljer en spelare får banken pengar = säljpriset. När du
+            köper en spelare betalar banken köppriset. Avgiften (1% av
+            säljpriset) dras dessutom från banken. Allt sker när bytfönstret
+            stänger — inte under matcherna.
           </p>
         </Block>
 
-        <Block title="POÄNG">
+        <Block title="LAGVÄRDE — DET DU TÄVLAR MED">
           <pre className="overflow-x-auto whitespace-pre text-[11px] leading-relaxed text-foreground">
-{`RONDPOÄNG =
-  Σ (varje spelares prisförändring i ronden)
-  + (kapten.tillväxt × ${r.captainMultiplier - 1}) [endast om positiv]
-  + (kvarvarande budget × ${pct(r.bankInterestPctPerRound)})
-  − (summa bytavgifter denna rond)`}
+{`LAGVÄRDE  =  SQUAD VÄRDE  +  BANK
+
+SQUAD VÄRDE  =  Σ (nuvarande pris för dina 11 spelare)
+                                                       ← drivs av Aftonbladets prissättning
+BANK_N       =  BANK_{N−1}
+              + Σ (sälj − köp − avgift) för rond-N byten
+              + ränta (${pct(r.bankInterestPctPerRound)} på bank-saldot efter bytfönstret)
+              + kaptenbonus
+                                                       ← vår egen ledger
+
+Δ LAGVÄRDE i ronden  =  squad-drift  +  bank-drift
+                     =  Σ tillväxt + ränta + kapten
+                        + (sälj − köp) − avgift`}
           </pre>
           <p className="mt-3 text-xs text-dim">
-            Spelarpriserna och deras tillväxt hämtas från Aftonbladets API. Vi
-            sparar en oföränderlig snapshot per rond — gamla poäng kan aldrig
-            ändras retroaktivt.
+            Det här är den ENDA siffran som spelar roll för placeringen. Den
+            som har högst lagvärde när VM är slut vinner.
+          </p>
+          <p className="mt-2 text-xs text-dim">
+            Ränta får du bara på pengar i banken, inte på pengar som ligger
+            i spelare. Det är en avvägning: satsa allt på dyra spelare för
+            stor tillväxt, eller håll kapital i banken för säker avkastning.
+          </p>
+          <p className="mt-2 text-xs text-dim">
+            Spelarpriser och tillväxt kommer från Aftonbladets API. Tillväxt
+            är precis prisförändringen — vi sparar en oföränderlig snapshot
+            per rond så gamla värden aldrig kan ändras retroaktivt.
+          </p>
+        </Block>
+
+        <Block title="KAPTENBONUS — HUR DEN LANDAR">
+          <pre className="overflow-x-auto whitespace-pre text-[11px] leading-relaxed text-foreground">
+{`KAPTENBONUS  =  kaptenens tillväxt × (${r.captainMultiplier} − 1)
+                ${r.captainBonusOnlyPositive ? "// endast om positiv" : ""}`}
+          </pre>
+          <p className="mt-3 text-xs text-dim">
+            Krediteras DIN BANK, inte spelarens pris. Spelarens marknadspris
+            hos Aftonbladet rör sig inte av att du valt hen som kapten — det
+            är vår interna belöning för att ha satsat rätt.
           </p>
         </Block>
 
