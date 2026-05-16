@@ -122,7 +122,7 @@ export function validateSquad(c: SquadCandidate): SquadValidationError[] {
   for (const [clubId, n] of byClub) {
     if (n > r.maxFromSameClub) {
       errors.push(
-        `Max ${r.maxFromSameClub} spelare per klubb (har ${n} från ${clubId}).`,
+        `Max ${r.maxFromSameClub} spelare per landslag (har ${n} från ${clubId}).`,
       );
     }
   }

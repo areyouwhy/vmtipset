@@ -100,11 +100,7 @@ export default async function HowPage() {
           <KV k="FÖRSVARARE" v={range(r.positions.DEF)} />
           <KV k="MITTFÄLTARE" v={range(r.positions.MID)} />
           <KV k="ANFALLARE" v={range(r.positions.FWD)} />
-          <KV k="MAX PER KLUBB" v={`${r.maxFromSameClub}`} />
-          <KV
-            k="MAX PER LAND"
-            v={r.maxFromSameCountry?.toString() ?? "INGEN GRÄNS"}
-          />
+          <KV k="MAX PER LANDSLAG" v={`${r.maxFromSameClub}`} />
         </Block>
 
         <Block title="GILTIGA FORMATIONER">
