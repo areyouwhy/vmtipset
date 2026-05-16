@@ -46,6 +46,14 @@ export type PlayerListRow = {
   /** Whether the player is in an active WC pool. Admin can see false ones;
    *  public /spelare only ever calls this with includeInactive=false. */
   active: boolean;
+  /** Per-round growth from the latest round's snapshot (Aftonbladet's
+   *  "värdeökning" column). 0 if no snapshot for the latest round. */
+  latestGrowthSek: number;
+  /** Popularity at the latest snapshot — raw count of Aftonbladet squads
+   *  owning this player. */
+  popularity: number;
+  /** −1 / 0 / +1 trend indicator from the latest snapshot. */
+  trend: number;
   stats: PlayerSeasonStats;
 };
 
@@ -204,6 +212,9 @@ export async function getPlayerListRows(
       manualOverrides: manualCountByPlayer.get(p.id) ?? 0,
       domesticClub: clubFor(p.externalId),
       active: p.active,
+      latestGrowthSek: latestByPlayer.get(p.id)?.growthSek ?? 0,
+      popularity: latestByPlayer.get(p.id)?.popularity ?? 0,
+      trend: latestByPlayer.get(p.id)?.trend ?? 0,
       stats: statsByPlayer.get(p.id) ?? emptyStats(),
     };
   });

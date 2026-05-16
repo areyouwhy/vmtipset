@@ -18,7 +18,21 @@ function fmtSekShort(n: number): string {
 const POSITION_FILTERS = ["ALL", "GK", "DEF", "MID", "FWD"] as const;
 type PositionFilter = (typeof POSITION_FILTERS)[number];
 
-type SortKey = "price" | "name" | "country" | "growth" | "goals";
+type SortKey =
+  | "price"
+  | "name"
+  | "country"
+  | "growth"
+  | "latest"
+  | "goals"
+  | "assists"
+  | "yellow"
+  | "red"
+  | "shots"
+  | "saves"
+  | "motm"
+  | "pop";
+type ViewMode = "list" | "table";
 
 export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
   const [search, setSearch] = useState("");
@@ -26,6 +40,7 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
   const [country, setCountry] = useState<string>("ALL");
   const [club, setClub] = useState<string>("ALL");
   const [sort, setSort] = useState<SortKey>("price");
+  const [view, setView] = useState<ViewMode>("list");
 
   // Build the team list once, alphabetically by name — same shape the
   // squad picker uses.
@@ -84,12 +99,66 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
           a.name.localeCompare(b.name),
       );
     }
+    if (sort === "latest") {
+      return [...filtered].sort(
+        (a, b) =>
+          b.latestGrowthSek - a.latestGrowthSek ||
+          a.name.localeCompare(b.name),
+      );
+    }
     if (sort === "goals") {
       return [...filtered].sort(
         (a, b) =>
           b.stats.goals - a.stats.goals ||
           b.stats.assists - a.stats.assists ||
           a.name.localeCompare(b.name),
+      );
+    }
+    if (sort === "assists") {
+      return [...filtered].sort(
+        (a, b) =>
+          b.stats.assists - a.stats.assists ||
+          b.stats.goals - a.stats.goals ||
+          a.name.localeCompare(b.name),
+      );
+    }
+    if (sort === "yellow") {
+      return [...filtered].sort(
+        (a, b) =>
+          b.stats.yellowCards - a.stats.yellowCards ||
+          a.name.localeCompare(b.name),
+      );
+    }
+    if (sort === "red") {
+      return [...filtered].sort(
+        (a, b) =>
+          b.stats.redCards - a.stats.redCards ||
+          a.name.localeCompare(b.name),
+      );
+    }
+    if (sort === "shots") {
+      return [...filtered].sort(
+        (a, b) =>
+          b.stats.shotsOnGoal - a.stats.shotsOnGoal ||
+          a.name.localeCompare(b.name),
+      );
+    }
+    if (sort === "saves") {
+      return [...filtered].sort(
+        (a, b) =>
+          b.stats.saves - a.stats.saves || a.name.localeCompare(b.name),
+      );
+    }
+    if (sort === "motm") {
+      return [...filtered].sort(
+        (a, b) =>
+          b.stats.manOfTheMatch - a.stats.manOfTheMatch ||
+          a.name.localeCompare(b.name),
+      );
+    }
+    if (sort === "pop") {
+      return [...filtered].sort(
+        (a, b) => b.popularity - a.popularity || a.name.localeCompare(b.name),
       );
     }
     if (sort === "country") {
@@ -149,10 +218,39 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
         />
       </div>
 
-      <p className="mt-3 text-[10px] uppercase tracking-widest text-dim">
-        {visible.length} SPELARE
-      </p>
+      <div className="mt-3 flex items-baseline justify-between text-[10px] uppercase tracking-widest text-dim">
+        <span>{visible.length} SPELARE</span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setView("list")}
+            className={`border px-2 py-0.5 ${
+              view === "list"
+                ? "border-yellow bg-yellow text-black font-bold"
+                : "border-border text-dim hover:border-cyan hover:text-cyan"
+            }`}
+          >
+            LISTA
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("table")}
+            className={`border px-2 py-0.5 ${
+              view === "table"
+                ? "border-yellow bg-yellow text-black font-bold"
+                : "border-border text-dim hover:border-cyan hover:text-cyan"
+            }`}
+          >
+            TABELL
+          </button>
+        </div>
+      </div>
 
+      {view === "table" && (
+        <StatsTable rows={visible} sort={sort} onSort={setSort} />
+      )}
+
+      {view === "list" && (
       <ul className="mt-1 divide-y divide-border border border-border">
         {visible.map((r) => {
           const hasStats =
@@ -241,6 +339,196 @@ export function PublicPlayersList({ rows }: { rows: PlayerListRow[] }) {
           </li>
         )}
       </ul>
+      )}
     </>
   );
+}
+
+function StatsTable({
+  rows,
+  sort,
+  onSort,
+}: {
+  rows: PlayerListRow[];
+  sort: SortKey;
+  onSort: (k: SortKey) => void;
+}) {
+  return (
+    <div className="mt-1 overflow-x-auto border border-border">
+      <table className="w-full min-w-[820px] border-collapse text-[11px]">
+        <thead className="bg-background text-[9px] uppercase tracking-widest text-dim">
+          <tr className="border-b border-border">
+            <Th align="right" w="w-8">
+              #
+            </Th>
+            <Th align="left" sortKey="name" current={sort} onSort={onSort}>
+              SPELARE
+            </Th>
+            <Th align="left" w="w-12" sortKey="country" current={sort} onSort={onSort}>
+              LAND
+            </Th>
+            <Th align="center" w="w-10">
+              POS
+            </Th>
+            <Th align="right" sortKey="price" current={sort} onSort={onSort}>
+              VÄRDE
+            </Th>
+            <Th align="right" sortKey="growth" current={sort} onSort={onSort}>
+              Δ TOT
+            </Th>
+            <Th align="right" sortKey="latest" current={sort} onSort={onSort}>
+              Δ ROND
+            </Th>
+            <Th align="right" sortKey="goals" current={sort} onSort={onSort}>
+              MÅL
+            </Th>
+            <Th align="right" sortKey="assists" current={sort} onSort={onSort}>
+              ASS
+            </Th>
+            <Th align="right" sortKey="yellow" current={sort} onSort={onSort}>
+              GUL
+            </Th>
+            <Th align="right" sortKey="red" current={sort} onSort={onSort}>
+              RÖD
+            </Th>
+            <Th align="right" sortKey="shots" current={sort} onSort={onSort}>
+              SK
+            </Th>
+            <Th align="right" sortKey="saves" current={sort} onSort={onSort}>
+              RÄ
+            </Th>
+            <Th align="right" sortKey="motm" current={sort} onSort={onSort}>
+              ⭐
+            </Th>
+            <Th align="right" sortKey="pop" current={sort} onSort={onSort}>
+              POP
+            </Th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border/60">
+          {rows.map((r, i) => (
+            <tr key={r.id} className="tabular-nums hover:bg-yellow/5">
+              <td className="px-2 py-1.5 text-right text-dim">{i + 1}</td>
+              <td className="min-w-0 px-2 py-1.5">
+                <Link
+                  href={`/spelare/${r.id}`}
+                  className="block truncate text-foreground hover:text-cyan"
+                >
+                  {r.name}
+                </Link>
+                {r.domesticClub && (
+                  <span className="block truncate text-[9px] uppercase tracking-widest text-cyan/70">
+                    {r.domesticClub}
+                  </span>
+                )}
+              </td>
+              <td className="px-2 py-1.5 text-left text-dim">
+                <span className="inline-flex items-center gap-1">
+                  <Jersey code={r.countryCode} size={16} />
+                  {r.countryCode ?? "—"}
+                </span>
+              </td>
+              <td className="px-2 py-1.5 text-center text-yellow">
+                {r.position}
+              </td>
+              <td className="px-2 py-1.5 text-right text-foreground">
+                {r.currentPriceSek === null
+                  ? "—"
+                  : `${(r.currentPriceSek / 1_000_000).toFixed(1)}M`}
+              </td>
+              <td
+                className={`px-2 py-1.5 text-right ${toneClass(r.stats.totalGrowthSek)}`}
+              >
+                {r.stats.totalGrowthSek === 0
+                  ? "—"
+                  : fmtSekShort(r.stats.totalGrowthSek)}
+              </td>
+              <td
+                className={`px-2 py-1.5 text-right ${toneClass(r.latestGrowthSek)}`}
+              >
+                {r.latestGrowthSek === 0 ? "—" : fmtSekShort(r.latestGrowthSek)}
+              </td>
+              <td className="px-2 py-1.5 text-right text-foreground">
+                {r.stats.goals || "—"}
+              </td>
+              <td className="px-2 py-1.5 text-right text-foreground">
+                {r.stats.assists || "—"}
+              </td>
+              <td className="px-2 py-1.5 text-right text-yellow">
+                {r.stats.yellowCards || "—"}
+              </td>
+              <td className="px-2 py-1.5 text-right text-red">
+                {r.stats.redCards || "—"}
+              </td>
+              <td className="px-2 py-1.5 text-right text-foreground">
+                {r.stats.shotsOnGoal || "—"}
+              </td>
+              <td className="px-2 py-1.5 text-right text-foreground">
+                {r.stats.saves || "—"}
+              </td>
+              <td className="px-2 py-1.5 text-right text-foreground">
+                {r.stats.manOfTheMatch || "—"}
+              </td>
+              <td className="px-2 py-1.5 text-right text-dim">
+                {r.popularity || "—"}
+              </td>
+            </tr>
+          ))}
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={15} className="px-2 py-3 text-center text-dim">
+                — inga matcher —
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Th({
+  children,
+  align,
+  w,
+  sortKey,
+  current,
+  onSort,
+}: {
+  children: React.ReactNode;
+  align: "left" | "center" | "right";
+  w?: string;
+  sortKey?: SortKey;
+  current?: SortKey;
+  onSort?: (k: SortKey) => void;
+}) {
+  const isActive = sortKey && current === sortKey;
+  const alignClass =
+    align === "left"
+      ? "text-left"
+      : align === "center"
+        ? "text-center"
+        : "text-right";
+  const base = `${w ?? ""} px-2 py-1.5 ${alignClass} whitespace-nowrap`;
+  if (!sortKey) {
+    return <th className={base}>{children}</th>;
+  }
+  return (
+    <th className={base}>
+      <button
+        type="button"
+        onClick={() => onSort?.(sortKey)}
+        className={`uppercase transition hover:text-cyan ${isActive ? "text-yellow font-bold" : ""}`}
+      >
+        {children}
+        {isActive && <span className="ml-0.5">↓</span>}
+      </button>
+    </th>
+  );
+}
+
+function toneClass(n: number): string {
+  if (n > 0) return "text-green";
+  if (n < 0) return "text-red";
+  return "text-dim";
 }
