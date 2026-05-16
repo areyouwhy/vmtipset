@@ -142,6 +142,14 @@ export const playerRoundSnapshots = pgTable(
     trend: smallint("trend").notNull().default(0),
     source: snapshotSource("source").notNull(),
     notes: text("notes"),
+    /** Per-round scoring events from Aftonbladet — array of
+     *  {typeId, amount}. typeId joins to fantasyEventTypes. Sum of
+     *  (amount × valueSek) over this array should equal growthSek
+     *  (modulo Aftonbladet rounding). Empty array pre-match. */
+    events: jsonb("events")
+      .notNull()
+      .default([])
+      .$type<Array<{ typeId: number; amount: number }>>(),
     capturedAt: timestamp("captured_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -150,6 +158,24 @@ export const playerRoundSnapshots = pgTable(
     unique("player_round_source_unique").on(t.playerId, t.roundId, t.source),
   ],
 );
+
+/**
+ * Aftonbladet's fantasy scoring catalog. Each event type has a SEK value
+ * — sum of (event count × value) across a player's events in a round
+ * equals their growthSek for that round. Seeded from `/rulesets/{id}`
+ * during ingest. Keyed by Aftonbladet's numeric type id.
+ */
+export const fantasyEventTypes = pgTable("fantasy_event_types", {
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  title: text("title").notNull(),
+  shortTitle: text("short_title"),
+  valueSek: integer("value_sek").notNull(),
+  imageUrl: text("image_url"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
 
 // ─── Squads ─────────────────────────────────────────────────────────────────
 
@@ -393,6 +419,8 @@ export type Round = typeof rounds.$inferSelect;
 export type NewRound = typeof rounds.$inferInsert;
 export type PlayerRoundSnapshot = typeof playerRoundSnapshots.$inferSelect;
 export type NewPlayerRoundSnapshot = typeof playerRoundSnapshots.$inferInsert;
+export type FantasyEventType = typeof fantasyEventTypes.$inferSelect;
+export type NewFantasyEventType = typeof fantasyEventTypes.$inferInsert;
 export type PrizePool = typeof prizePools.$inferSelect;
 export type NewPrizePool = typeof prizePools.$inferInsert;
 export type PrizePlace = typeof prizePlaces.$inferSelect;

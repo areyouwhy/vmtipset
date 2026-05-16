@@ -1,4 +1,7 @@
+import { asc } from "drizzle-orm";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { db } from "@/db";
+import { fantasyEventTypes } from "@/db/schema";
 import {
   currentRules,
   formationToString,
@@ -20,7 +23,13 @@ export const dynamic = "force-dynamic";
 export default async function HowPage() {
   const r = currentRules;
   await ensureDefaultPrizes();
-  const payout = await getPotPayout();
+  const [payout, eventTypeRows] = await Promise.all([
+    getPotPayout(),
+    db
+      .select()
+      .from(fantasyEventTypes)
+      .orderBy(asc(fantasyEventTypes.valueSek)),
+  ]);
   const lastVerified = r.meta.lastVerifiedAt
     ? new Date(r.meta.lastVerifiedAt).toISOString().slice(0, 10)
     : "ALDRIG VERIFIERAD";
@@ -167,6 +176,56 @@ BANK_N       =  BANK_{N−1}
             är vår interna belöning för att ha satsat rätt.
           </p>
         </Block>
+
+        {eventTypeRows.length > 0 && (
+          <Block title="HÄNDELSER — VAD AFTONBLADET RAPPORTERAR PER ROND">
+            <p className="text-xs text-dim">
+              Varje rond rapporterar Aftonbladet vad varje spelare gjorde
+              (mål, assist, kort, räddningar, lineup …). Vi visar dessa
+              händelser per spelare på <span className="text-cyan">/spelare/[id]</span>.
+              Den faktiska SEK-poängen är dock <em>positionsberoende</em> hos
+              Aftonbladet — t.ex. mål av försvarare väger tyngre än mål av
+              anfallare — så de SEK-värden vi visar nedan är en indikativ
+              koppling, inte exakt scoring.
+            </p>
+            <div className="mt-3 overflow-x-auto border border-border">
+              <table className="w-full text-[11px] tabular-nums">
+                <thead className="text-[9px] uppercase tracking-widest text-dim">
+                  <tr className="border-b border-border">
+                    <th className="px-2 py-1.5 text-left">HÄNDELSE</th>
+                    <th className="px-2 py-1.5 text-right">RIKTVÄRDE (SEK)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {eventTypeRows.map((t) => (
+                    <tr
+                      key={t.id}
+                      className="border-b border-dotted border-border/40"
+                    >
+                      <td className="px-2 py-1 text-foreground">{t.title}</td>
+                      <td
+                        className={`px-2 py-1 text-right ${
+                          t.valueSek > 0
+                            ? "text-green"
+                            : t.valueSek < 0
+                              ? "text-red"
+                              : "text-dim"
+                        }`}
+                      >
+                        {t.valueSek === 0
+                          ? "—"
+                          : `${t.valueSek > 0 ? "+" : ""}${t.valueSek.toLocaleString("sv-SE").replace(/ /g, " ")}`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-[10px] uppercase tracking-widest text-dim">
+              {eventTypeRows.length} HÄNDELSETYPER · KÄLLA: AFTONBLADETS RULESET
+            </p>
+          </Block>
+        )}
 
         <Block title="PENGAR">
           <KV k="INSATS / DELTAGARE" v={`${r.stakePerUserSek} SEK`} />

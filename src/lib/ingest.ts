@@ -46,6 +46,7 @@ export type SnapshotKnown = {
   popularity: number;
   trend: number;
   source: "api" | "manual";
+  events?: Array<{ typeId: number; amount: number }>;
 };
 
 export type ExistingState = {
@@ -152,6 +153,7 @@ export function planIngest(
     const incomingTotalGrowth = s.totalGrowthSek ?? 0;
     const incomingPopularity = s.popularity ?? 0;
     const incomingTrend = s.trend ?? 0;
+    const incomingEvents = s.events ?? [];
     if (!prev) {
       snapshots.push({ kind: "insert-snapshot", snapshot: s, source: "api" });
     } else if (
@@ -159,7 +161,8 @@ export function planIngest(
       prev.growthSek !== s.growthSek ||
       prev.totalGrowthSek !== incomingTotalGrowth ||
       prev.popularity !== incomingPopularity ||
-      prev.trend !== incomingTrend
+      prev.trend !== incomingTrend ||
+      !eventsEqual(prev.events ?? [], incomingEvents)
     ) {
       snapshots.push({ kind: "update-snapshot", snapshot: s, source: "api" });
     }
@@ -172,6 +175,18 @@ export function planIngest(
     .map((p) => p.externalId);
 
   return { clubs, players, rounds, snapshots, orphanedPlayers };
+}
+
+function eventsEqual(
+  a: Array<{ typeId: number; amount: number }>,
+  b: Array<{ typeId: number; amount: number }>,
+): boolean {
+  if (a.length !== b.length) return false;
+  const byTypeA = new Map(a.map((e) => [e.typeId, e.amount] as const));
+  for (const e of b) {
+    if (byTypeA.get(e.typeId) !== e.amount) return false;
+  }
+  return true;
 }
 
 function snapshotKey(playerExtId: string, roundExtId: string): string {

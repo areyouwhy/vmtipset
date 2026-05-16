@@ -17,7 +17,7 @@ export default async function PublicPlayerPage({
   const detail = await getPlayerDetail(id);
   if (!detail) notFound();
 
-  const { player, club, rounds: roundLines } = detail;
+  const { player, club, rounds: roundLines, eventTypes } = detail;
   const countryCode = club?.countryCode ?? null;
   const domesticClub = clubFor(player.externalId);
 
@@ -124,12 +124,71 @@ export default async function PublicPlayerPage({
                     }
                   />
                 </dl>
+
+                {effective && effective.events.length > 0 && (
+                  <EventBreakdown
+                    events={effective.events}
+                    eventTypes={eventTypes}
+                    growthSek={effective.growthSek}
+                  />
+                )}
+                {effective &&
+                  effective.events.length === 0 &&
+                  effective.growthSek !== 0 && (
+                    <p className="mt-3 text-[10px] text-dim">
+                      — Inga händelser rapporterade (men tillväxten är inte
+                      noll, kan vara aggregerade pris/popularitetsförändringar)
+                    </p>
+                  )}
               </article>
             );
           })}
         </section>
       </div>
     </main>
+  );
+}
+
+function EventBreakdown({
+  events,
+  eventTypes,
+}: {
+  events: Array<{ typeId: number; amount: number }>;
+  eventTypes: Map<number, { title: string; valueSek: number }>;
+  growthSek: number;
+}) {
+  const rows = events.map((e) => {
+    const type = eventTypes.get(e.typeId);
+    return {
+      typeId: e.typeId,
+      title: type?.title ?? `?#${e.typeId}`,
+      amount: e.amount,
+    };
+  });
+  // Stable order: by name.
+  rows.sort((a, b) => a.title.localeCompare(b.title));
+  return (
+    <div className="mt-3 border-t border-border/60 pt-2">
+      <p className="text-[10px] uppercase tracking-widest text-dim">
+        HÄNDELSER I RONDEN
+      </p>
+      <ul className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] tabular-nums sm:grid-cols-3">
+        {rows.map((r) => (
+          <li
+            key={r.typeId}
+            className="flex items-baseline gap-2"
+          >
+            <span className="text-yellow">{r.amount}×</span>
+            <span className="text-foreground">{r.title}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[10px] text-dim">
+        Aftonbladets exakta poäng beror på spelarens position (mål av
+        försvarare ≠ mål av anfallare). Vi visar händelserna; tillväxten
+        ovan är Aftonbladets aggregerade SEK för ronden.
+      </p>
+    </div>
   );
 }
 

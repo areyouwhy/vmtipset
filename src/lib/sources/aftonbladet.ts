@@ -44,6 +44,42 @@ type RawGame = {
 
 type RawRuleset = {
   positions?: { id: number; slug: string; name: string }[];
+  /** RAW event taxonomy — these are the IDs that appear in
+   *  /statistics events.round[].type.id. (Goal, Lineup, Benched, etc.) */
+  eventTypes?: {
+    id: number;
+    name: string;
+    title: string;
+    abbreviation?: string;
+    imageUrl?: string;
+  }[];
+  /** Aftonbladet's fantasy scoring catalog — separate ID space from
+   *  eventTypes. e.g., a Goal event becomes SoccerDefenseGoal/MidfieldGoal/
+   *  StrikerGoal depending on the player's position. Surfaced on /hur for
+   *  reference only; we don't auto-bridge. */
+  fantasyEventTypes?: {
+    id: number;
+    name: string;
+    title: string;
+    shortTitle?: string;
+    value: number;
+    imageUrl?: string;
+  }[];
+};
+
+type RawStatistics = {
+  player: number | { id: number };
+  values: {
+    growth: number;
+    totalGrowth?: number;
+    value: number;
+    popularity?: number;
+    trend?: number;
+  };
+  events?: {
+    round?: Array<{ type: { id: number }; amount: number }>;
+    total?: Array<{ type: { id: number }; amount: number }>;
+  };
 };
 
 type RawPlayer = {
@@ -68,14 +104,6 @@ type RawPerson = {
   nationality?: { code?: string };
 };
 
-type RawRoundValue = {
-  player: number | { id: number };
-  value: number;
-  growth: number;
-  totalGrowth?: number;
-  popularity?: number;
-  trend?: number;
-};
 
 async function getJson<T>(url: string, label: string): Promise<T> {
   const res = await fetch(url, { cache: "no-store" });
@@ -122,8 +150,16 @@ export const aftonbladetSource: DataSource = {
       };
     });
 
-    // 2. Ruleset — build position-id → enum mapping by slug.
+    // 2. Ruleset — position-id → enum mapping by slug, plus event taxonomy.
     let positionByApiId: Record<number, Position> = {};
+    // We populate `fantasyEventTypes` from `ruleset.eventTypes` (the RAW
+    // event taxonomy) because that's the ID space that appears in
+    // /statistics events.round[]. The ruleset's own `fantasyEventTypes`
+    // uses different IDs and depends on player position (Goal by Defender
+    // ≠ Goal by Striker), so we don't try to bridge them — we just store
+    // the raw event names for display. The SEK-valued scoring catalog
+    // is referenced on /hur as informational.
+    let fantasyEventTypes: NonNullable<ExternalDataset["fantasyEventTypes"]> = [];
     if (game.ruleset?.id) {
       const ruleset = await tryGetJson<RawRuleset>(
         `${apiBase}/rulesets/${game.ruleset.id}`,
@@ -132,6 +168,21 @@ export const aftonbladetSource: DataSource = {
         const mapped = POSITION_BY_SLUG[p.slug];
         if (mapped) positionByApiId[p.id] = mapped;
       }
+      // Best-effort SEK value lookup: pattern-match `Soccer<EventName>` in
+      // the fantasy scoring catalog. Falls back to 0 if no match — display
+      // code uses null in that case.
+      const fantasyByName = new Map<string, number>();
+      for (const ft of ruleset?.fantasyEventTypes ?? []) {
+        fantasyByName.set(ft.name, ft.value);
+      }
+      fantasyEventTypes = (ruleset?.eventTypes ?? []).map((t) => ({
+        id: t.id,
+        name: t.name,
+        title: t.title,
+        shortTitle: t.abbreviation ?? null,
+        valueSek: fantasyByName.get(`Soccer${t.name}`) ?? 0,
+        imageUrl: t.imageUrl ?? null,
+      }));
     }
     if (Object.keys(positionByApiId).length === 0) {
       // Fallback to PL ruleset 193 ids if ruleset fetch failed.
@@ -172,27 +223,33 @@ export const aftonbladetSource: DataSource = {
       );
     }
 
-    // 6. Snapshots for each round (sequential to be polite; ~38 calls for PL).
+    // 6. Snapshots for each round, with events.
+    // `/rounds/{n}/statistics` returns the same fields as `/rounds/{n}/players`
+    // PLUS per-player events ({typeId, amount}). Same shape change otherwise.
     const snapshots: ExternalSnapshot[] = [];
     for (const round of rounds) {
-      const values = await tryGetJson<RawRoundValue[]>(
-        `${apiBase}/games/${gameId}/rounds/${round.number}/players`,
+      const stats = await tryGetJson<RawStatistics[]>(
+        `${apiBase}/games/${gameId}/rounds/${round.number}/statistics`,
       );
-      if (!values) continue;
-      for (const rv of values) {
+      if (!stats) continue;
+      for (const rv of stats) {
         const playerId =
           typeof rv.player === "number" ? rv.player : rv.player.id;
-        // Trend can come back as ±1.something float; clamp to {-1, 0, +1}.
-        const rawTrend = rv.trend ?? 0;
+        const rawTrend = rv.values.trend ?? 0;
         const trend = rawTrend > 0 ? 1 : rawTrend < 0 ? -1 : 0;
+        const events = (rv.events?.round ?? []).map((e) => ({
+          typeId: e.type.id,
+          amount: e.amount,
+        }));
         snapshots.push({
           playerExternalId: `ab:p:${playerId}`,
           roundExternalId: round.externalId,
-          priceSek: rv.value ?? 0,
-          growthSek: rv.growth ?? 0,
-          totalGrowthSek: rv.totalGrowth ?? 0,
-          popularity: rv.popularity ?? 0,
+          priceSek: rv.values.value ?? 0,
+          growthSek: rv.values.growth ?? 0,
+          totalGrowthSek: rv.values.totalGrowth ?? 0,
+          popularity: rv.values.popularity ?? 0,
           trend,
+          events,
         });
       }
     }
@@ -222,6 +279,6 @@ export const aftonbladetSource: DataSource = {
       ];
     });
 
-    return { clubs, players, rounds, snapshots };
+    return { clubs, players, rounds, snapshots, fantasyEventTypes };
   },
 };

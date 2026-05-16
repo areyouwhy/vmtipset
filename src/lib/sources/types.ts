@@ -28,6 +28,13 @@ export type ExternalRound = {
   deadline?: string | null; // ISO 8601
 };
 
+export type ExternalEvent = {
+  /** Source-specific event type id (Aftonbladet's fantasyEventTypes.id). */
+  typeId: number;
+  /** How many times this event happened in the round (usually 1, can be 2+ for goals etc). */
+  amount: number;
+};
+
 export type ExternalSnapshot = {
   playerExternalId: string;
   roundExternalId: string;
@@ -39,6 +46,17 @@ export type ExternalSnapshot = {
   popularity?: number;
   /** -1 = falling, 0 = flat, +1 = rising. */
   trend?: number;
+  /** Scoring events for THIS round (empty if no match has played yet). */
+  events?: ExternalEvent[];
+};
+
+export type ExternalFantasyEventType = {
+  id: number;
+  name: string;
+  title: string;
+  shortTitle?: string | null;
+  valueSek: number;
+  imageUrl?: string | null;
 };
 
 export type ExternalDataset = {
@@ -46,6 +64,9 @@ export type ExternalDataset = {
   players: ExternalPlayer[];
   rounds: ExternalRound[];
   snapshots: ExternalSnapshot[];
+  /** Fantasy-scoring event catalog from the source's ruleset. Optional —
+   *  mock sources can omit. */
+  fantasyEventTypes?: ExternalFantasyEventType[];
 };
 
 export interface DataSource {

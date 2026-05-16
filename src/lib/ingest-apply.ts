@@ -2,6 +2,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
   clubs,
+  fantasyEventTypes,
   players,
   playerRoundSnapshots,
   rounds,
@@ -91,6 +92,7 @@ export async function loadExistingState(): Promise<ExistingState> {
           popularity: s.popularity,
           trend: s.trend,
           source: s.source,
+          events: s.events ?? [],
         },
       ];
     }),
@@ -212,6 +214,7 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
           popularity: op.snapshot.popularity ?? 0,
           trend: op.snapshot.trend ?? 0,
           source: op.source,
+          events: op.snapshot.events ?? [],
         } as const,
       ];
     });
@@ -241,6 +244,7 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
           totalGrowthSek: op.snapshot.totalGrowthSek ?? 0,
           popularity: op.snapshot.popularity ?? 0,
           trend: op.snapshot.trend ?? 0,
+          events: op.snapshot.events ?? [],
           capturedAt: new Date(),
         })
         .where(
@@ -293,5 +297,35 @@ export async function runIngest(source: DataSource): Promise<IngestSummary> {
   ]);
   const plan = planIngest(incoming, existing);
   const summary = await applyPlan(plan);
+
+  // Upsert the fantasy event-types catalog. Independent of the snapshot
+  // diffing flow — it's just a small reference table. Source can omit
+  // (mock source, etc.) and we leave existing rows alone.
+  if (incoming.fantasyEventTypes && incoming.fantasyEventTypes.length > 0) {
+    for (const t of incoming.fantasyEventTypes) {
+      await db
+        .insert(fantasyEventTypes)
+        .values({
+          id: t.id,
+          name: t.name,
+          title: t.title,
+          shortTitle: t.shortTitle ?? null,
+          valueSek: t.valueSek,
+          imageUrl: t.imageUrl ?? null,
+        })
+        .onConflictDoUpdate({
+          target: fantasyEventTypes.id,
+          set: {
+            name: t.name,
+            title: t.title,
+            shortTitle: t.shortTitle ?? null,
+            valueSek: t.valueSek,
+            imageUrl: t.imageUrl ?? null,
+            updatedAt: new Date(),
+          },
+        });
+    }
+  }
+
   return { ...summary, sourceId: source.id };
 }

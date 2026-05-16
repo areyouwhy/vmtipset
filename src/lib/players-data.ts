@@ -3,11 +3,13 @@ import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
 import {
   clubs,
+  fantasyEventTypes,
   playerRoundSnapshots,
   players,
   rounds,
   type Player,
   type Club,
+  type FantasyEventType,
   type Round,
   type PlayerRoundSnapshot,
 } from "@/db/schema";
@@ -112,6 +114,9 @@ export type PlayerDetail = {
   player: Player;
   club: Club | null;
   rounds: PlayerDetailRoundSnapshot[];
+  /** Catalog of fantasy event types from Aftonbladet — name + SEK value.
+   *  Keyed by event type id. Empty if ingest hasn't run yet. */
+  eventTypes: Map<number, FantasyEventType>;
 };
 
 /**
@@ -128,7 +133,7 @@ export async function getPlayerDetail(
     .limit(1);
   if (!player) return null;
 
-  const [allRounds, allSnapshots, club] = await Promise.all([
+  const [allRounds, allSnapshots, club, allEventTypes] = await Promise.all([
     db.select().from(rounds).orderBy(asc(rounds.number)),
     db
       .select()
@@ -142,6 +147,7 @@ export async function getPlayerDetail(
           .limit(1)
           .then((r) => r[0] ?? null)
       : Promise.resolve<Club | null>(null),
+    db.select().from(fantasyEventTypes),
   ]);
 
   const byRound = new Map<
@@ -166,5 +172,10 @@ export async function getPlayerDetail(
     };
   });
 
-  return { player, club, rounds: roundLines };
+  return {
+    player,
+    club,
+    rounds: roundLines,
+    eventTypes: new Map(allEventTypes.map((t) => [t.id, t])),
+  };
 }
