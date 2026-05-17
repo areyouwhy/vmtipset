@@ -1,7 +1,8 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { users, type User } from "@/db/schema";
+import { teams, users, type User } from "@/db/schema";
+import { teamSlug } from "./team-slug";
 
 export async function getOrCreateDbUser(): Promise<User | null> {
   const { userId } = await auth();
@@ -38,6 +39,48 @@ export async function getOrCreateDbUser(): Promise<User | null> {
     .returning();
 
   return created;
+}
+
+/**
+ * Read-only auth snapshot for things like the global ⌘K palette. Does NOT
+ * create a users row (unlike getOrCreateDbUser). Cheap enough to call from
+ * the root layout on every request.
+ */
+export type ViewerAuth = {
+  signedIn: boolean;
+  approved: boolean;
+  isAdmin: boolean;
+  myTeamSlug: string | null;
+};
+
+export async function getViewerAuth(): Promise<ViewerAuth> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { signedIn: false, approved: false, isAdmin: false, myTeamSlug: null };
+  }
+
+  const [u, team, admin] = await Promise.all([
+    db
+      .select({ status: users.status })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+      .then((r) => r[0] ?? null),
+    db
+      .select({ name: teams.name })
+      .from(teams)
+      .where(eq(teams.ownerUserId, userId))
+      .limit(1)
+      .then((r) => r[0] ?? null),
+    isAdmin(),
+  ]);
+
+  return {
+    signedIn: true,
+    approved: u?.status === "approved",
+    isAdmin: admin,
+    myTeamSlug: team ? teamSlug(team.name) : null,
+  };
 }
 
 export async function isAdmin(): Promise<boolean> {

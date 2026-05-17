@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { WcMatchLine } from "@/components/wc-match-line";
 import { clubFor } from "@/data/player-clubs";
 import { clubSlug } from "@/lib/clubs";
 import { Jersey, PitchJersey } from "@/lib/jersey";
-import { getNationDetail, type NationPlayer } from "@/lib/nation-data";
+import {
+  getNationDetail,
+  type NationDetail,
+  type NationPlayer,
+} from "@/lib/nation-data";
 import { fifaRank, FIFA_RANK_SOURCE_DATE } from "@/data/fifa-rank";
 import { groupForCountry } from "@/data/wc-groups";
 
@@ -116,8 +121,66 @@ export default async function NationPage({
           </h2>
           <RosterByPosition players={detail.players} />
         </section>
+
+        <section className="mt-6 border-t border-border pt-6">
+          <h2 className="mb-2 text-[10px] uppercase tracking-widest text-dim">
+            MATCHER
+          </h2>
+          <MatchSchedule
+            matches={detail.matches}
+            teamsById={detail.wcTeamsById}
+          />
+        </section>
       </div>
     </main>
+  );
+}
+
+function MatchSchedule({
+  matches,
+  teamsById,
+}: {
+  matches: NationDetail["matches"];
+  teamsById: NationDetail["wcTeamsById"];
+}) {
+  if (matches.length === 0) {
+    return (
+      <p className="border border-border p-3 text-center text-[10px] uppercase tracking-widest text-dim">
+        — Inga matcher hittade —
+      </p>
+    );
+  }
+  // Bucket by fantasy round (1-8). Group stage = R1-3, knockout = R4+.
+  const byRound = new Map<number, typeof matches>();
+  for (const m of matches) {
+    const arr = byRound.get(m.roundNumber) ?? [];
+    arr.push(m);
+    byRound.set(m.roundNumber, arr);
+  }
+  const sections = [...byRound.entries()].sort((a, b) => a[0] - b[0]);
+
+  return (
+    <div className="space-y-4">
+      {sections.map(([roundNumber, ms]) => (
+        <section key={roundNumber}>
+          <Link
+            href={`/vm/omgang/${roundNumber}`}
+            className="block text-[10px] uppercase tracking-widest text-cyan hover:text-yellow"
+          >
+            Omgång {roundNumber} →
+          </Link>
+          <ul className="mt-1 divide-y divide-border/40 border border-border">
+            {ms.map((m) => (
+              <WcMatchLine
+                key={m.externalId}
+                m={m}
+                teamsById={teamsById}
+              />
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
   );
 }
 

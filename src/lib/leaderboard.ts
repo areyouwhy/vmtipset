@@ -31,6 +31,9 @@ export type LeaderboardRow = {
   teamId: string;
   teamName: string;
   ownerHandle: string;
+  /** Owner's user.status. Rejected users are filtered out before this stage,
+   *  so it's always pending or approved. */
+  ownerStatus: "pending" | "approved";
   /** Sum of Δ team value across all scored rounds. Equals
    *  (current team value − initial budget) once at least one round is scored. */
   totalPointsSek: number;
@@ -72,7 +75,7 @@ export async function getLeaderboard(): Promise<Leaderboard> {
   const [
     allRounds,
     allScores,
-    allTeams,
+    allTeamsRaw,
     allUsers,
     dailyBetsByTeam,
     allSquads,
@@ -90,6 +93,13 @@ export async function getLeaderboard(): Promise<Leaderboard> {
   ]);
 
   const userById = new Map(allUsers.map((u) => [u.id, u]));
+  // Hide teams whose owner is rejected — they're not in the league.
+  // Pending and approved owners both show; pending get an "EJ SWISHAD" tag
+  // in the UI.
+  const allTeams = allTeamsRaw.filter((t) => {
+    const owner = userById.get(t.ownerUserId);
+    return owner ? owner.status !== "rejected" : true;
+  });
   const teamById = new Map(allTeams.map((t) => [t.id, t]));
 
   const scoredRounds = allRounds.filter((r) => r.status === "scored");
@@ -263,6 +273,9 @@ export async function getLeaderboard(): Promise<Leaderboard> {
           : null,
     }));
 
+    const ownerStatus = (owner?.status === "approved" ? "approved" : "pending") as
+      | "pending"
+      | "approved";
     return {
       rank,
       prevRank,
@@ -270,6 +283,7 @@ export async function getLeaderboard(): Promise<Leaderboard> {
       teamId: t.id,
       teamName: team.name,
       ownerHandle: handle,
+      ownerStatus,
       totalPointsSek: total,
       perRound,
       dailyBetsPoints: dailyBetsByTeam.get(t.id) ?? 0,

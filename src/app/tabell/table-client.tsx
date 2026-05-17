@@ -107,6 +107,11 @@ export function TabellClient({
                       className="block truncate text-foreground hover:text-cyan"
                     >
                       {row.teamName}
+                      {row.ownerStatus === "pending" && (
+                        <span className="ml-2 text-[9px] uppercase tracking-widest text-yellow">
+                          EJ SWISHAD
+                        </span>
+                      )}
                     </Link>
                     <span className="block truncate text-[10px] uppercase tracking-widest text-dim">
                       {row.ownerHandle}

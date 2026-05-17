@@ -9,6 +9,12 @@ import {
   type PlayerRoundSnapshot,
 } from "@/db/schema";
 import { currentRules } from "@/lib/rules";
+import {
+  getAllMatches,
+  getTeamLookup,
+  type WcMatch,
+  type WcTeam,
+} from "@/lib/wc-tournament";
 
 export type NationPlayer = {
   id: string;
@@ -29,6 +35,7 @@ export type StartingEleven = {
   captainId: string | null;
 };
 
+
 export type NationDetail = {
   countryCode: string;
   countryName: string;
@@ -43,6 +50,12 @@ export type NationDetail = {
   /** Sum of priceSek across the 11 best-XI players. null if no valid XI
    *  could be built (roster too short or prices missing). */
   dreamTeamValueSek: number | null;
+  /** WC matches involving this team, ordered by kickoff. Populated from
+   *  the WC tournament feed (separate id space from our clubs table —
+   *  matched by ISO country code). Empty if no matches found. */
+  matches: WcMatch[];
+  /** Team id → team metadata for resolving the opponent's name + jersey. */
+  wcTeamsById: Map<number, WcTeam>;
 };
 
 function priceOf(p: NationPlayer): number {
@@ -196,15 +209,31 @@ export async function getNationDetail(
     .limit(1);
   if (!club) return null;
 
-  const [allPlayers, allRounds, allSnapshots] = await Promise.all([
-    db
-      .select()
-      .from(players)
-      .where(eq(players.clubId, club.id))
-      .orderBy(asc(players.name)),
-    db.select().from(rounds).orderBy(asc(rounds.number)),
-    db.select().from(playerRoundSnapshots),
-  ]);
+  const [allPlayers, allRounds, allSnapshots, wcTeamsById, allMatches] =
+    await Promise.all([
+      db
+        .select()
+        .from(players)
+        .where(eq(players.clubId, club.id))
+        .orderBy(asc(players.name)),
+      db.select().from(rounds).orderBy(asc(rounds.number)),
+      db.select().from(playerRoundSnapshots),
+      getTeamLookup(),
+      getAllMatches(),
+    ]);
+
+  // Match this nation to its WC team by ISO code. Fixtures we surface are
+  // those where the team is either home or away.
+  const wcTeam = [...wcTeamsById.values()].find((t) => t.code === code);
+  const matches = wcTeam
+    ? allMatches
+        .filter(
+          (m) =>
+            m.homeTeamId === wcTeam.externalId ||
+            m.awayTeamId === wcTeam.externalId,
+        )
+        .sort((a, b) => a.kickoff.localeCompare(b.kickoff))
+    : [];
 
   const playerIds = new Set(allPlayers.map((p) => p.id));
   const { baseline, latest } = buildPriceMaps(
@@ -244,6 +273,8 @@ export async function getNationDetail(
     startingEleven,
     dreamTeamFormation,
     dreamTeamValueSek,
+    matches,
+    wcTeamsById,
   };
 }
 
