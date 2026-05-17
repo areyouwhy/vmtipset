@@ -784,7 +784,12 @@ function PitchView({
           backgroundImage: "url('/img/pitch.png')",
         }}
       >
-        <div className="absolute inset-0 flex flex-col px-2 py-3">
+        {/* Push the first row below the goal art + sponsor banners painted
+            into the pitch image (top ~18% of the canvas). */}
+        <div
+          className="absolute inset-0 flex flex-col px-2 pb-3"
+          style={{ paddingTop: "18%" }}
+        >
           {rows.map((pos) => {
             const players = byPos(pos);
             const targetSlots = slotsByPos[pos];
