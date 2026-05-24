@@ -1,12 +1,15 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import {
   clubs,
   eventTypes,
   fantasyEventTypes,
+  ingestRuns,
   players,
   playerRoundSnapshots,
   rounds,
+  squadPlayers,
+  squads,
 } from "@/db/schema";
 import {
   planIngest,
@@ -26,7 +29,8 @@ export type IngestSummary = {
   snapshotsInserted: number;
   snapshotsUpdated: number;
   orphanedPlayers: string[];
-  playersDeactivated: number;
+  playersArchived: number;
+  squadsInvalidated: number;
 };
 
 export async function loadExistingState(): Promise<ExistingState> {
@@ -109,7 +113,8 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
   let roundsUpdated = 0;
   let snapshotsInserted = 0;
   let snapshotsUpdated = 0;
-  let playersDeactivated = 0;
+  let playersArchived = 0;
+  let squadsInvalidated = 0;
 
   // Clubs first — players reference them.
   for (const op of plan.clubs) {
@@ -259,21 +264,54 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
     }
   }
 
-  // Orphans: players the source dropped (eliminated, injured, withdrawn).
-  // Flip them to active=false so the squad picker hides them; admins can
-  // see them on /admin/players and manually override prices if needed.
+  // Orphans: players the source dropped (eliminated, injured, withdrawn,
+  // cut from final squad). Soft-delete via archived_at so the picker hides
+  // them; flag any squad still holding them as invalid so the owner has to
+  // re-pick. We only archive players not already archived, so the row's
+  // archived_at timestamp marks the first time we noticed the drop.
   if (plan.orphanedPlayers.length > 0) {
-    const result = await db
+    const archived = await db
       .update(players)
-      .set({ active: false, updatedAt: new Date() })
+      .set({ archivedAt: new Date(), updatedAt: new Date() })
       .where(
         and(
           inArray(players.externalId, plan.orphanedPlayers),
-          eq(players.active, true),
+          isNull(players.archivedAt),
         ),
       )
-      .returning({ id: players.id });
-    playersDeactivated = result.length;
+      .returning({ id: players.id, name: players.name });
+    playersArchived = archived.length;
+
+    if (archived.length > 0) {
+      const archivedIds = archived.map((p) => p.id);
+      const hits = await db
+        .select({
+          squadId: squadPlayers.squadId,
+          playerName: players.name,
+        })
+        .from(squadPlayers)
+        .innerJoin(players, eq(players.id, squadPlayers.playerId))
+        .where(inArray(squadPlayers.playerId, archivedIds));
+
+      const namesBySquad = new Map<string, string[]>();
+      for (const h of hits) {
+        const list = namesBySquad.get(h.squadId) ?? [];
+        list.push(h.playerName);
+        namesBySquad.set(h.squadId, list);
+      }
+      for (const [squadId, names] of namesBySquad) {
+        const reason = `Spelare borttagna ur VM-poolen: ${names.join(", ")}`;
+        await db
+          .update(squads)
+          .set({
+            invalid: true,
+            invalidReason: reason,
+            updatedAt: new Date(),
+          })
+          .where(eq(squads.id, squadId));
+        squadsInvalidated++;
+      }
+    }
   }
 
   return {
@@ -287,7 +325,8 @@ export async function applyPlan(plan: IngestPlan): Promise<IngestSummary> {
     snapshotsInserted,
     snapshotsUpdated,
     orphanedPlayers: plan.orphanedPlayers,
-    playersDeactivated,
+    playersArchived,
+    squadsInvalidated,
   };
 }
 
@@ -352,4 +391,44 @@ export async function runIngest(source: DataSource): Promise<IngestSummary> {
   }
 
   return { ...summary, sourceId: source.id };
+}
+
+/**
+ * Same as `runIngest`, but writes an audit row to `ingest_runs` so we can see
+ * later that the cron actually fired (and what it did / failed at). Always
+ * inserts a started row up front, then updates on success or failure.
+ */
+export async function runIngestWithLog(
+  source: DataSource,
+  trigger: "cron" | "admin",
+): Promise<IngestSummary> {
+  const [row] = await db
+    .insert(ingestRuns)
+    .values({
+      sourceId: source.id,
+      trigger,
+      startedAt: new Date(),
+      ok: false,
+    })
+    .returning({ id: ingestRuns.id });
+
+  try {
+    const summary = await runIngest(source);
+    await db
+      .update(ingestRuns)
+      .set({
+        finishedAt: new Date(),
+        ok: true,
+        summary: summary as unknown as Record<string, unknown>,
+      })
+      .where(eq(ingestRuns.id, row.id));
+    return summary;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    await db
+      .update(ingestRuns)
+      .set({ finishedAt: new Date(), ok: false, error: message })
+      .where(eq(ingestRuns.id, row.id));
+    throw err;
+  }
 }

@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
 import {
@@ -169,7 +169,7 @@ export async function getPlayerListRows(
       : db
           .select()
           .from(players)
-          .where(eq(players.active, true))
+          .where(and(eq(players.active, true), isNull(players.archivedAt)))
           .orderBy(asc(players.name)),
     db.select().from(clubs),
     db.select().from(rounds).orderBy(asc(rounds.number)),

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runIngest } from "@/lib/ingest-apply";
+import { runIngestWithLog } from "@/lib/ingest-apply";
 import { aftonbladetSource } from "@/lib/sources/aftonbladet";
 
 /**
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
 
   const startedAt = new Date();
   try {
-    const summary = await runIngest(aftonbladetSource);
+    const summary = await runIngestWithLog(aftonbladetSource, "cron");
     return NextResponse.json({
       ok: true,
       startedAt: startedAt.toISOString(),

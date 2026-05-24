@@ -1,0 +1,1 @@
+ALTER TABLE "player_round_snapshots" ALTER COLUMN "popularity" SET DATA TYPE real;

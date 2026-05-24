@@ -108,9 +108,18 @@ export async function saveSquadAction(
   // Persist. No transactions over Neon HTTP — sequence carefully.
   let squadId: string;
   if (existing) {
+    // Picker only lets the user pick from non-archived players, and
+    // validateSquad has already verified every ID is in the pickable set,
+    // so a successful save proves the squad no longer contains archived
+    // players — clear any invalid flag set by an earlier ingest run.
     await db
       .update(squads)
-      .set({ captainPlayerId, updatedAt: new Date() })
+      .set({
+        captainPlayerId,
+        invalid: false,
+        invalidReason: null,
+        updatedAt: new Date(),
+      })
       .where(eq(squads.id, existing.squadId));
     squadId = existing.squadId;
     await db.delete(squadPlayers).where(eq(squadPlayers.squadId, squadId));

@@ -159,16 +159,33 @@ async function SquadPickerWrapper({
 
   return (
     <>
-      {dropped.length > 0 && current?.lockedAt == null && (
-        <section className="mt-3 border border-yellow bg-yellow/5 p-3 text-xs">
-          <p className="text-yellow uppercase tracking-widest">
-            ! AFTONBLADET HAR PLOCKAT UT {dropped.length} SPELARE
+      {(dropped.length > 0 || current?.invalid) && current?.lockedAt == null && (
+        <section
+          className={`mt-3 border p-3 text-xs ${
+            current?.invalid
+              ? "border-red bg-red/5"
+              : "border-yellow bg-yellow/5"
+          }`}
+        >
+          <p
+            className={`uppercase tracking-widest ${
+              current?.invalid ? "text-red" : "text-yellow"
+            }`}
+          >
+            {current?.invalid
+              ? "! TRUPPEN ÄR OGILTIG — MÅSTE BYGGAS OM"
+              : `! AFTONBLADET HAR PLOCKAT UT ${dropped.length} SPELARE`}
           </p>
-          <ul className="mt-2 ml-3 list-disc text-foreground">
-            {dropped.map((d) => (
-              <li key={d.id}>{d.name}</li>
-            ))}
-          </ul>
+          {current?.invalidReason && (
+            <p className="mt-2 text-foreground">{current.invalidReason}</p>
+          )}
+          {dropped.length > 0 && (
+            <ul className="mt-2 ml-3 list-disc text-foreground">
+              {dropped.map((d) => (
+                <li key={d.id}>{d.name}</li>
+              ))}
+            </ul>
+          )}
           <p className="mt-2 text-dim">
             {dropped.length === 1 ? "Spelaren är" : "Spelarna är"} borttagna
             ur landslagstruppen. Välj ersättare — bytet kostar inget innan

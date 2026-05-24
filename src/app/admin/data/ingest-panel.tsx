@@ -89,9 +89,14 @@ export function IngestPanel() {
               tone={summary.orphanedPlayers.length > 0 ? "warn" : undefined}
             />
             <Line
-              k="DEAKTIVERADE"
-              v={summary.playersDeactivated}
-              tone={summary.playersDeactivated > 0 ? "warn" : undefined}
+              k="ARKIVERADE"
+              v={summary.playersArchived}
+              tone={summary.playersArchived > 0 ? "warn" : undefined}
+            />
+            <Line
+              k="OGILTIGA TRUPPER"
+              v={summary.squadsInvalidated}
+              tone={summary.squadsInvalidated > 0 ? "warn" : undefined}
             />
           </dl>
         </section>

@@ -4,6 +4,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  real,
   smallint,
   text,
   timestamp,
@@ -95,6 +96,10 @@ export const players = pgTable("players", {
   clubId: uuid("club_id").references(() => clubs.id, { onDelete: "set null" }),
   position: playerPosition("position").notNull(),
   active: boolean("active").notNull().default(true),
+  /** Set when the ingest source drops a player (orphan). Picker hides them;
+   *  any squad still holding them gets marked invalid. Soft-delete so we can
+   *  un-archive if Aftonbladet re-adds them under the same external id. */
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -135,9 +140,11 @@ export const playerRoundSnapshots = pgTable(
     growthSek: integer("growth_sek").notNull().default(0),
     /** Cumulative SEK growth across the tournament through this round. */
     totalGrowthSek: integer("total_growth_sek").notNull().default(0),
-    /** Raw count of teams owning this player. Aftonbladet returns this as a
-     *  count, not a percentage — divide by approved-team count to render %. */
-    popularity: integer("popularity").notNull().default(0),
+    /** Fraction of Aftonbladet squads owning this player, 0..1. Multiply by
+     *  100 to render as a percentage. Aftonbladet used to return a raw squad
+     *  count here but switched to a fraction during the 2026 WC rollout, so
+     *  this is `real` not `integer`. */
+    popularity: real("popularity").notNull().default(0),
     /** -1 = falling, 0 = flat, +1 = rising. Aftonbladet's own indicator. */
     trend: smallint("trend").notNull().default(0),
     source: snapshotSource("source").notNull(),
@@ -194,6 +201,26 @@ export const fantasyEventTypes = pgTable("fantasy_event_types", {
     .defaultNow(),
 });
 
+/**
+ * Audit log of every ingest run (cron-triggered or admin-triggered). Lets us
+ * answer "did the cron actually run yesterday, and what did it change?"
+ * without doing DB forensics. Stored summary mirrors IngestSummary shape.
+ */
+export const ingestRuns = pgTable("ingest_runs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sourceId: text("source_id").notNull(),
+  /** "cron" | "admin" — who fired it. */
+  trigger: text("trigger").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  ok: boolean("ok").notNull().default(false),
+  /** Full IngestSummary on success, or partial summary if we got far enough. */
+  summary: jsonb("summary").$type<Record<string, unknown>>(),
+  error: text("error"),
+});
+
 // ─── Squads ─────────────────────────────────────────────────────────────────
 
 /**
@@ -215,6 +242,11 @@ export const squads = pgTable(
       onDelete: "restrict",
     }),
     lockedAt: timestamp("locked_at", { withTimezone: true }),
+    /** Set true by the ingest when this squad contains a player that the
+     *  source has dropped. UI surfaces a banner + re-pick CTA. Cleared when
+     *  the user rebuilds the squad without the offending player(s). */
+    invalid: boolean("invalid").notNull().default(false),
+    invalidReason: text("invalid_reason"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -460,6 +492,8 @@ export type SideBet = typeof sideBets.$inferSelect;
 export type NewSideBet = typeof sideBets.$inferInsert;
 export type BetAnswerType = (typeof betAnswerType.enumValues)[number];
 export type BetStatus = (typeof betStatus.enumValues)[number];
+export type IngestRun = typeof ingestRuns.$inferSelect;
+export type NewIngestRun = typeof ingestRuns.$inferInsert;
 
 export type Position = (typeof playerPosition.enumValues)[number];
 export type RoundStatus = (typeof roundStatus.enumValues)[number];

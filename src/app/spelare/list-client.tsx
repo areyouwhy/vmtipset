@@ -532,7 +532,9 @@ function StatsTable({
                 {r.stats.manOfTheMatch || "—"}
               </td>
               <td className="px-2 py-1.5 text-right text-dim">
-                {r.popularity || "—"}
+                {r.popularity > 0
+                  ? `${(r.popularity * 100).toFixed(1)}%`
+                  : "—"}
               </td>
               <td className="px-2 py-1.5 text-right text-cyan">
                 {r.ourPickCount > 0

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
 import {
@@ -66,7 +66,10 @@ export async function getPickablePlayers(
   roundId: string,
 ): Promise<PickablePlayer[]> {
   const [allPlayers, allClubs, allSnapshots, ourSquads] = await Promise.all([
-    db.select().from(players).where(eq(players.active, true)),
+    db
+      .select()
+      .from(players)
+      .where(and(eq(players.active, true), isNull(players.archivedAt))),
     db.select().from(clubs),
     db
       .select()
@@ -86,15 +89,8 @@ export async function getPickablePlayers(
     }
   }
 
-  // Aftonbladet popularity is a raw count of squads owning this player on
-  // their platform. To turn it into a percentage we infer their total
-  // active-squad count for the round: each squad picks 11 players, so the
-  // sum of popularities across all players in the round equals
-  // (totalSquads × 11). Divide-by-zero pre-tournament → 0%.
-  let abTotalPopularity = 0;
-  for (const s of snapshotByPlayer.values()) abTotalPopularity += s.popularity;
-  const SQUAD_SIZE = 11;
-  const abActiveSquads = abTotalPopularity > 0 ? abTotalPopularity / SQUAD_SIZE : 0;
+  // Aftonbladet now returns popularity as a fraction (0..1) of all their
+  // squads owning this player. Render as a percentage directly.
 
   // Our own popularity = count of *our* round squads owning the player.
   const ourSquadIds = ourSquads.map((s) => s.id);
@@ -118,8 +114,7 @@ export async function getPickablePlayers(
       const snap = snapshotByPlayer.get(p.id);
       if (!snap) return [];
       const club = p.clubId ? clubById.get(p.clubId) : null;
-      const abPct =
-        abActiveSquads > 0 ? (snap.popularity / abActiveSquads) * 100 : 0;
+      const abPct = snap.popularity * 100;
       const ourCount = ourCountByPlayer.get(p.id) ?? 0;
       const ourPct = ourTotal > 0 ? (ourCount / ourTotal) * 100 : 0;
       return [
@@ -152,12 +147,18 @@ export type CurrentSquad = {
    *  inactive (dropped from the WC pool by Aftonbladet). The picker filters
    *  these out before display; use droppedPlayers to surface the fact. */
   playerIds: string[];
-  /** Subset of playerIds whose player.active = false. Pre-round-1 the user
-   *  needs to swap these for free; mid-tournament they get auto-replaced
-   *  via the normal transfer flow. */
+  /** Subset of playerIds whose player is no longer pickable — either
+   *  manually deactivated (active=false) or archived by the ingest
+   *  (archivedAt set). Pre-round-1 the user needs to swap these for free;
+   *  mid-tournament they get auto-replaced via the normal transfer flow. */
   droppedPlayers: { id: string; name: string }[];
   captainPlayerId: string | null;
   lockedAt: Date | null;
+  /** True once the ingest detected that one of this squad's players got
+   *  archived. UI surfaces a banner with `invalidReason` until the user
+   *  rebuilds the squad. */
+  invalid: boolean;
+  invalidReason: string | null;
 };
 
 export type PendingTransfer = {
@@ -266,15 +267,21 @@ export async function getCurrentSquad(
     .where(eq(squadPlayers.squadId, squad.id));
   const ids = sps.map((sp) => sp.playerId);
 
-  // Look up which of these have been deactivated.
+  // Look up which of these are no longer pickable (manual deactivate OR
+  // ingest-archived).
   const dropped: { id: string; name: string }[] = [];
   if (ids.length > 0) {
     const rows = await db
-      .select({ id: players.id, name: players.name, active: players.active })
+      .select({
+        id: players.id,
+        name: players.name,
+        active: players.active,
+        archivedAt: players.archivedAt,
+      })
       .from(players)
       .where(inArray(players.id, ids));
     for (const r of rows) {
-      if (!r.active) dropped.push({ id: r.id, name: r.name });
+      if (!r.active || r.archivedAt) dropped.push({ id: r.id, name: r.name });
     }
   }
 
@@ -284,5 +291,7 @@ export async function getCurrentSquad(
     droppedPlayers: dropped,
     captainPlayerId: squad.captainPlayerId,
     lockedAt: squad.lockedAt,
+    invalid: squad.invalid,
+    invalidReason: squad.invalidReason,
   };
 }

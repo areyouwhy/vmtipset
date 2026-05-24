@@ -13,7 +13,7 @@ import {
   transfers,
 } from "@/db/schema";
 import { isAdmin } from "@/lib/auth";
-import { runIngest, type IngestSummary } from "@/lib/ingest-apply";
+import { runIngest, runIngestWithLog, type IngestSummary } from "@/lib/ingest-apply";
 import { aftonbladetSource } from "@/lib/sources/aftonbladet";
 import { mockSource } from "@/lib/sources/mock";
 import type { DataSource } from "@/lib/sources/types";
@@ -31,7 +31,7 @@ export async function runIngestAction(
   source: "mock" | "aftonbladet",
 ): Promise<IngestSummary> {
   await requireAdmin();
-  const summary = await runIngest(SOURCES[source]);
+  const summary = await runIngestWithLog(SOURCES[source], "admin");
   revalidatePath("/admin/data");
   return summary;
 }
