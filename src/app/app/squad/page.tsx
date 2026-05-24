@@ -40,26 +40,24 @@ export default async function SquadPage() {
         />
 
         <section className="py-6">
-          <p className="text-[10px] uppercase tracking-widest text-dim">
-            LAG
-          </p>
+          {round ? (
+            <p className="text-[10px] uppercase tracking-widest text-dim">
+              <Link
+                href={`/vm/omgang/${round.number}`}
+                className="text-dim hover:text-cyan"
+              >
+                AKTIV ROND: {round.name} (#{round.number}) →
+              </Link>
+            </p>
+          ) : (
+            <p className="text-[10px] uppercase tracking-widest text-dim">
+              LAG
+            </p>
+          )}
           <h1 className="mt-1 text-2xl font-bold uppercase tracking-tight text-yellow">
             {team.name}
           </h1>
-          {round ? (
-            <>
-              <p className="mt-2 text-sm text-dim">
-                Aktiv rond:{" "}
-                <Link
-                  href={`/vm/omgang/${round.number}`}
-                  className="text-foreground hover:text-cyan"
-                >
-                  {round.name} (#{round.number}) →
-                </Link>
-              </p>
-              <DeadlineBanner deadline={round.deadline} />
-            </>
-          ) : (
+          {!round && (
             <p className="mt-2 text-sm text-red">
               ! Ingen aktiv rond — admin måste öppna en rond först.
             </p>
@@ -71,6 +69,7 @@ export default async function SquadPage() {
             teamId={team.id}
             roundId={round.id}
             roundNumber={round.number}
+            deadline={round.deadline}
           />
         )}
       </div>
@@ -123,10 +122,12 @@ async function SquadPickerWrapper({
   teamId,
   roundId,
   roundNumber,
+  deadline,
 }: {
   teamId: string;
   roundId: string;
   roundNumber: number;
+  deadline: Date | null;
 }) {
   const [pickable, current, referenceIds] = await Promise.all([
     getPickablePlayers(roundId),
@@ -199,6 +200,7 @@ async function SquadPickerWrapper({
         initialCaptainId={cleanCaptainId}
         locked={current?.lockedAt != null}
         referencePlayerIds={referenceIds}
+        deadlineSlot={<DeadlineBanner deadline={deadline} />}
       />
     </>
   );

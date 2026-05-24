@@ -35,6 +35,7 @@ export function SquadPicker({
   initialCaptainId,
   locked,
   referencePlayerIds,
+  deadlineSlot,
 }: {
   players: PickablePlayer[];
   initialPlayerIds: string[];
@@ -43,6 +44,10 @@ export function SquadPicker({
   /** Squad from the previous round. Used to display pending transfers + offer
    *  undo. null = round 1 (no transfers possible). */
   referencePlayerIds: string[] | null;
+  /** Optional banner rendered inside the picker, directly after the picker
+   *  body and just above the fixed save bar. Lets the page hand the deadline
+   *  notice down without leaving a gap of bottom padding above it. */
+  deadlineSlot?: React.ReactNode;
 }) {
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(initialPlayerIds),
@@ -530,37 +535,64 @@ export function SquadPicker({
         </div>
       )}
 
-      {/* View tabs — only on mobile/tablet. Desktop renders both side-by-side. */}
-      <div className="mt-2 grid grid-cols-2 border border-border lg:hidden">
-        <button
-          type="button"
-          onClick={() => {
-            setPickedSlotPosition(null);
-            setView("plan");
-          }}
-          className={`px-3 py-2 text-xs uppercase tracking-widest transition ${
-            view === "plan"
-              ? "bg-yellow text-black"
-              : "text-dim hover:text-cyan"
-          }`}
-        >
-          PLAN
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setPickedSlotPosition(null);
-            setFilter("ALL");
-            setView("lista");
-          }}
-          className={`px-3 py-2 text-xs uppercase tracking-widest transition ${
-            view === "lista"
-              ? "bg-yellow text-black"
-              : "text-dim hover:text-cyan"
-          }`}
-        >
-          LISTA
-        </button>
+      {/* Mobile-only compact toolbar: PLAN | LISTA toggle + formation
+          dropdown, both on one row to reclaim vertical space for the pitch.
+          Desktop hides this and shows the chip-style formation selector
+          inside PitchView instead. */}
+      <div className="mt-2 flex items-stretch gap-2 lg:hidden">
+        <div className="flex flex-1 border border-border">
+          <button
+            type="button"
+            onClick={() => {
+              setPickedSlotPosition(null);
+              setView("plan");
+            }}
+            className={`flex-1 px-3 py-1.5 text-xs uppercase tracking-widest transition ${
+              view === "plan"
+                ? "bg-yellow text-black"
+                : "text-dim hover:text-cyan"
+            }`}
+          >
+            PLAN
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPickedSlotPosition(null);
+              setFilter("ALL");
+              setView("lista");
+            }}
+            className={`flex-1 px-3 py-1.5 text-xs uppercase tracking-widest transition ${
+              view === "lista"
+                ? "bg-yellow text-black"
+                : "text-dim hover:text-cyan"
+            }`}
+          >
+            LISTA
+          </button>
+        </div>
+        {!locked && (
+          <select
+            value={formationToString(formation)}
+            onChange={(e) => {
+              const next = currentRules.legalFormations.find(
+                (f) => formationToString(f) === e.target.value,
+              );
+              if (next) setFormation(next);
+            }}
+            aria-label="Formation"
+            className="border border-border bg-black px-2 py-1.5 text-xs font-bold uppercase tracking-widest tabular-nums text-yellow"
+          >
+            {currentRules.legalFormations.map((f) => {
+              const s = formationToString(f);
+              return (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              );
+            })}
+          </select>
+        )}
       </div>
 
       <div className="lg:grid lg:grid-cols-2 lg:gap-6 lg:mt-2">
@@ -683,6 +715,8 @@ export function SquadPicker({
         </div>
       )}
 
+      {deadlineSlot && <div className="mt-3">{deadlineSlot}</div>}
+
       {/* Sticky save bar at viewport bottom */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background px-4 py-3 sm:px-6">
         <div className="mx-auto w-full max-w-3xl lg:max-w-6xl">
@@ -742,10 +776,11 @@ function PitchView({
 
   return (
     <div className="mt-3">
-      {/* Formation selector — horizontal scroll with a fade on the right
-          edge so users see there's more to swipe to. */}
+      {/* Desktop formation chips. On mobile, the parent renders a compact
+          <select> in the PLAN|LISTA toolbar — hide chips here to free up
+          vertical space for the pitch. */}
       <div
-        className="mb-2 -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1"
+        className="mb-2 -mx-1 hidden snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 lg:flex"
         style={{
           maskImage:
             "linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%)",
@@ -784,11 +819,12 @@ function PitchView({
           backgroundImage: "url('/img/pitch.png')",
         }}
       >
-        {/* Push the first row below the goal art + sponsor banners painted
-            into the pitch image (top ~18% of the canvas). */}
+        {/* Push the first row just below the painted goal area at the top.
+            10% works across phone widths so the GK lands inside the goal
+            box and the FWD row still fits inside the bottom edge. */}
         <div
-          className="absolute inset-0 flex flex-col px-2 pb-3"
-          style={{ paddingTop: "18%" }}
+          className="absolute inset-0 flex flex-col px-2 pb-2"
+          style={{ paddingTop: "10%" }}
         >
           {rows.map((pos) => {
             const players = byPos(pos);
@@ -912,7 +948,13 @@ function EmptySlot({
       className="flex min-w-0 flex-1 flex-col items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
       aria-label={`Lägg till ${pos}`}
     >
-      <div className="flex h-[84px] w-[84px] items-center justify-center border-2 border-dashed border-yellow/70 bg-black/40 text-3xl leading-none text-yellow/90 transition hover:border-yellow hover:bg-black/60 hover:text-yellow">
+      <div
+        className="flex items-center justify-center border-2 border-dashed border-yellow/70 bg-black/40 text-3xl leading-none text-yellow/90 transition hover:border-yellow hover:bg-black/60 hover:text-yellow"
+        style={{
+          width: "clamp(48px, 15vw, 84px)",
+          height: "clamp(48px, 15vw, 84px)",
+        }}
+      >
         +
       </div>
       <span className="bg-black/80 px-1 text-[10px] uppercase tracking-widest text-yellow/80">

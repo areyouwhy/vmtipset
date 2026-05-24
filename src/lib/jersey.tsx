@@ -48,7 +48,7 @@ export function PitchJersey({
   // clamp(minPx, viewport-relative preferred, maxPx) → caps at `size` on
   // wider screens, shrinks to 14vw on narrow ones (≈ 56px at iPhone width).
   const dim = responsive
-    ? `clamp(56px, 18vw, ${size}px)`
+    ? `clamp(48px, 15vw, ${size}px)`
     : `${size}px`;
   if (!src) {
     return (
