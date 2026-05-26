@@ -7,6 +7,12 @@ import { PLAYER_CLUBS } from "@/data/player-clubs";
 import { clubSlug } from "@/lib/clubs";
 import { teamSlug } from "@/lib/team-slug";
 
+// Route-segment revalidate makes Next emit the proper
+// `Cache-Control: public, max-age=0, s-maxage=3600, stale-while-revalidate`
+// header on the CDN response. Setting it manually via NextResponse
+// headers is silently overridden by Next when unstable_cache is in play.
+export const revalidate = 3600;
+
 /**
  * Search-palette catalog. One trip pulls everything the ⌘K palette needs
  * (players, national teams, domestic clubs, rounds) so client-side filtering
@@ -132,14 +138,7 @@ const buildSearchCatalog = unstable_cache(
 export async function GET(): Promise<NextResponse<SearchCatalog>> {
   try {
     const catalog = await buildSearchCatalog();
-    return NextResponse.json(catalog, {
-      headers: {
-        // CDN holds the response for an hour; the underlying unstable_cache
-        // gets tag-invalidated on admin approve / ingest, so this is safe.
-        "cache-control":
-          "public, s-maxage=3600, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(catalog);
   } catch {
     // Degrade rather than 500 — palette just shows static page entries.
     return NextResponse.json(
