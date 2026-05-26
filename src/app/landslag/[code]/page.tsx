@@ -13,7 +13,7 @@ import {
 import { fifaRank, FIFA_RANK_SOURCE_DATE } from "@/data/fifa-rank";
 import { groupForCountry } from "@/data/wc-groups";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function NationPage({
   params,
@@ -21,7 +21,7 @@ export default async function NationPage({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  const detail = await getNationDetail(code);
+  const detail = await getNationDetail(code).catch(() => null);
   if (!detail) notFound();
 
   const rank = fifaRank(detail.countryCode);

@@ -2,7 +2,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getPlayerListRows } from "@/lib/players-data";
 import { PublicPlayersList } from "./list-client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export default async function PlayersPage() {
   const rows = await getPlayerListRows().catch(() => null);

@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { sideBets } from "@/db/schema";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = {
   title: "SIDOSPEL — Copa del Mundo 2026",

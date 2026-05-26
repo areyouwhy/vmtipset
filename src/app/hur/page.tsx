@@ -16,9 +16,10 @@ export const metadata = {
     "How the league works, what the rules are, and how scoring is calculated.",
 };
 
-// The pot preview reads the live approved-user count + pool config; never
-// prerender against build-time DB state.
-export const dynamic = "force-dynamic";
+// The pot preview reads the live approved-user count + pool config — cached
+// via unstable_cache + revalidateTag, so the page itself can be statically
+// rendered at the CDN.
+export const revalidate = 600;
 
 export default async function HowPage() {
   const r = currentRules;

@@ -1,4 +1,5 @@
 import { asc, eq } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { clubFor, PLAYER_CLUBS } from "@/data/player-clubs";
 import { db } from "@/db";
 import { clubs, players, playerRoundSnapshots, rounds, type Player } from "@/db/schema";
@@ -68,7 +69,13 @@ export type ClubDetail = {
 
 /** Returns the club's roster for the latest round's prices, sorted GK→FWD
  *  then by price desc. */
-export async function getClubDetail(slug: string): Promise<ClubDetail | null> {
+export const getClubDetail = unstable_cache(
+  _getClubDetail,
+  ["club-detail"],
+  { tags: ["players", "snapshots", "rounds", "clubs"], revalidate: 3600 },
+);
+
+async function _getClubDetail(slug: string): Promise<ClubDetail | null> {
   const name = clubNameFromSlug(slug);
   if (!name) return null;
 

@@ -1,4 +1,5 @@
 import { asc, eq } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { db } from "@/db";
 import {
   clubs,
@@ -198,7 +199,13 @@ function buildPriceMaps(
  * Loads everything a /landslag/[code] page needs in one round-trip.
  * Returns null when no club/team with that ISO code exists.
  */
-export async function getNationDetail(
+export const getNationDetail = unstable_cache(
+  _getNationDetail,
+  ["nation-detail"],
+  { tags: ["players", "snapshots", "rounds", "clubs"], revalidate: 3600 },
+);
+
+async function _getNationDetail(
   countryCode: string,
 ): Promise<NationDetail | null> {
   const code = countryCode.toUpperCase();
@@ -292,7 +299,13 @@ export type NationSummary = {
  * value. Single round-trip; reuses the same dream-team math as the detail
  * page so the two numbers always agree.
  */
-export async function getAllNations(): Promise<NationSummary[]> {
+export const getAllNations = unstable_cache(
+  _getAllNations,
+  ["all-nations"],
+  { tags: ["players", "snapshots", "rounds", "clubs"], revalidate: 3600 },
+);
+
+async function _getAllNations(): Promise<NationSummary[]> {
   const [allClubs, allPlayers, allRounds, allSnapshots] = await Promise.all([
     db.select().from(clubs),
     db.select().from(players).where(eq(players.active, true)),

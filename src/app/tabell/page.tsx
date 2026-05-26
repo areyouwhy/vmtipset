@@ -4,7 +4,7 @@ import { getLeaderboard } from "@/lib/leaderboard";
 import { teamSlug } from "@/lib/team-slug";
 import { TabellClient } from "./table-client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = {
   title: "TABELL — Copa del Mundo 2026",

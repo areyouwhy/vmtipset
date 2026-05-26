@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getAllClubs } from "@/lib/clubs";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function KlubblagIndexPage() {
   const clubs = await getAllClubs();

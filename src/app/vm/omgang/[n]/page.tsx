@@ -9,7 +9,7 @@ import {
   type WcMatchGroup,
 } from "@/lib/wc-tournament";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 const ROUND_TITLES: Record<number, string> = {
   1: "GRUPPSPEL · OMGÅNG 1",

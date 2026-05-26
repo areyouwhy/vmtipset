@@ -4,7 +4,7 @@ import { getGroupsView, getKnockoutView } from "@/lib/wc-tournament";
 import { getAllNations } from "@/lib/nation-data";
 import { getAllClubs } from "@/lib/clubs";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export default async function VMHomePage() {
   const [groups, knockout, nations, clubs] = await Promise.all([

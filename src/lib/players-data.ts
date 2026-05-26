@@ -298,7 +298,13 @@ export type PlayerDetail = {
  * Player detail + per-round snapshot map. Returns null when no player exists
  * with that id.
  */
-export async function getPlayerDetail(
+export const getPlayerDetail = unstable_cache(
+  _getPlayerDetail,
+  ["player-detail"],
+  { tags: ["players", "snapshots", "rounds"], revalidate: 3600 },
+);
+
+async function _getPlayerDetail(
   playerId: string,
 ): Promise<PlayerDetail | null> {
   const [player] = await db

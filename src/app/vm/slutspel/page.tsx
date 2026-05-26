@@ -3,7 +3,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getKnockoutView } from "@/lib/wc-tournament";
 import { KnockoutTabs } from "./client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export default async function KnockoutPage() {
   const view = await getKnockoutView();

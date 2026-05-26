@@ -4,7 +4,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Jersey } from "@/lib/jersey";
 import { getClubDetail, type ClubPlayer } from "@/lib/clubs";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function ClubPage({
   params,
@@ -12,7 +12,7 @@ export default async function ClubPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const detail = await getClubDetail(slug);
+  const detail = await getClubDetail(slug).catch(() => null);
   if (!detail) notFound();
 
   // Group by position for display.

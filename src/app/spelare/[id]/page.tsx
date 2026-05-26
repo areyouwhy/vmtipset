@@ -6,7 +6,7 @@ import { clubSlug } from "@/lib/clubs";
 import { Jersey } from "@/lib/jersey";
 import { getPlayerDetail } from "@/lib/players-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export default async function PublicPlayerPage({
   params,
@@ -14,7 +14,7 @@ export default async function PublicPlayerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const detail = await getPlayerDetail(id);
+  const detail = await getPlayerDetail(id).catch(() => null);
   if (!detail) notFound();
 
   const { player, club, rounds: roundLines, eventTypes, stats } = detail;

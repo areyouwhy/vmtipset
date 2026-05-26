@@ -9,12 +9,12 @@ import {
 } from "@/lib/wc-tournament";
 import { fifaRank, FIFA_RANK_SOURCE_DATE } from "@/data/fifa-rank";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export default async function LandslagIndexPage() {
   const [nations, groups] = await Promise.all([
-    getAllNations(),
-    getGroupsView(),
+    getAllNations().catch(() => []),
+    getGroupsView().catch(() => [] as GroupView[]),
   ]);
   const byCode = new Map(nations.map((n) => [n.countryCode, n]));
 

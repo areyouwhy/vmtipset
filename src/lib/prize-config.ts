@@ -7,6 +7,7 @@ import {
   users,
   type PrizePoolKey,
 } from "@/db/schema";
+import { readEdgeConfig, writeEdgeConfig } from "./edge-config";
 import {
   calculatePotPayout,
   validatePlaceShares,
@@ -15,6 +16,8 @@ import {
   type PrizePoolInput,
 } from "./prizes";
 import { currentRules } from "./rules";
+
+const EDGE_CONFIG_KEY = "prize_pools_v1";
 
 /**
  * Default config seeded the first time an admin loads the config page. Once
@@ -59,29 +62,46 @@ export async function ensureDefaultPrizes(): Promise<void> {
   }
 }
 
+async function loadPrizePoolsFromDb(): Promise<PrizePoolInput[]> {
+  const pools = await db.select().from(prizePools);
+  const places = await db.select().from(prizePlaces);
+
+  // Stable order: main_league first, then daily_bets, then any future keys.
+  const order: Record<PrizePoolKey, number> = {
+    main_league: 0,
+    daily_bets: 1,
+  };
+
+  return pools
+    .filter((p) => p.active)
+    .sort((a, b) => order[a.key] - order[b.key])
+    .map((pool) => ({
+      key: pool.key,
+      label: pool.label,
+      allocationBps: pool.allocationBps,
+      places: places
+        .filter((pl) => pl.poolId === pool.id)
+        .sort((a, b) => a.place - b.place)
+        .map((pl) => ({ place: pl.place, shareBps: pl.shareBps })),
+    }));
+}
+
+/**
+ * Read order: Edge Config first (free, off-DB), then DB. DB result is
+ * cached for an hour and invalidated via revalidateTag("prize-pools")
+ * from `savePool*`. Falls back to DEFAULT_POOLS as the last resort so the
+ * landing page still has something to render if Neon is completely down
+ * AND Edge Config isn't set up yet.
+ */
 export const loadPrizePools = unstable_cache(
   async (): Promise<PrizePoolInput[]> => {
-    const pools = await db.select().from(prizePools);
-    const places = await db.select().from(prizePlaces);
-
-    // Stable order: main_league first, then daily_bets, then any future keys.
-    const order: Record<PrizePoolKey, number> = {
-      main_league: 0,
-      daily_bets: 1,
-    };
-
-    return pools
-      .filter((p) => p.active)
-      .sort((a, b) => order[a.key] - order[b.key])
-      .map((pool) => ({
-        key: pool.key,
-        label: pool.label,
-        allocationBps: pool.allocationBps,
-        places: places
-          .filter((pl) => pl.poolId === pool.id)
-          .sort((a, b) => a.place - b.place)
-          .map((pl) => ({ place: pl.place, shareBps: pl.shareBps })),
-      }));
+    const fromEdge = await readEdgeConfig<PrizePoolInput[]>(EDGE_CONFIG_KEY);
+    if (fromEdge && fromEdge.length > 0) return fromEdge;
+    try {
+      return await loadPrizePoolsFromDb();
+    } catch {
+      return DEFAULT_POOLS;
+    }
   },
   ["prize-pools"],
   { tags: ["prize-pools"], revalidate: 3600 },
@@ -125,6 +145,7 @@ export async function savePoolAllocations(
       .set({ allocationBps: pool.allocationBps, updatedAt: new Date() })
       .where(eq(prizePools.key, pool.key));
   }
+  await syncPrizePoolsToEdgeConfig();
   revalidateTag("prize-pools", "max");
   return { ok: true, errors: [] };
 }
@@ -153,6 +174,22 @@ export async function savePoolPlaces(
       })),
     );
   }
+  await syncPrizePoolsToEdgeConfig();
   revalidateTag("prize-pools", "max");
   return { ok: true, errors: [] };
+}
+
+/**
+ * Push the current DB state into Edge Config so reads skip Postgres on
+ * subsequent requests. No-op when Edge Config write credentials aren't
+ * configured (local / preview).
+ */
+async function syncPrizePoolsToEdgeConfig(): Promise<void> {
+  try {
+    const pools = await loadPrizePoolsFromDb();
+    await writeEdgeConfig(EDGE_CONFIG_KEY, pools);
+  } catch {
+    // Best-effort — Edge Config sync isn't load-bearing; the DB is still
+    // source of truth and the next revalidateTag will rehydrate the cache.
+  }
 }
