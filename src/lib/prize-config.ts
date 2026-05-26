@@ -1,4 +1,5 @@
 import { count, eq } from "drizzle-orm";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { db } from "@/db";
 import {
   prizePlaces,
@@ -58,37 +59,45 @@ export async function ensureDefaultPrizes(): Promise<void> {
   }
 }
 
-export async function loadPrizePools(): Promise<PrizePoolInput[]> {
-  const pools = await db.select().from(prizePools);
-  const places = await db.select().from(prizePlaces);
+export const loadPrizePools = unstable_cache(
+  async (): Promise<PrizePoolInput[]> => {
+    const pools = await db.select().from(prizePools);
+    const places = await db.select().from(prizePlaces);
 
-  // Stable order: main_league first, then daily_bets, then any future keys.
-  const order: Record<PrizePoolKey, number> = {
-    main_league: 0,
-    daily_bets: 1,
-  };
+    // Stable order: main_league first, then daily_bets, then any future keys.
+    const order: Record<PrizePoolKey, number> = {
+      main_league: 0,
+      daily_bets: 1,
+    };
 
-  return pools
-    .filter((p) => p.active)
-    .sort((a, b) => order[a.key] - order[b.key])
-    .map((pool) => ({
-      key: pool.key,
-      label: pool.label,
-      allocationBps: pool.allocationBps,
-      places: places
-        .filter((pl) => pl.poolId === pool.id)
-        .sort((a, b) => a.place - b.place)
-        .map((pl) => ({ place: pl.place, shareBps: pl.shareBps })),
-    }));
-}
+    return pools
+      .filter((p) => p.active)
+      .sort((a, b) => order[a.key] - order[b.key])
+      .map((pool) => ({
+        key: pool.key,
+        label: pool.label,
+        allocationBps: pool.allocationBps,
+        places: places
+          .filter((pl) => pl.poolId === pool.id)
+          .sort((a, b) => a.place - b.place)
+          .map((pl) => ({ place: pl.place, shareBps: pl.shareBps })),
+      }));
+  },
+  ["prize-pools"],
+  { tags: ["prize-pools"], revalidate: 3600 },
+);
 
-export async function getApprovedCount(): Promise<number> {
-  const [r] = await db
-    .select({ n: count() })
-    .from(users)
-    .where(eq(users.status, "approved"));
-  return r.n;
-}
+export const getApprovedCount = unstable_cache(
+  async (): Promise<number> => {
+    const [r] = await db
+      .select({ n: count() })
+      .from(users)
+      .where(eq(users.status, "approved"));
+    return r.n;
+  },
+  ["approved-count"],
+  { tags: ["users"], revalidate: 600 },
+);
 
 export async function getPotPayout(): Promise<PotPayout> {
   const [pools, approvedCount] = await Promise.all([
@@ -116,6 +125,7 @@ export async function savePoolAllocations(
       .set({ allocationBps: pool.allocationBps, updatedAt: new Date() })
       .where(eq(prizePools.key, pool.key));
   }
+  revalidateTag("prize-pools", "max");
   return { ok: true, errors: [] };
 }
 
@@ -143,5 +153,6 @@ export async function savePoolPlaces(
       })),
     );
   }
+  revalidateTag("prize-pools", "max");
   return { ok: true, errors: [] };
 }

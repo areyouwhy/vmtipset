@@ -12,7 +12,19 @@ export const metadata = {
 };
 
 export default async function TabellPage() {
-  const lb = await getLeaderboard();
+  const lb = await getLeaderboard().catch(() => null);
+  if (!lb) {
+    return (
+      <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mx-auto w-full max-w-3xl">
+          <Breadcrumbs trail={[{ label: "TABELL" }]} />
+          <p className="mt-8 border border-yellow/30 bg-yellow/5 p-4 text-sm text-dim">
+            Tabellen är tillfälligt otillgänglig — kom tillbaka om en stund.
+          </p>
+        </div>
+      </main>
+    );
+  }
   const scoredRounds = lb.rounds.filter((r) => r.isScored);
 
   return (

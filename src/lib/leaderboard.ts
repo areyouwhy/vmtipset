@@ -1,4 +1,5 @@
 import { asc, eq, inArray } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
 import {
@@ -71,7 +72,13 @@ export type Leaderboard = {
  * Rank is by total points across all scored rounds; tied teams share the
  * lower numeric rank (`1, 2, 2, 4`).
  */
-export async function getLeaderboard(): Promise<Leaderboard> {
+export const getLeaderboard = unstable_cache(
+  _getLeaderboard,
+  ["leaderboard"],
+  { tags: ["leaderboard", "teams", "scores", "squads"], revalidate: 300 },
+);
+
+async function _getLeaderboard(): Promise<Leaderboard> {
   const [
     allRounds,
     allScores,

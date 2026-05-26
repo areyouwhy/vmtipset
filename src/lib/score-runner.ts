@@ -1,4 +1,5 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
+import { revalidateTag } from "next/cache";
 import { db } from "@/db";
 import {
   playerRoundSnapshots,
@@ -107,6 +108,11 @@ export async function scoreRound(roundId: string): Promise<ScoringSummary> {
     playersBySquad.set(sp.squadId, arr);
   }
   await inheritSquadsForNextRound(round.number, targetSquads, playersBySquad);
+
+  revalidateTag("scores", "max");
+  revalidateTag("leaderboard", "max");
+  revalidateTag("rounds", "max");
+  revalidateTag("squads", "max");
 
   return lastSummary ?? {
     roundId,
@@ -327,6 +333,8 @@ export async function setRoundStatus(
   status: "upcoming" | "open" | "locked" | "scored",
 ): Promise<void> {
   await db.update(rounds).set({ status }).where(eq(rounds.id, roundId));
+  revalidateTag("rounds", "max");
+  revalidateTag("leaderboard", "max");
 }
 
 export async function reopenRound(roundId: string): Promise<void> {
@@ -335,6 +343,9 @@ export async function reopenRound(roundId: string): Promise<void> {
     .update(rounds)
     .set({ status: "locked" })
     .where(eq(rounds.id, roundId));
+  revalidateTag("rounds", "max");
+  revalidateTag("scores", "max");
+  revalidateTag("leaderboard", "max");
 }
 
 async function loadScoreSnapshots(

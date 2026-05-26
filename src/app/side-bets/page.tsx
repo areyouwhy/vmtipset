@@ -11,7 +11,11 @@ export const metadata = {
 };
 
 export default async function SideBetsPage() {
-  const all = await db.select().from(sideBets).orderBy(asc(sideBets.createdAt));
+  const all = await db
+    .select()
+    .from(sideBets)
+    .orderBy(asc(sideBets.createdAt))
+    .catch(() => [] as typeof sideBets.$inferSelect[]);
   const open = all.filter((b) => !b.resolution);
   const resolved = all.filter((b) => b.resolution);
 

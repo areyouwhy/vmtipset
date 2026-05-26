@@ -1,4 +1,5 @@
 import { and, asc, eq, isNull } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
 import {
@@ -160,7 +161,13 @@ function aggregateStats(
  * `includeInactive` off and get only active players; admin passes true to
  * see everyone (used for finding players Aftonbladet has dropped).
  */
-export async function getPlayerListRows(
+export const getPlayerListRows = unstable_cache(
+  _getPlayerListRows,
+  ["player-list-rows"],
+  { tags: ["players", "snapshots", "rounds"], revalidate: 3600 },
+);
+
+async function _getPlayerListRows(
   opts: { includeInactive?: boolean } = {},
 ): Promise<PlayerListRow[]> {
   const [allPlayers, allClubs, allRounds, allSnapshots, allEventTypeRows, allSquads, allSquadPlayers] = await Promise.all([

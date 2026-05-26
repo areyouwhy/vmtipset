@@ -8,10 +8,10 @@ export const dynamic = "force-dynamic";
 
 export default async function VMHomePage() {
   const [groups, knockout, nations, clubs] = await Promise.all([
-    getGroupsView(),
-    getKnockoutView(),
-    getAllNations(),
-    getAllClubs(),
+    getGroupsView().catch(() => []),
+    getKnockoutView().catch(() => ({ stages: [] as { matches: unknown[] }[] })),
+    getAllNations().catch(() => []),
+    getAllClubs().catch(() => []),
   ]);
   const groupMatchCount = groups.reduce((n, g) => n + g.matches.length, 0);
   const knockoutMatchCount = knockout.stages.reduce(

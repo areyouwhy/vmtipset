@@ -7,7 +7,7 @@ import {
   formationToString,
   type Formation,
 } from "@/lib/rules";
-import { ensureDefaultPrizes, getPotPayout } from "@/lib/prize-config";
+import { getPotPayout } from "@/lib/prize-config";
 import { bpsToPercent } from "@/lib/prizes";
 
 export const metadata = {
@@ -22,13 +22,13 @@ export const dynamic = "force-dynamic";
 
 export default async function HowPage() {
   const r = currentRules;
-  await ensureDefaultPrizes();
   const [payout, scoringRules] = await Promise.all([
-    getPotPayout(),
+    getPotPayout().catch(() => null),
     db
       .select()
       .from(fantasyEventTypes)
-      .orderBy(desc(fantasyEventTypes.valueSek)),
+      .orderBy(desc(fantasyEventTypes.valueSek))
+      .catch(() => [] as typeof fantasyEventTypes.$inferSelect[]),
   ]);
   // Drop entries Aftonbladet keeps at 0 value (lineup, substitute in/out) —
   // they're status markers, not scoring rules.
@@ -230,19 +230,19 @@ BANK_N       =  BANK_{N−1}
           <KV k="INSATS / DELTAGARE" v={`${r.stakePerUserSek} SEK`} />
           <KV
             k="GODKÄNDA LAG"
-            v={<span className="tabular-nums">{payout.approvedCount}</span>}
+            v={<span className="tabular-nums">{payout?.approvedCount ?? "—"}</span>}
           />
           <KV
             k="TOTAL POTT NU"
             v={
               <span className="tabular-nums text-yellow">
-                {formatSek(payout.totalPotSek)} SEK
+                {payout ? `${formatSek(payout.totalPotSek)} SEK` : "—"}
               </span>
             }
           />
 
           <div className="mt-5 space-y-4">
-            {payout.pools.filter((p) => p.allocationBps > 0).map((pool) => (
+            {(payout?.pools ?? []).filter((p) => p.allocationBps > 0).map((pool) => (
               <div key={pool.key} className="border border-border p-3">
                 <p className="flex items-baseline justify-between text-xs">
                   <span className="text-yellow">{pool.label}</span>

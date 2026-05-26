@@ -1,4 +1,5 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import { revalidateTag } from "next/cache";
 import { db } from "@/db";
 import {
   clubs,
@@ -337,6 +338,12 @@ export async function runIngest(source: DataSource): Promise<IngestSummary> {
   ]);
   const plan = planIngest(incoming, existing);
   const summary = await applyPlan(plan);
+
+  // Bust read caches that depend on these tables.
+  revalidateTag("players", "max");
+  revalidateTag("snapshots", "max");
+  revalidateTag("rounds", "max");
+  revalidateTag("squads", "max");
 
   // Upsert raw event taxonomy. Independent of the snapshot diffing flow.
   if (incoming.eventTypes && incoming.eventTypes.length > 0) {

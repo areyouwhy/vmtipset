@@ -1,29 +1,33 @@
 import { auth } from "@clerk/nextjs/server";
 import { SignUpInButtons } from "./auth-buttons";
 import { count, eq } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import Link from "next/link";
 import { db } from "@/db";
 import { teams, users } from "@/db/schema";
-import { ensureDefaultPrizes, getPotPayout } from "@/lib/prize-config";
+import { getPotPayout } from "@/lib/prize-config";
 
-async function getStats() {
-  const [created] = await db.select({ n: count() }).from(teams);
-  const [paying] = await db
-    .select({ n: count() })
-    .from(teams)
-    .innerJoin(users, eq(users.id, teams.ownerUserId))
-    .where(eq(users.status, "approved"));
-  return { created: created.n, paying: paying.n };
-}
+const getStats = unstable_cache(
+  async () => {
+    const [created] = await db.select({ n: count() }).from(teams);
+    const [paying] = await db
+      .select({ n: count() })
+      .from(teams)
+      .innerJoin(users, eq(users.id, teams.ownerUserId))
+      .where(eq(users.status, "approved"));
+    return { created: created.n, paying: paying.n };
+  },
+  ["landing-stats"],
+  { tags: ["teams", "users"], revalidate: 600 },
+);
 
 export default async function Home() {
-  await ensureDefaultPrizes();
-  const [{ userId }, stats, payout] = await Promise.all([
-    auth(),
-    getStats(),
-    getPotPayout(),
+  const { userId } = await auth();
+  const [stats, payout] = await Promise.all([
+    getStats().catch(() => ({ created: 0, paying: 0 })),
+    getPotPayout().catch(() => null),
   ]);
-  const mainPool = payout.pools.find((p) => p.key === "main_league");
+  const mainPool = payout?.pools.find((p) => p.key === "main_league");
   const topPlaces = mainPool?.places.slice(0, 3) ?? [];
 
   return (

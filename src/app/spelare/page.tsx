@@ -5,7 +5,19 @@ import { PublicPlayersList } from "./list-client";
 export const dynamic = "force-dynamic";
 
 export default async function PlayersPage() {
-  const rows = await getPlayerListRows();
+  const rows = await getPlayerListRows().catch(() => null);
+  if (!rows) {
+    return (
+      <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mx-auto w-full max-w-3xl">
+          <Breadcrumbs trail={[{ label: "SPELARE" }]} />
+          <p className="mt-8 border border-yellow/30 bg-yellow/5 p-4 text-sm text-dim">
+            Spelarlistan är tillfälligt otillgänglig — kom tillbaka om en stund.
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
