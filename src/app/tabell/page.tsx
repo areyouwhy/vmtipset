@@ -19,7 +19,7 @@ export default async function TabellPage() {
         <div className="mx-auto w-full max-w-3xl">
           <Breadcrumbs trail={[{ label: "TABELL" }]} />
           <p className="mt-8 border border-yellow/30 bg-yellow/5 p-4 text-sm text-dim">
-            Tabellen är tillfälligt otillgänglig — kom tillbaka om en stund.
+            Underhåll pågår — försök igen om en stund.
           </p>
         </div>
       </main>

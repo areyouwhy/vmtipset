@@ -59,19 +59,25 @@ export async function getViewerAuth(): Promise<ViewerAuth> {
     return { signedIn: false, approved: false, isAdmin: false, myTeamSlug: null };
   }
 
+  // Called from the root layout on every signed-in request — must NEVER
+  // throw, or the whole app crashes when Neon is unreachable. Both DB
+  // reads degrade to "unknown" (signed-in but treat as not-approved,
+  // no team) so users still see a working layout.
   const [u, team, admin] = await Promise.all([
     db
       .select({ status: users.status })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1)
-      .then((r) => r[0] ?? null),
+      .then((r) => r[0] ?? null)
+      .catch(() => null),
     db
       .select({ name: teams.name })
       .from(teams)
       .where(eq(teams.ownerUserId, userId))
       .limit(1)
-      .then((r) => r[0] ?? null),
+      .then((r) => r[0] ?? null)
+      .catch(() => null),
     isAdmin(),
   ]);
 

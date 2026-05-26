@@ -12,7 +12,7 @@ export default async function PlayersPage() {
         <div className="mx-auto w-full max-w-3xl">
           <Breadcrumbs trail={[{ label: "SPELARE" }]} />
           <p className="mt-8 border border-yellow/30 bg-yellow/5 p-4 text-sm text-dim">
-            Spelarlistan är tillfälligt otillgänglig — kom tillbaka om en stund.
+            Underhåll pågår — försök igen om en stund.
           </p>
         </div>
       </main>

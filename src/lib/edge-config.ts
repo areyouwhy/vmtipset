@@ -19,9 +19,24 @@ import { createClient, type EdgeConfigClient } from "@vercel/edge-config";
 
 let cached: EdgeConfigClient | null | undefined;
 
+/**
+ * Resolve the Edge Config connection URL. Standard convention is
+ * `EDGE_CONFIG`, but when a project has multiple stores connected Vercel
+ * names each env var after the store id (`ecfg_<hash>`). Accept either.
+ */
+function resolveConnectionUrl(): string | null {
+  if (process.env.EDGE_CONFIG) return process.env.EDGE_CONFIG;
+  for (const [k, v] of Object.entries(process.env)) {
+    if (k.startsWith("ecfg_") && typeof v === "string" && v.startsWith("https://")) {
+      return v;
+    }
+  }
+  return null;
+}
+
 function client(): EdgeConfigClient | null {
   if (cached !== undefined) return cached;
-  const url = process.env.EDGE_CONFIG;
+  const url = resolveConnectionUrl();
   cached = url ? createClient(url) : null;
   return cached;
 }

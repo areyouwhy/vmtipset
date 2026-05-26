@@ -120,9 +120,12 @@ export const getApprovedCount = unstable_cache(
 );
 
 export async function getPotPayout(): Promise<PotPayout> {
+  // Pools come from Edge Config (no DB hit); approved count comes from
+  // Neon. If the count fails we still render the pool structure with a
+  // 0-user pot — better than collapsing the whole section to a fallback.
   const [pools, approvedCount] = await Promise.all([
     loadPrizePools(),
-    getApprovedCount(),
+    getApprovedCount().catch(() => 0),
   ]);
   return calculatePotPayout({
     approvedCount,
