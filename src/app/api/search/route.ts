@@ -7,10 +7,13 @@ import { PLAYER_CLUBS } from "@/data/player-clubs";
 import { clubSlug } from "@/lib/clubs";
 import { teamSlug } from "@/lib/team-slug";
 
-// Route-segment revalidate makes Next emit the proper
-// `Cache-Control: public, max-age=0, s-maxage=3600, stale-while-revalidate`
-// header on the CDN response. Setting it manually via NextResponse
-// headers is silently overridden by Next when unstable_cache is in play.
+// Route-segment revalidate tells Vercel's CDN to hold the response
+// internally for an hour (visible as `x-vercel-cache: HIT` + `age: N`).
+// Next emits `Cache-Control: public, max-age=0, must-revalidate` to the
+// client so the browser always re-asks the CDN; the CDN then serves
+// stale until a tag-revalidation flushes it. Underlying data cache
+// (unstable_cache below) gets invalidated via revalidateTag() from
+// admin/actions.ts and ingest-apply.ts.
 export const revalidate = 3600;
 
 /**
