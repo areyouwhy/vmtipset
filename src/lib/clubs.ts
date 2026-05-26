@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { clubFor, PLAYER_CLUBS } from "@/data/player-clubs";
 import { db } from "@/db";
@@ -79,25 +79,36 @@ async function _getClubDetail(slug: string): Promise<ClubDetail | null> {
   const name = clubNameFromSlug(slug);
   if (!name) return null;
 
-  const [allPlayers, allClubs, allRounds, allSnapshots] = await Promise.all([
-    db
-      .select()
-      .from(players)
-      .where(eq(players.active, true)),
+  // Rounds first so we can filter snapshots to (base, latest) only —
+  // we never read middle-round prices on the club page.
+  const allRounds = await db.select().from(rounds).orderBy(asc(rounds.number));
+  const baseRoundId = allRounds[0]?.id;
+  const latestRoundId = allRounds[allRounds.length - 1]?.id;
+  const priceRoundIds = [
+    ...new Set([baseRoundId, latestRoundId].filter((x): x is string => !!x)),
+  ];
+
+  const [allPlayers, allClubs, allSnapshots] = await Promise.all([
+    db.select().from(players).where(eq(players.active, true)),
     db.select().from(clubs),
-    db.select().from(rounds).orderBy(asc(rounds.number)),
-    db.select().from(playerRoundSnapshots),
+    priceRoundIds.length > 0
+      ? db
+          .select({
+            playerId: playerRoundSnapshots.playerId,
+            roundId: playerRoundSnapshots.roundId,
+            priceSek: playerRoundSnapshots.priceSek,
+          })
+          .from(playerRoundSnapshots)
+          .where(inArray(playerRoundSnapshots.roundId, priceRoundIds))
+      : Promise.resolve<{ playerId: string; roundId: string; priceSek: number }[]>([]),
   ]);
 
-  const latestRoundId = allRounds[allRounds.length - 1]?.id;
-  const baseRoundId = allRounds[0]?.id;
   const clubById = new Map(allClubs.map((c) => [c.id, c]));
 
   const priceByPlayer = new Map<string, number>();
-  // Manual wins over API for the same (round, player); latest round wins
-  // over base round.
+  // Manual wins over API is already enforced by ingest — latest round
+  // wins over base round here.
   for (const s of allSnapshots) {
-    if (s.roundId !== latestRoundId && s.roundId !== baseRoundId) continue;
     const prev = priceByPlayer.get(s.playerId);
     if (prev == null) {
       priceByPlayer.set(s.playerId, s.priceSek);

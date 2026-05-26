@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { db } from "@/db";
 import {
@@ -7,8 +7,20 @@ import {
   players,
   rounds,
   type Player,
-  type PlayerRoundSnapshot,
 } from "@/db/schema";
+
+/**
+ * Minimal projection of a snapshot row — just what the price-map builders
+ * need. Skips the `events` jsonb column (biggest field per row) and other
+ * unused metadata, so an unfiltered table dump goes from a few MB to a
+ * few hundred KB.
+ */
+type SnapshotPriceRow = {
+  playerId: string;
+  roundId: string;
+  priceSek: number;
+  source: "api" | "manual";
+};
 import { currentRules } from "@/lib/rules";
 import {
   getAllMatches,
@@ -163,7 +175,7 @@ function buildDreamTeam(roster: NationPlayer[]): {
  * API for the same (round, player); the most recent round wins overall.
  */
 function buildPriceMaps(
-  allSnapshots: PlayerRoundSnapshot[],
+  allSnapshots: SnapshotPriceRow[],
   baseRoundId: string | undefined,
   latestRoundId: string | undefined,
   playerIds: Set<string>,
@@ -216,18 +228,38 @@ async function _getNationDetail(
     .limit(1);
   if (!club) return null;
 
-  const [allPlayers, allRounds, allSnapshots, wcTeamsById, allMatches] =
-    await Promise.all([
+  // Pull rounds first so we can filter the snapshot query to just the
+  // two rounds we actually consume (base + latest). One extra RTT, much
+  // less wire data.
+  const allRounds = await db.select().from(rounds).orderBy(asc(rounds.number));
+  const baseRoundId = allRounds[0]?.id;
+  const latestRoundId = allRounds[allRounds.length - 1]?.id;
+  const priceRoundIds = [
+    ...new Set([baseRoundId, latestRoundId].filter((x): x is string => !!x)),
+  ];
+
+  const [allPlayers, allSnapshots, wcTeamsById, allMatches] = await Promise.all(
+    [
       db
         .select()
         .from(players)
         .where(eq(players.clubId, club.id))
         .orderBy(asc(players.name)),
-      db.select().from(rounds).orderBy(asc(rounds.number)),
-      db.select().from(playerRoundSnapshots),
+      priceRoundIds.length > 0
+        ? db
+            .select({
+              playerId: playerRoundSnapshots.playerId,
+              roundId: playerRoundSnapshots.roundId,
+              priceSek: playerRoundSnapshots.priceSek,
+              source: playerRoundSnapshots.source,
+            })
+            .from(playerRoundSnapshots)
+            .where(inArray(playerRoundSnapshots.roundId, priceRoundIds))
+        : Promise.resolve<SnapshotPriceRow[]>([]),
       getTeamLookup(),
       getAllMatches(),
-    ]);
+    ],
+  );
 
   // Match this nation to its WC team by ISO code. Fixtures we surface are
   // those where the team is either home or away.
@@ -245,8 +277,8 @@ async function _getNationDetail(
   const playerIds = new Set(allPlayers.map((p) => p.id));
   const { baseline, latest } = buildPriceMaps(
     allSnapshots,
-    allRounds[0]?.id,
-    allRounds[allRounds.length - 1]?.id,
+    baseRoundId,
+    latestRoundId,
     playerIds,
   );
 
@@ -306,15 +338,29 @@ export const getAllNations = unstable_cache(
 );
 
 async function _getAllNations(): Promise<NationSummary[]> {
-  const [allClubs, allPlayers, allRounds, allSnapshots] = await Promise.all([
-    db.select().from(clubs),
-    db.select().from(players).where(eq(players.active, true)),
-    db.select().from(rounds).orderBy(asc(rounds.number)),
-    db.select().from(playerRoundSnapshots),
-  ]);
-
+  // Rounds first so we can filter snapshots to (base, latest) only.
+  const allRounds = await db.select().from(rounds).orderBy(asc(rounds.number));
   const baseRoundId = allRounds[0]?.id;
   const latestRoundId = allRounds[allRounds.length - 1]?.id;
+  const priceRoundIds = [
+    ...new Set([baseRoundId, latestRoundId].filter((x): x is string => !!x)),
+  ];
+
+  const [allClubs, allPlayers, allSnapshots] = await Promise.all([
+    db.select().from(clubs),
+    db.select().from(players).where(eq(players.active, true)),
+    priceRoundIds.length > 0
+      ? db
+          .select({
+            playerId: playerRoundSnapshots.playerId,
+            roundId: playerRoundSnapshots.roundId,
+            priceSek: playerRoundSnapshots.priceSek,
+            source: playerRoundSnapshots.source,
+          })
+          .from(playerRoundSnapshots)
+          .where(inArray(playerRoundSnapshots.roundId, priceRoundIds))
+      : Promise.resolve<SnapshotPriceRow[]>([]),
+  ]);
   const allPlayerIds = new Set(allPlayers.map((p) => p.id));
   const { baseline, latest } = buildPriceMaps(
     allSnapshots,
