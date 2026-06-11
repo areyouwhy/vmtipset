@@ -43,6 +43,9 @@ export type LeaderboardRow = {
   dailyBetsPoints: number;
   /** Squad value at current prices: Σ price for the latest squad. null if no squad yet. */
   squadValueSek: number | null;
+  /** Growth this round = Σ growthSek across the latest squad (the value the
+   *  squad has gained from price drift). null if no squad yet. */
+  roundGrowthSek: number | null;
   /** Bank cash after the latest scored round. budgetSek − initial squad cost
    *  for round 1; modified by interest, captain bonus, transfers afterward. */
   bankSek: number | null;
@@ -188,18 +191,24 @@ async function _getLeaderboard(): Promise<Leaderboard> {
     }
   }
   const squadValueByTeam = new Map<string, number | null>();
+  // Growth this round = Σ growthSek across the latest squad. It's the slice of
+  // the squad value that came from in-round price drift (squad value − cost).
+  const roundGrowthByTeam = new Map<string, number | null>();
   for (const t of allTeams) {
     const latest = latestSquadByTeam.get(t.id);
     if (!latest) {
       squadValueByTeam.set(t.id, null);
+      roundGrowthByTeam.set(t.id, null);
       continue;
     }
     const pids = playerIdsBySquad.get(latest.squadId) ?? [];
     if (pids.length === 0) {
       squadValueByTeam.set(t.id, null);
+      roundGrowthByTeam.set(t.id, null);
       continue;
     }
     let sum = 0;
+    let growth = 0;
     let missing = false;
     for (const pid of pids) {
       const snap = snapshotByRoundPlayer.get(`${latest.roundId}::${pid}`);
@@ -209,8 +218,10 @@ async function _getLeaderboard(): Promise<Leaderboard> {
       }
       // Squad VALUE uses the current price (this is the drift we want to show).
       sum += snap.priceSek;
+      growth += snap.growthSek;
     }
     squadValueByTeam.set(t.id, missing ? null : sum);
+    roundGrowthByTeam.set(t.id, missing ? null : growth);
   }
 
   // Bank: latest scored round's bank_sek_end. Pre-tournament (no rounds scored)
@@ -303,6 +314,7 @@ async function _getLeaderboard(): Promise<Leaderboard> {
       perRound,
       dailyBetsPoints: dailyBetsByTeam.get(t.id) ?? 0,
       squadValueSek: squadValueByTeam.get(t.id) ?? null,
+      roundGrowthSek: roundGrowthByTeam.get(t.id) ?? null,
       bankSek: bankByTeam.get(t.id) ?? null,
       teamValueSek: teamValueByTeam.get(t.id) ?? null,
     };

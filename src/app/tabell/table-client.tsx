@@ -61,6 +61,7 @@ export function TabellClient({
               <th className="px-2 py-2 text-left">LAG</th>
               <th className="px-2 py-2 text-right text-yellow">VÄRDE</th>
               <th className="px-2 py-2 text-right">SQUAD</th>
+              <th className="px-2 py-2 text-right">TILLVÄXT</th>
               <th className="px-2 py-2 text-right">BANK</th>
             </tr>
           </thead>
@@ -122,6 +123,21 @@ export function TabellClient({
                   </td>
                   <td className="px-2 py-2 text-right text-foreground">
                     {row.squadValueSek === null ? "—" : fmtSek(row.squadValueSek)}
+                  </td>
+                  <td
+                    className={`px-2 py-2 text-right ${
+                      row.roundGrowthSek === null || row.roundGrowthSek === 0
+                        ? "text-dim"
+                        : row.roundGrowthSek > 0
+                          ? "text-green"
+                          : "text-red"
+                    }`}
+                  >
+                    {row.roundGrowthSek === null
+                      ? "—"
+                      : row.roundGrowthSek === 0
+                        ? "0"
+                        : `${row.roundGrowthSek > 0 ? "↑ " : "↓ "}${fmtSek(row.roundGrowthSek)}`}
                   </td>
                   <td
                     className={`px-2 py-2 text-right ${row.bankSek !== null && row.bankSek < 0 ? "text-red" : "text-foreground"}`}
@@ -200,6 +216,16 @@ function ComparePanel({
               label="SQUAD"
               cells={rows.map((r) =>
                 r.squadValueSek === null ? "—" : fmtSek(r.squadValueSek),
+              )}
+            />
+            <CompareStat
+              label="TILLVÄXT"
+              cells={rows.map((r) =>
+                r.roundGrowthSek === null
+                  ? "—"
+                  : r.roundGrowthSek === 0
+                    ? "0"
+                    : `${r.roundGrowthSek > 0 ? "↑ " : "↓ "}${fmtSek(r.roundGrowthSek)}`,
               )}
             />
             <CompareStat
