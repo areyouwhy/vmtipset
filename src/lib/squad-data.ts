@@ -44,22 +44,12 @@ export type PickablePlayer = {
 };
 
 export async function getActiveRound(): Promise<Round | null> {
+  // Fully manual lifecycle: the live trading round is whichever one the admin
+  // has OPENED (status `open`). Deadlines are display-only and no longer decide
+  // what's active. No open round → no transfer window (between rounds, or a
+  // round the admin hasn't opened yet).
   const all = await db.select().from(rounds).orderBy(asc(rounds.number));
-  const now = Date.now();
-
-  // Prefer the next round whose deadline is still in the future and isn't
-  // already scored. That's "the round users should be picking for".
-  const upcoming = all.find(
-    (r) =>
-      r.status !== "scored" &&
-      r.deadline !== null &&
-      new Date(r.deadline).getTime() > now,
-  );
-  if (upcoming) return upcoming;
-
-  // Fall back to any non-scored round (covers rounds without deadlines and
-  // also "season already past, nothing scored" edge cases).
-  return all.find((r) => r.status !== "scored") ?? null;
+  return all.find((r) => r.status === "open") ?? null;
 }
 
 export async function getPickablePlayers(

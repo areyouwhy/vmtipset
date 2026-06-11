@@ -63,14 +63,9 @@ export async function saveSquadAction(
   if (existing?.lockedAt) {
     return { ok: false, errors: ["Truppen är låst för denna rond."] };
   }
-  if (round.deadline && new Date(round.deadline).getTime() < Date.now()) {
-    return {
-      ok: false,
-      errors: [
-        `Deadline för ${round.name} har passerat (${new Date(round.deadline).toISOString().slice(0, 16).replace("T", " ")} UTC).`,
-      ],
-    };
-  }
+  // No deadline enforcement: a round is editable for exactly as long as the
+  // admin keeps it `open`. Deadlines are display-only; closing the round
+  // (status → locked) is what stops trading and reveals lineups.
 
   const pickable = await getPickablePlayers(round.id);
   const byId = new Map(pickable.map((p) => [p.id, p]));
