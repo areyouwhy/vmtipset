@@ -51,6 +51,14 @@ export async function saveSquadAction(
     return { ok: false, errors: ["Ingen aktiv rond — admin har inte öppnat någon."] };
   }
 
+  // Reveal-state gate: the leaderboard exposes every team's lineup once a
+  // round is `locked`/`scored`. Edits must be blocked in exactly those states
+  // so nobody can peek at others' squads and then re-pick. (`lockedAt` alone
+  // isn't enough — a manual admin lock flips status without stamping it.)
+  if (round.status === "locked" || round.status === "scored") {
+    return { ok: false, errors: [`${round.name} är låst för redigering.`] };
+  }
+
   const existing = await getCurrentSquad(team.id, round.id);
   if (existing?.lockedAt) {
     return { ok: false, errors: ["Truppen är låst för denna rond."] };

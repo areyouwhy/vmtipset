@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { db } from "@/db";
 import {
@@ -333,6 +333,16 @@ export async function setRoundStatus(
   status: "upcoming" | "open" | "locked" | "scored",
 ): Promise<void> {
   await db.update(rounds).set({ status }).where(eq(rounds.id, roundId));
+  // Locking the round reveals lineups on the leaderboard, so stamp the
+  // per-squad lock too — keeps `squads.lockedAt` from diverging from
+  // `rounds.status` (mirrors what the lock-deadlines cron does) so the
+  // picker hides edit controls instead of showing controls that then error.
+  if (status === "locked") {
+    await db
+      .update(squads)
+      .set({ lockedAt: new Date() })
+      .where(and(eq(squads.roundId, roundId), isNull(squads.lockedAt)));
+  }
   revalidateTag("rounds", "max");
   revalidateTag("leaderboard", "max");
 }
