@@ -8,6 +8,7 @@ import { getOrCreateDbUser } from "@/lib/auth";
 import {
   getActiveRound,
   getCurrentSquad,
+  getLatestSquadForTeam,
   getPickablePlayers,
   getPreviousRoundSquadPlayerIds,
 } from "@/lib/squad-data";
@@ -28,6 +29,10 @@ export default async function SquadPage() {
   if (!team) redirect("/app");
 
   const round = await getActiveRound();
+  // Between rounds (no open round) we still let the owner view their current
+  // squad — same pitch + lineup, just read-only (no transfers).
+  const latest = round ? null : await getLatestSquadForTeam(team.id);
+  const viewRound = round ?? latest?.round ?? null;
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
@@ -49,6 +54,10 @@ export default async function SquadPage() {
                 AKTIV ROND: {round.name} (#{round.number}) →
               </Link>
             </p>
+          ) : viewRound ? (
+            <p className="text-[10px] uppercase tracking-widest text-yellow">
+              DIN TRUPP · {viewRound.name} (#{viewRound.number}) · LÅST
+            </p>
           ) : (
             <p className="text-[10px] uppercase tracking-widest text-dim">
               LAG
@@ -57,7 +66,12 @@ export default async function SquadPage() {
           <h1 className="mt-1 text-2xl font-bold uppercase tracking-tight text-yellow">
             {team.name}
           </h1>
-          {!round && (
+          {!round && viewRound && (
+            <p className="mt-2 text-sm text-dim">
+              Inga byten just nu — transfers öppnar när admin öppnar nästa rond.
+            </p>
+          )}
+          {!round && !viewRound && (
             <p className="mt-2 text-sm text-red">
               ! Ingen aktiv rond — admin måste öppna en rond först.
             </p>
@@ -70,6 +84,15 @@ export default async function SquadPage() {
             roundId={round.id}
             roundNumber={round.number}
             deadline={round.deadline}
+          />
+        )}
+        {!round && viewRound && (
+          <SquadPickerWrapper
+            teamId={team.id}
+            roundId={viewRound.id}
+            roundNumber={viewRound.number}
+            deadline={viewRound.deadline}
+            readOnly
           />
         )}
       </div>
@@ -123,11 +146,13 @@ async function SquadPickerWrapper({
   roundId,
   roundNumber,
   deadline,
+  readOnly = false,
 }: {
   teamId: string;
   roundId: string;
   roundNumber: number;
   deadline: Date | null;
+  readOnly?: boolean;
 }) {
   const [pickable, current, referenceIds] = await Promise.all([
     getPickablePlayers(roundId),
@@ -198,9 +223,9 @@ async function SquadPickerWrapper({
         players={pickable}
         initialPlayerIds={cleanIds}
         initialCaptainId={cleanCaptainId}
-        locked={current?.lockedAt != null}
+        locked={readOnly || current?.lockedAt != null}
         referencePlayerIds={referenceIds}
-        deadlineSlot={<DeadlineBanner deadline={deadline} />}
+        deadlineSlot={readOnly ? null : <DeadlineBanner deadline={deadline} />}
       />
     </>
   );

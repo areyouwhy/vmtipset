@@ -11,6 +11,7 @@ import { getOpenBetsForUser } from "@/lib/bets-data";
 import {
   getActiveRound,
   getCurrentSquad,
+  getLatestSquadForTeam,
   getPendingTransfersForTeamRound,
   type PendingTransfersForRound,
 } from "@/lib/squad-data";
@@ -37,9 +38,19 @@ export default async function AppPage() {
   // Active round is shown for everyone (signed-in) — gives users a clear
   // signal of what they're picking for, even before they're approved.
   const activeRound = team ? await getActiveRound() : null;
+  // Between rounds (no open round) fall back to the team's latest squad so the
+  // dashboard still shows their current — locked — team instead of going blank.
+  const latestBetween =
+    team && !activeRound && user.status === "approved"
+      ? await getLatestSquadForTeam(team.id)
+      : null;
+  const displayRound = activeRound ?? latestBetween?.round ?? null;
+  const betweenRounds = !activeRound && latestBetween != null;
   const squad =
-    team && activeRound && user.status === "approved"
-      ? await getCurrentSquad(team.id, activeRound.id)
+    team && user.status === "approved"
+      ? activeRound
+        ? await getCurrentSquad(team.id, activeRound.id)
+        : (latestBetween?.squad ?? null)
       : null;
   const pendingTransfers =
     team && activeRound && user.status === "approved"
@@ -60,7 +71,7 @@ export default async function AppPage() {
   // Squad chip in the identity row — only meaningful once the user is approved
   // and there's an active round. Mirrors SquadStatusPanel's tone logic.
   let squadChip: { label: string; color: string } | null = null;
-  if (team && user.status === "approved" && activeRound) {
+  if (team && user.status === "approved" && displayRound) {
     const total = squad?.playerIds.length ?? 0;
     const dropped = squad?.droppedPlayers.length ?? 0;
     const active = total - dropped;
@@ -141,12 +152,12 @@ export default async function AppPage() {
               </>
             )}
             <span className="text-dim">·</span>
-            {activeRound ? (
+            {displayRound ? (
               <Link
-                href={`/vm/omgang/${activeRound.number}`}
+                href={`/vm/omgang/${displayRound.number}`}
                 className="text-yellow hover:text-cyan"
               >
-                ROND #{activeRound.number}
+                ROND #{displayRound.number}
               </Link>
             ) : (
               <span className="text-dim">INGEN ROND</span>
@@ -168,7 +179,7 @@ export default async function AppPage() {
           {team && user.status === "approved" && (
             <>
               <SquadStatusPanel
-                activeRound={activeRound}
+                activeRound={displayRound}
                 squadPlayerCount={
                   // Count only still-active picks so dropped players don't
                   // inflate the "DU ÄR KLAR" check.
@@ -176,7 +187,8 @@ export default async function AppPage() {
                   (squad?.droppedPlayers.length ?? 0)
                 }
                 droppedPlayers={squad?.droppedPlayers ?? []}
-                locked={squad?.lockedAt != null}
+                locked={betweenRounds || squad?.lockedAt != null}
+                betweenRounds={betweenRounds}
                 pendingTransfers={pendingTransfers}
               />
               {myStanding && (
@@ -374,12 +386,14 @@ function SquadStatusPanel({
   squadPlayerCount,
   droppedPlayers,
   locked,
+  betweenRounds = false,
   pendingTransfers,
 }: {
   activeRound: { number: number; name: string; deadline: Date | null } | null;
   squadPlayerCount: number;
   droppedPlayers: { id: string; name: string }[];
   locked: boolean;
+  betweenRounds?: boolean;
   pendingTransfers: PendingTransfersForRound | null;
 }) {
   if (!activeRound) {
@@ -426,7 +440,9 @@ function SquadStatusPanel({
         ? "TRUPP SPARAD"
         : "INTE KLAR";
   const subline = locked
-    ? `Truppen är låst för ${activeRound.name}. Inväntar matcher.`
+    ? betweenRounds
+      ? `Din trupp för ${activeRound.name} är låst. Inga byten just nu — transfers öppnar när admin öppnar nästa rond.`
+      : `Truppen är låst för ${activeRound.name}. Inväntar matcher.`
     : hasDropped
       ? `Aftonbladet har plockat ut ${droppedPlayers.length} av dina spelare ur landslagstruppen — välj ersättare innan deadline. Bytet är gratis innan första ronden startar.`
       : isReady

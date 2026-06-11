@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
 import {
@@ -50,6 +50,28 @@ export async function getActiveRound(): Promise<Round | null> {
   // round the admin hasn't opened yet).
   const all = await db.select().from(rounds).orderBy(asc(rounds.number));
   return all.find((r) => r.status === "open") ?? null;
+}
+
+/**
+ * The team's most recent squad and the round it belongs to — i.e. their
+ * "current team" regardless of whether a round is open. Used between rounds
+ * to show the locked squad read-only (no open round → no active round, but
+ * the player should still see what they're holding).
+ */
+export async function getLatestSquadForTeam(
+  teamId: string,
+): Promise<{ round: Round; squad: CurrentSquad } | null> {
+  const [row] = await db
+    .select({ round: rounds })
+    .from(squads)
+    .innerJoin(rounds, eq(rounds.id, squads.roundId))
+    .where(eq(squads.teamId, teamId))
+    .orderBy(desc(rounds.number))
+    .limit(1);
+  if (!row) return null;
+  const squad = await getCurrentSquad(teamId, row.round.id);
+  if (!squad) return null;
+  return { round: row.round, squad };
 }
 
 export async function getPickablePlayers(
