@@ -14,6 +14,7 @@ import {
 import { currentRules } from "./rules";
 import {
   scoreSquadForRound,
+  squadPurchaseCostSek,
   type ScoringSquad,
   type SnapshotForScoring,
 } from "./scoring";
@@ -208,10 +209,12 @@ async function scoreOneRound(
     // bank: entering bank = budget − initial squad cost (at Round 1 prices).
     let bankEntering: number;
     if (roundNumber === 1) {
-      const initialCost = playerIds.reduce((acc, pid) => {
-        const snap = scoreSnapshotByPlayer.get(pid);
-        return acc + (snap?.priceSek ?? 0);
-      }, 0);
+      const initialCost = squadPurchaseCostSek(
+        playerIds.flatMap((pid) => {
+          const snap = scoreSnapshotByPlayer.get(pid);
+          return snap ? [snap] : [];
+        }),
+      );
       bankEntering = currentRules.budgetSek - initialCost;
     } else {
       const prevBank = ctx.bankEndByTeam.get(squad.teamId);
@@ -219,10 +222,12 @@ async function scoreOneRound(
         // Team has no prior round_score — they joined mid-tournament. Best
         // we can do: derive from this round's snapshot cost as if it were
         // the initial purchase. Flag a warning.
-        const initialCost = playerIds.reduce((acc, pid) => {
-          const snap = scoreSnapshotByPlayer.get(pid);
-          return acc + (snap?.priceSek ?? 0);
-        }, 0);
+        const initialCost = squadPurchaseCostSek(
+          playerIds.flatMap((pid) => {
+            const snap = scoreSnapshotByPlayer.get(pid);
+            return snap ? [snap] : [];
+          }),
+        );
         bankEntering = currentRules.budgetSek - initialCost;
         warnings.push(
           `${ctx.teamById.get(squad.teamId)?.name ?? squad.teamId}: ingen tidigare bank-balans hittad — antar att detta är deras startrond.`,

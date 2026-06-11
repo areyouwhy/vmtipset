@@ -173,12 +173,18 @@ async function _getLeaderboard(): Promise<Leaderboard> {
     arr.push(sp.playerId);
     playerIdsBySquad.set(sp.squadId, arr);
   }
-  const snapshotByRoundPlayer = new Map<string, number>();
+  const snapshotByRoundPlayer = new Map<
+    string,
+    { priceSek: number; growthSek: number }
+  >();
   for (const s of allSnapshots) {
     const key = `${s.roundId}::${s.playerId}`;
     const existing = snapshotByRoundPlayer.get(key);
     if (existing === undefined || s.source === "manual") {
-      snapshotByRoundPlayer.set(key, s.priceSek);
+      snapshotByRoundPlayer.set(key, {
+        priceSek: s.priceSek,
+        growthSek: s.growthSek,
+      });
     }
   }
   const squadValueByTeam = new Map<string, number | null>();
@@ -196,12 +202,13 @@ async function _getLeaderboard(): Promise<Leaderboard> {
     let sum = 0;
     let missing = false;
     for (const pid of pids) {
-      const price = snapshotByRoundPlayer.get(`${latest.roundId}::${pid}`);
-      if (price === undefined) {
+      const snap = snapshotByRoundPlayer.get(`${latest.roundId}::${pid}`);
+      if (snap === undefined) {
         missing = true;
         break;
       }
-      sum += price;
+      // Squad VALUE uses the current price (this is the drift we want to show).
+      sum += snap.priceSek;
     }
     squadValueByTeam.set(t.id, missing ? null : sum);
   }
@@ -227,11 +234,12 @@ async function _getLeaderboard(): Promise<Leaderboard> {
       const latest = latestSquadByTeam.get(t.id);
       if (latest) {
         const pids = playerIdsBySquad.get(latest.squadId) ?? [];
-        const cost = pids.reduce(
-          (acc, pid) =>
-            acc + (snapshotByRoundPlayer.get(`${latest.roundId}::${pid}`) ?? 0),
-          0,
-        );
+        // Bank = budget − what the squad COST (purchase price = current
+        // price minus in-round growth), never the current value.
+        const cost = pids.reduce((acc, pid) => {
+          const snap = snapshotByRoundPlayer.get(`${latest.roundId}::${pid}`);
+          return acc + (snap ? snap.priceSek - snap.growthSek : 0);
+        }, 0);
         bank = currentRules.budgetSek - cost;
       }
     }
@@ -566,12 +574,13 @@ export async function getTeamDetail(
           let cost = 0;
           let missing = false;
           for (const pid of r1PlayerIds) {
-            const price = snapshotByRoundPlayer.get(`${r1.id}::${pid}`)?.priceSek;
-            if (price === undefined) {
+            const snap = snapshotByRoundPlayer.get(`${r1.id}::${pid}`);
+            if (snap === undefined) {
               missing = true;
               break;
             }
-            cost += price;
+            // Purchase cost, not current value: price minus in-round growth.
+            cost += snap.priceSek - snap.growthSek;
           }
           return missing ? null : currentRules.budgetSek - cost;
         })();

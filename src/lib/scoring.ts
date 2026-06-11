@@ -90,6 +90,21 @@ export type ScoreResult = {
   missingSnapshots: string[];
 };
 
+/**
+ * What a squad actually *cost* when it was locked — the basis for the bank
+ * (leftover cash) balance. A round snapshot's `priceSek` drifts upward as the
+ * player gains value during the round, so the original purchase price is
+ * `priceSek − growthSek`. Bank must be derived from this, never from the
+ * current price: using the current price subtracts in-round growth from the
+ * bank, which cancels the squad-value gain and makes a rising player look like
+ * a falling bank.
+ */
+export function squadPurchaseCostSek(
+  snaps: Array<{ priceSek: number; growthSek: number }>,
+): number {
+  return snaps.reduce((acc, s) => acc + (s.priceSek - s.growthSek), 0);
+}
+
 export function scoreSquadForRound(args: ScoringInputs): ScoreResult {
   const {
     squad,

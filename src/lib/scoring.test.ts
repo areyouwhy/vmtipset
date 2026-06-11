@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { scoreSquadForRound, type ScoringInputs } from "./scoring";
+import {
+  scoreSquadForRound,
+  squadPurchaseCostSek,
+  type ScoringInputs,
+} from "./scoring";
 
 function snap(
   id: string,
@@ -326,5 +330,50 @@ describe("scoreSquadForRound — determinism", () => {
     const a = scoreSquadForRound(inputs);
     const b = scoreSquadForRound(inputs);
     expect(b).toEqual(a);
+  });
+});
+
+describe("squadPurchaseCostSek", () => {
+  it("with no growth, cost equals the sum of prices", () => {
+    expect(
+      squadPurchaseCostSek([
+        { priceSek: 4_000_000, growthSek: 0 },
+        { priceSek: 3_000_000, growthSek: 0 },
+      ]),
+    ).toBe(7_000_000);
+  });
+
+  it("strips in-round growth: cost is the purchase price, not current value", () => {
+    // A player bought at 3.0M who has gained 142k is now priced 3.142M.
+    // Purchase cost must read 3.0M, not 3.142M.
+    expect(
+      squadPurchaseCostSek([{ priceSek: 3_142_000, growthSek: 142_000 }]),
+    ).toBe(3_000_000);
+  });
+
+  it("golden master: Kartagos Örnar Round 1 — bank stays ~0 despite +142k growth", () => {
+    // 10 players at flat baseline summing to 47.0M + Quínones at 3.142M (+142k).
+    // Current value = 50.142M; purchase cost must be 50.0M so bank = budget − cost = 0.
+    const BUDGET = 50_000_000;
+    const flat = [
+      4_000_000, 4_500_000, 3_500_000, 4_500_000, 2_500_000, 4_500_000,
+      3_000_000, 2_500_000, 8_500_000, 9_500_000,
+    ].map((priceSek) => ({ priceSek, growthSek: 0 }));
+    const snaps = [...flat, { priceSek: 3_142_000, growthSek: 142_000 }];
+
+    const currentValue = snaps.reduce((a, s) => a + s.priceSek, 0);
+    const cost = squadPurchaseCostSek(snaps);
+
+    expect(currentValue).toBe(50_142_000);
+    expect(cost).toBe(50_000_000);
+    expect(BUDGET - cost).toBe(0); // correct bank
+    expect(BUDGET - currentValue).toBe(-142_000); // the OLD buggy bank
+  });
+
+  it("handles negative growth (a player who lost value)", () => {
+    // Bought at 5.0M, now priced 4.8M (−200k) → purchase cost still 5.0M.
+    expect(
+      squadPurchaseCostSek([{ priceSek: 4_800_000, growthSek: -200_000 }]),
+    ).toBe(5_000_000);
   });
 });
