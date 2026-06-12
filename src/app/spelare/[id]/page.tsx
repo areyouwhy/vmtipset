@@ -4,7 +4,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { clubFor } from "@/data/player-clubs";
 import { clubSlug } from "@/lib/clubs";
 import { Jersey } from "@/lib/jersey";
-import { getPlayerDetail } from "@/lib/players-data";
+import { getPlayerDetail, type ScoreBreakdownItem } from "@/lib/players-data";
 
 export const revalidate = 600;
 
@@ -17,7 +17,14 @@ export default async function PublicPlayerPage({
   const detail = await getPlayerDetail(id).catch(() => null);
   if (!detail) notFound();
 
-  const { player, club, rounds: roundLines, eventTypes: eventTypeList, stats } = detail;
+  const {
+    player,
+    club,
+    rounds: roundLines,
+    eventTypes: eventTypeList,
+    scoreBreakdownByRound,
+    stats,
+  } = detail;
   // Rebuild the Map here (after the cache boundary) — see PlayerDetail.eventTypes.
   const eventTypes = new Map(eventTypeList.map((t) => [t.id, t] as const));
   const countryCode = club?.countryCode ?? null;
@@ -96,6 +103,7 @@ export default async function PublicPlayerPage({
           )}
           {roundLines.map((line) => {
             const effective = line.manual ?? line.api;
+            const breakdown = scoreBreakdownByRound[line.roundNumber] ?? [];
             return (
               <article
                 key={line.roundId}
@@ -143,27 +151,75 @@ export default async function PublicPlayerPage({
                   />
                 </dl>
 
-                {effective && effective.events.length > 0 && (
+                {breakdown.length > 0 ? (
+                  <ScoreBreakdownBlock
+                    items={breakdown}
+                    growthSek={effective?.growthSek ?? 0}
+                  />
+                ) : effective && effective.events.length > 0 ? (
                   <EventBreakdown
                     events={effective.events}
                     eventTypes={eventTypes}
                     growthSek={effective.growthSek}
                   />
-                )}
-                {effective &&
-                  effective.events.length === 0 &&
-                  effective.growthSek !== 0 && (
-                    <p className="mt-3 text-[10px] text-dim">
-                      — Inga händelser rapporterade (men tillväxten är inte
-                      noll, kan vara aggregerade pris/popularitetsförändringar)
-                    </p>
-                  )}
+                ) : effective && effective.growthSek !== 0 ? (
+                  <p className="mt-3 text-[10px] text-dim">
+                    — Inga händelser rapporterade (men tillväxten är inte
+                    noll, kan vara aggregerade pris/popularitetsförändringar)
+                  </p>
+                ) : null}
               </article>
             );
           })}
         </section>
       </div>
     </main>
+  );
+}
+
+function ScoreBreakdownBlock({
+  items,
+  growthSek,
+}: {
+  items: ScoreBreakdownItem[];
+  growthSek: number;
+}) {
+  const sum = items.reduce((acc, it) => acc + it.totalSek, 0);
+  const toneOf = (n: number) =>
+    n > 0 ? "text-green" : n < 0 ? "text-red" : "text-dim";
+  return (
+    <div className="mt-3">
+      <p className="text-[10px] uppercase tracking-widest text-dim">
+        SÅ BLEV TILLVÄXTEN
+      </p>
+      <ul className="mt-1 divide-y divide-dotted divide-border/50 border border-border text-[11px] tabular-nums">
+        {items.map((it, i) => (
+          <li
+            key={i}
+            className="grid grid-cols-[auto_1fr_auto] items-baseline gap-2 px-2 py-1.5"
+          >
+            <span className="text-dim">{it.amount}×</span>
+            <span className="truncate text-foreground">{it.title}</span>
+            <span className={toneOf(it.totalSek)}>
+              {it.totalSek === 0 ? "0" : fmtSek(it.totalSek)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1 flex items-baseline justify-between px-2 text-[11px] tabular-nums">
+        <span className="text-[10px] uppercase tracking-widest text-dim">
+          Σ TILLVÄXT
+        </span>
+        <span className={toneOf(sum)}>
+          {fmtSek(sum)}
+          {sum !== growthSek && (
+            <span className="ml-2 text-[9px] text-dim">
+              (sparat: {fmtSek(growthSek)})
+            </span>
+          )}
+        </span>
+      </p>
+    </div>
   );
 }
 

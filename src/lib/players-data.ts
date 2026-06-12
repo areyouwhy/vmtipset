@@ -5,6 +5,7 @@ import { db } from "@/db";
 import {
   clubs,
   eventTypes,
+  fantasyEventTypes,
   playerRoundSnapshots,
   players,
   rounds,
@@ -16,6 +17,11 @@ import {
   type Round,
   type PlayerRoundSnapshot,
 } from "@/db/schema";
+import { getAllMatches } from "@/lib/wc-tournament";
+
+const AB_BASE =
+  process.env.AFTONBLADET_API_BASE ?? "https://api-manager.aftonbladet.se";
+const AB_GAME = process.env.AFTONBLADET_GAME_ID ?? "735";
 
 export type PlayerSeasonStats = {
   /** Aggregate event counts across all rounds (manual wins over api per round).
@@ -283,10 +289,86 @@ export type PlayerDetailRoundSnapshot = {
   manual: PlayerRoundSnapshot | null;
 };
 
+/** One scored fantasy event for a player in a round, with its SEK worth.
+ *  Built live from Aftonbladet's per-player statistics — the sum across a
+ *  round's items reconciles to that round's growth. */
+export type ScoreBreakdownItem = {
+  title: string;
+  amount: number;
+  /** Per-occurrence value from the fantasy scoring catalog. */
+  valueSek: number;
+  /** amount × valueSek. */
+  totalSek: number;
+};
+
+type RawPlayerMatchStats = Array<{
+  match: { id: number };
+  events: Array<{ type: { id: number }; amount: number }>;
+}>;
+
+/**
+ * Live per-player fantasy-scoring breakdown, grouped by round. Aftonbladet's
+ * `/games/{g}/players/{id}/statistics` returns the value-bearing events (in the
+ * fantasyEventTypes id space) per match; we map match→round and attach the
+ * catalog value. Degrades to {} on any fetch error — the page falls back to
+ * the raw event list. Best-effort: only events present in the fantasy catalog
+ * are shown (raw stats like ShotWide carry no value).
+ */
+async function loadScoreBreakdownByRound(
+  externalId: string | null,
+  fantasyTypeById: Map<number, { title: string; valueSek: number }>,
+): Promise<Record<number, ScoreBreakdownItem[]>> {
+  if (!externalId) return {};
+  const abId = externalId.replace("ab:p:", "");
+
+  let stats: RawPlayerMatchStats;
+  try {
+    const res = await fetch(
+      `${AB_BASE}/games/${AB_GAME}/players/${abId}/statistics`,
+      { cache: "no-store" },
+    );
+    if (!res.ok) return {};
+    stats = (await res.json()) as RawPlayerMatchStats;
+  } catch {
+    return {};
+  }
+
+  let matchToRound: Map<number, number>;
+  try {
+    const matches = await getAllMatches();
+    matchToRound = new Map(matches.map((m) => [m.externalId, m.roundNumber]));
+  } catch {
+    return {};
+  }
+
+  const byRound: Record<number, ScoreBreakdownItem[]> = {};
+  for (const entry of stats) {
+    const round = matchToRound.get(entry.match?.id);
+    if (round === undefined) continue;
+    for (const ev of entry.events ?? []) {
+      const ft = fantasyTypeById.get(ev.type?.id);
+      if (!ft) continue; // raw-stat event, no fantasy value
+      (byRound[round] ??= []).push({
+        title: ft.title,
+        amount: ev.amount,
+        valueSek: ft.valueSek,
+        totalSek: ft.valueSek * ev.amount,
+      });
+    }
+  }
+  for (const items of Object.values(byRound)) {
+    items.sort((a, b) => b.totalSek - a.totalSek);
+  }
+  return byRound;
+}
+
 export type PlayerDetail = {
   player: Player;
   club: Club | null;
   rounds: PlayerDetailRoundSnapshot[];
+  /** Live fantasy-scoring breakdown keyed by round number (see
+   *  ScoreBreakdownItem). Empty when unavailable. */
+  scoreBreakdownByRound: Record<number, ScoreBreakdownItem[]>;
   /** Raw event-type catalog from Aftonbladet — {id, name, title, …}. Used to
    *  resolve human-friendly names for events stored on snapshots. Kept as a
    *  plain array (NOT a Map): this object is returned through `unstable_cache`,
@@ -317,22 +399,35 @@ async function _getPlayerDetail(
     .limit(1);
   if (!player) return null;
 
-  const [allRounds, allSnapshots, club, allEventTypes] = await Promise.all([
-    db.select().from(rounds).orderBy(asc(rounds.number)),
-    db
-      .select()
-      .from(playerRoundSnapshots)
-      .where(eq(playerRoundSnapshots.playerId, playerId)),
-    player.clubId
-      ? db
-          .select()
-          .from(clubs)
-          .where(eq(clubs.id, player.clubId))
-          .limit(1)
-          .then((r) => r[0] ?? null)
-      : Promise.resolve<Club | null>(null),
-    db.select().from(eventTypes),
-  ]);
+  const [allRounds, allSnapshots, club, allEventTypes, allFantasyTypes] =
+    await Promise.all([
+      db.select().from(rounds).orderBy(asc(rounds.number)),
+      db
+        .select()
+        .from(playerRoundSnapshots)
+        .where(eq(playerRoundSnapshots.playerId, playerId)),
+      player.clubId
+        ? db
+            .select()
+            .from(clubs)
+            .where(eq(clubs.id, player.clubId))
+            .limit(1)
+            .then((r) => r[0] ?? null)
+        : Promise.resolve<Club | null>(null),
+      db.select().from(eventTypes),
+      db.select().from(fantasyEventTypes),
+    ]);
+
+  const fantasyTypeById = new Map(
+    allFantasyTypes.map((f) => [
+      f.id,
+      { title: f.title, valueSek: f.valueSek },
+    ]),
+  );
+  const scoreBreakdownByRound = await loadScoreBreakdownByRound(
+    player.externalId,
+    fantasyTypeById,
+  );
 
   const byRound = new Map<
     string,
@@ -364,6 +459,7 @@ async function _getPlayerDetail(
     player,
     club,
     rounds: roundLines,
+    scoreBreakdownByRound,
     eventTypes: allEventTypes,
     stats: statsMap.get(player.id) ?? emptyStats(),
   };
