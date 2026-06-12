@@ -145,7 +145,7 @@ src/
         aftonbladet-refresh   — re-runs ingest
   db/
     index.ts                  — Drizzle + Neon HTTP client
-    schema.ts                 — 15 tables (see Data model)
+    schema.ts                 — 16 tables (see Data model)
   lib/
     auth.ts                   — getOrCreateDbUser, isAdmin
     rules.ts                  — RuleSet source of truth (read by app + /hur)
@@ -167,7 +167,7 @@ vercel.json                   — framework: nextjs + region arn1 + cron schedul
 
 ## Data model
 
-15 tables in `src/db/schema.ts`. All FKs from `users` / `teams` are `ON DELETE CASCADE`, so `DELETE FROM users` wipes the whole player-side graph cleanly (used during the 2026-05-16 prod reset).
+16 tables in `src/db/schema.ts`. All FKs from `users` / `teams` are `ON DELETE CASCADE`, so `DELETE FROM users` wipes the whole player-side graph cleanly (used during the 2026-05-16 prod reset). `rivalry_votes` is the one exception — deliberately isolated (no FK), see below.
 
 People & teams
 - `users` — keyed by Clerk userId. Status enum: `pending` | `approved` | `rejected`. Row is lazily created on first `/app` visit via `getOrCreateDbUser()`.
@@ -189,6 +189,7 @@ Money + side games
 - `bets`, `bet_answers` — daily/round bets. `bet_answer_type` enum (`player_ref` | `numeric`); `bet_status` (`open` | `closed` | `scored`).
 - `side_bets` — display-only social bets.
 - `prize_pools`, `prize_places` — prize allocation config. `prize_pool_key` enum: `main_league` | `daily_bets`.
+- `rivalry_votes` — `/hets` banter voting (`rivalry_slug`, `user_id` = Clerk id, `side_key`). One changeable vote per `(rivalry_slug, user_id)`. **No FK** to users/teams on purpose, so it's fully isolated from the game graph and even users without a `users` row can vote. Created on prod via a manual `CREATE TABLE` (the migration baseline is still unseeded — see Migrations), not `db:migrate`.
 
 ## Design
 

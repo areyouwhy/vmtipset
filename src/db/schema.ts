@@ -454,6 +454,29 @@ export const prizePlaces = pgTable(
   (t) => [unique("pool_place_unique").on(t.poolId, t.place)],
 );
 
+// ─── Rivalry votes (the /hets banter sub-games) ─────────────────────────────
+// Isolated from the game graph on purpose: no FK to users/teams, so it never
+// affects scoring or the player-side cascade. One changeable vote per
+// (rivalry, Clerk user). userId is the Clerk id (matches users.id), stored
+// loosely so even users who've never hit /app (no users row) can still vote.
+
+export const rivalryVotes = pgTable(
+  "rivalry_votes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    rivalrySlug: text("rivalry_slug").notNull(),
+    userId: text("user_id").notNull(),
+    sideKey: text("side_key").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [unique("rivalry_vote_unique").on(t.rivalrySlug, t.userId)],
+);
+
 // ─── Inferred types ─────────────────────────────────────────────────────────
 
 export type User = typeof users.$inferSelect;
@@ -494,6 +517,9 @@ export type BetAnswerType = (typeof betAnswerType.enumValues)[number];
 export type BetStatus = (typeof betStatus.enumValues)[number];
 export type IngestRun = typeof ingestRuns.$inferSelect;
 export type NewIngestRun = typeof ingestRuns.$inferInsert;
+
+export type RivalryVote = typeof rivalryVotes.$inferSelect;
+export type NewRivalryVote = typeof rivalryVotes.$inferInsert;
 
 export type Position = (typeof playerPosition.enumValues)[number];
 export type RoundStatus = (typeof roundStatus.enumValues)[number];

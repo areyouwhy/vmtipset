@@ -1,9 +1,12 @@
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { getRivalry, resolveSide } from "@/lib/rivalries";
+import { getMyVote, getVoteSummary } from "@/lib/rivalry-votes";
 import { teamSlug } from "@/lib/team-slug";
 import { MatchupBody } from "../matchup";
 import { getRivalryData } from "../rivalry-data";
-import { ACCENT_BORDER, ACCENT_TEXT, RivalryShell, VoteTeaser } from "../rivalry-ui";
+import { ACCENT_BORDER, ACCENT_TEXT, RivalryShell } from "../rivalry-ui";
+import { VotePanel } from "../vote-panel";
 
 export const revalidate = 300;
 
@@ -14,15 +17,32 @@ export const metadata = {
 
 export default async function MatchOffPage() {
   const rivalry = getRivalry("match-off")!;
-  const { rowsByName, squadByTeamId, anyScored } = await getRivalryData();
+  const { userId } = await auth();
+  const [{ rowsByName, squadByTeamId, anyScored }, summary, myVote] =
+    await Promise.all([
+      getRivalryData(),
+      getVoteSummary("match-off"),
+      userId ? getMyVote("match-off", userId) : Promise.resolve(null),
+    ]);
 
   const [sideA, sideB] = rivalry.sides.map((s) => resolveSide(s, rowsByName));
   const rowA = sideA.members[0]?.row ?? null;
   const rowB = sideB.members[0]?.row ?? null;
+  const voteSides = rivalry.sides.map((s) => ({
+    key: s.key,
+    label: s.label,
+    accent: s.accent,
+  }));
 
   return (
     <RivalryShell title={rivalry.title} tagline={rivalry.tagline}>
-      <VoteTeaser aLabel={sideA.label} bLabel={sideB.label} />
+      <VotePanel
+        rivalrySlug="match-off"
+        sides={voteSides}
+        summary={summary}
+        myVote={myVote}
+        signedIn={!!userId}
+      />
 
       {/* External model sites */}
       <div className="mt-6 grid grid-cols-2 gap-2">

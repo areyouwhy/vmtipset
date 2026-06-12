@@ -58,38 +58,3 @@ export function RivalryShell({
     </main>
   );
 }
-
-/**
- * Phase-2 placeholder. Voting will be Clerk-authed and stored in an isolated
- * table; until then this just teases it so the layout slot exists.
- */
-export function VoteTeaser({
-  aLabel,
-  bLabel,
-}: {
-  aLabel: string;
-  bLabel: string;
-}) {
-  return (
-    <section className="mt-6 border border-magenta/40 bg-magenta/5">
-      <header className="border-b border-magenta/40 px-3 py-2 text-[10px] uppercase tracking-widest text-magenta">
-        VEM VINNER? · RÖSTNING
-      </header>
-      <div className="grid grid-cols-2 gap-2 p-3">
-        {[aLabel, bLabel].map((label) => (
-          <button
-            key={label}
-            type="button"
-            disabled
-            className="cursor-not-allowed border border-border px-3 py-3 text-center text-xs uppercase tracking-widest text-dim/70"
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <p className="border-t border-border px-3 py-2 text-[10px] uppercase tracking-widest text-dim">
-        ⧗ Röstning öppnar snart — då loggar du in och lägger din röst.
-      </p>
-    </section>
-  );
-}
