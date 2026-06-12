@@ -44,4 +44,5 @@ scripts/label-clubs-data.json
 
 # database backups
 /backups/
+scripts/backup-teams.js
 
