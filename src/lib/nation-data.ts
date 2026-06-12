@@ -67,8 +67,11 @@ export type NationDetail = {
    *  the WC tournament feed (separate id space from our clubs table —
    *  matched by ISO country code). Empty if no matches found. */
   matches: WcMatch[];
-  /** Team id → team metadata for resolving the opponent's name + jersey. */
-  wcTeamsById: Map<number, WcTeam>;
+  /** WC teams for resolving the opponent's name + jersey in the match list.
+   *  Kept as a plain array (NOT a Map) because this object passes through
+   *  `unstable_cache`, which serializes it — a Map would come back as a
+   *  non-Map and crash `.get()` on cache hits. The page rebuilds the Map. */
+  wcTeams: WcTeam[];
 };
 
 function priceOf(p: NationPlayer): number {
@@ -313,7 +316,7 @@ async function _getNationDetail(
     dreamTeamFormation,
     dreamTeamValueSek,
     matches,
-    wcTeamsById,
+    wcTeams: [...wcTeamsById.values()],
   };
 }
 

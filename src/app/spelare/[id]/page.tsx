@@ -17,7 +17,9 @@ export default async function PublicPlayerPage({
   const detail = await getPlayerDetail(id).catch(() => null);
   if (!detail) notFound();
 
-  const { player, club, rounds: roundLines, eventTypes, stats } = detail;
+  const { player, club, rounds: roundLines, eventTypes: eventTypeList, stats } = detail;
+  // Rebuild the Map here (after the cache boundary) — see PlayerDetail.eventTypes.
+  const eventTypes = new Map(eventTypeList.map((t) => [t.id, t] as const));
   const countryCode = club?.countryCode ?? null;
   const domesticClub = clubFor(player.externalId);
 

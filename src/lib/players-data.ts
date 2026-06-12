@@ -287,9 +287,12 @@ export type PlayerDetail = {
   player: Player;
   club: Club | null;
   rounds: PlayerDetailRoundSnapshot[];
-  /** Raw event-type catalog from Aftonbladet — id → {name, title, …}. Used
-   *  to resolve human-friendly names for events stored on snapshots. */
-  eventTypes: Map<number, EventType>;
+  /** Raw event-type catalog from Aftonbladet — {id, name, title, …}. Used to
+   *  resolve human-friendly names for events stored on snapshots. Kept as a
+   *  plain array (NOT a Map): this object is returned through `unstable_cache`,
+   *  which serializes it — a Map would deserialize into a non-Map and crash
+   *  `.get()` on cache hits. The page rebuilds the Map after the cache call. */
+  eventTypes: EventType[];
   /** Season-aggregate event counts + total growth for this player. */
   stats: PlayerSeasonStats;
 };
@@ -361,7 +364,7 @@ async function _getPlayerDetail(
     player,
     club,
     rounds: roundLines,
-    eventTypes: new Map(allEventTypes.map((t) => [t.id, t])),
+    eventTypes: allEventTypes,
     stats: statsMap.get(player.id) ?? emptyStats(),
   };
 }

@@ -12,6 +12,7 @@ import {
 } from "@/lib/nation-data";
 import { fifaRank, FIFA_RANK_SOURCE_DATE } from "@/data/fifa-rank";
 import { groupForCountry } from "@/data/wc-groups";
+import type { WcTeam } from "@/lib/wc-tournament";
 
 export const revalidate = 3600;
 
@@ -28,6 +29,11 @@ export default async function NationPage({
   const group = groupForCountry(detail.countryCode);
   const xi = detail.startingEleven;
   const captainId = xi.captainId;
+  // Rebuild the team lookup here (after the cache boundary) — see
+  // NationDetail.wcTeams.
+  const wcTeamsById = new Map(
+    detail.wcTeams.map((t) => [t.externalId, t] as const),
+  );
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
@@ -128,7 +134,7 @@ export default async function NationPage({
           </h2>
           <MatchSchedule
             matches={detail.matches}
-            teamsById={detail.wcTeamsById}
+            teamsById={wcTeamsById}
           />
         </section>
       </div>
@@ -141,7 +147,7 @@ function MatchSchedule({
   teamsById,
 }: {
   matches: NationDetail["matches"];
-  teamsById: NationDetail["wcTeamsById"];
+  teamsById: Map<number, WcTeam>;
 }) {
   if (matches.length === 0) {
     return (
