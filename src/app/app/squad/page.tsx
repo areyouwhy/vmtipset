@@ -1,10 +1,10 @@
-import { asc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { rounds, teams } from "@/db/schema";
+import { teams } from "@/db/schema";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { getOrCreateDbUser, isAdmin } from "@/lib/auth";
+import { getOrCreateDbUser } from "@/lib/auth";
 import {
   getActiveRound,
   getCurrentSquad,
@@ -16,18 +16,7 @@ import { SquadPicker } from "./picker";
 
 export const dynamic = "force-dynamic";
 
-// TEMPORARY: admin-only dry-run of the transfer phase. Visiting
-// /app/squad?preview=<secret> as the admin opens the NEXT round's picker,
-// seeded from the latest squad — fully interactive (fees compute live) but
-// Save is disabled and nothing is written. Remove this + the preview branch
-// below once validated.
-const PREVIEW_SECRET = "txnphase-9f3a2c7e";
-
-export default async function SquadPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ preview?: string }>;
-}) {
+export default async function SquadPage() {
   const user = await getOrCreateDbUser();
   if (!user) redirect("/");
   if (user.status !== "approved") redirect("/app");
@@ -40,26 +29,9 @@ export default async function SquadPage({
   if (!team) redirect("/app");
 
   const round = await getActiveRound();
-
-  // TEMPORARY preview: admin + secret param, only when no round is actually
-  // open. Renders the next upcoming round's picker seeded from the latest
-  // squad, fully interactive but save-disabled.
-  const sp = await searchParams;
-  const previewOk =
-    !round && sp?.preview === PREVIEW_SECRET && (await isAdmin());
-  let previewRound: typeof round = null;
-  let previewSeed: Awaited<ReturnType<typeof getLatestSquadForTeam>> = null;
-  if (previewOk) {
-    const all = await db.select().from(rounds).orderBy(asc(rounds.number));
-    previewRound = all.find((r) => r.status === "upcoming") ?? null;
-    if (previewRound) previewSeed = await getLatestSquadForTeam(team.id);
-  }
-  const inPreview = previewOk && previewRound != null && previewSeed != null;
-
   // Between rounds (no open round) we still let the owner view their current
   // squad — same pitch + lineup, just read-only (no transfers).
-  const latest =
-    round || inPreview ? null : await getLatestSquadForTeam(team.id);
+  const latest = round ? null : await getLatestSquadForTeam(team.id);
   const viewRound = round ?? latest?.round ?? null;
 
   return (
@@ -73,12 +45,7 @@ export default async function SquadPage({
         />
 
         <section className="py-6">
-          {inPreview ? (
-            <p className="text-[10px] uppercase tracking-widest text-cyan">
-              FÖRHANDSVISNING · {previewRound!.name} (#{previewRound!.number}) ·
-              BYTEN SPARAS INTE
-            </p>
-          ) : round ? (
+          {round ? (
             <p className="text-[10px] uppercase tracking-widest text-dim">
               <Link
                 href={`/vm/omgang/${round.number}`}
@@ -99,36 +66,18 @@ export default async function SquadPage({
           <h1 className="mt-1 text-2xl font-bold uppercase tracking-tight text-yellow">
             {team.name}
           </h1>
-          {inPreview && (
-            <p className="mt-2 border border-cyan/40 bg-cyan/5 px-3 py-2 text-xs text-cyan">
-              Test-läge: byt spelare för att se avgifter (0,7 % av inkommande
-              spelares pris) och kassaflöde live. Inget sparas — stäng fliken
-              när du är klar.
-            </p>
-          )}
-          {!inPreview && !round && viewRound && (
+          {!round && viewRound && (
             <p className="mt-2 text-sm text-dim">
               Inga byten just nu — transfers öppnar när admin öppnar nästa rond.
             </p>
           )}
-          {!inPreview && !round && !viewRound && (
+          {!round && !viewRound && (
             <p className="mt-2 text-sm text-red">
               ! Ingen aktiv rond — admin måste öppna en rond först.
             </p>
           )}
         </section>
 
-        {inPreview && (
-          <SquadPickerWrapper
-            teamId={team.id}
-            roundId={previewRound!.id}
-            roundNumber={previewRound!.number}
-            deadline={previewRound!.deadline}
-            preview
-            seedPlayerIds={previewSeed!.squad.playerIds}
-            seedCaptainId={previewSeed!.squad.captainPlayerId}
-          />
-        )}
         {round && (
           <SquadPickerWrapper
             teamId={team.id}
@@ -198,20 +147,12 @@ async function SquadPickerWrapper({
   roundNumber,
   deadline,
   readOnly = false,
-  preview = false,
-  seedPlayerIds,
-  seedCaptainId,
 }: {
   teamId: string;
   roundId: string;
   roundNumber: number;
   deadline: Date | null;
   readOnly?: boolean;
-  /** TEMPORARY preview mode — editable, fees compute live, Save disabled. */
-  preview?: boolean;
-  /** Initial squad for preview (the carried-forward squad). */
-  seedPlayerIds?: string[];
-  seedCaptainId?: string | null;
 }) {
   const [pickable, current, referenceIds] = await Promise.all([
     getPickablePlayers(roundId),
@@ -241,12 +182,6 @@ async function SquadPickerWrapper({
     current?.captainPlayerId && droppedIds.has(current.captainPlayerId)
       ? null
       : (current?.captainPlayerId ?? null);
-
-  // In preview, seed from the carried-forward squad and diff transfers against
-  // it (so swaps show fees), rather than the empty not-yet-created round squad.
-  const baseIds = preview ? (seedPlayerIds ?? []) : cleanIds;
-  const baseCaptainId = preview ? (seedCaptainId ?? null) : cleanCaptainId;
-  const referenceForDiff = preview ? (seedPlayerIds ?? null) : referenceIds;
 
   return (
     <>
@@ -286,14 +221,11 @@ async function SquadPickerWrapper({
       )}
       <SquadPicker
         players={pickable}
-        initialPlayerIds={baseIds}
-        initialCaptainId={baseCaptainId}
-        locked={!preview && (readOnly || current?.lockedAt != null)}
-        referencePlayerIds={referenceForDiff}
-        preview={preview}
-        deadlineSlot={
-          readOnly || preview ? null : <DeadlineBanner deadline={deadline} />
-        }
+        initialPlayerIds={cleanIds}
+        initialCaptainId={cleanCaptainId}
+        locked={readOnly || current?.lockedAt != null}
+        referencePlayerIds={referenceIds}
+        deadlineSlot={readOnly ? null : <DeadlineBanner deadline={deadline} />}
       />
     </>
   );

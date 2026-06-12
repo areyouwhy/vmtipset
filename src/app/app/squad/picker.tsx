@@ -36,7 +36,6 @@ export function SquadPicker({
   locked,
   referencePlayerIds,
   deadlineSlot,
-  preview = false,
 }: {
   players: PickablePlayer[];
   initialPlayerIds: string[];
@@ -49,9 +48,6 @@ export function SquadPicker({
    *  body and just above the fixed save bar. Lets the page hand the deadline
    *  notice down without leaving a gap of bottom padding above it. */
   deadlineSlot?: React.ReactNode;
-  /** TEMPORARY preview mode (admin-only): fully editable so transfers + fees
-   *  compute live, but Save is disabled and writes nothing. */
-  preview?: boolean;
 }) {
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(initialPlayerIds),
@@ -324,7 +320,6 @@ export function SquadPicker({
   }
 
   function save() {
-    if (preview) return; // preview mode writes nothing
     setErrors([]);
     setSavedAt(null);
     setSavedTransfers(null);
@@ -728,18 +723,16 @@ export function SquadPicker({
           <button
             type="button"
             onClick={save}
-            disabled={pending || locked || preview || liveErrors.length > 0}
+            disabled={pending || locked || liveErrors.length > 0}
             className="w-full border border-yellow bg-yellow px-6 py-3 text-sm font-bold uppercase tracking-widest text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-border disabled:text-dim disabled:opacity-100"
           >
-            {preview
-              ? "[ FÖRHANDSVISNING — SPARAS INTE ]"
-              : locked
-                ? "[ TRUPPEN ÄR LÅST ]"
-                : pending
-                  ? "[ SPARAR... ]"
-                  : liveErrors.length > 0
-                    ? `[ ${liveErrors.length} FEL KVAR ]`
-                    : "[ SPARA TRUPP → ]"}
+            {locked
+              ? "[ TRUPPEN ÄR LÅST ]"
+              : pending
+                ? "[ SPARAR... ]"
+                : liveErrors.length > 0
+                  ? `[ ${liveErrors.length} FEL KVAR ]`
+                  : "[ SPARA TRUPP → ]"}
           </button>
         </div>
       </div>

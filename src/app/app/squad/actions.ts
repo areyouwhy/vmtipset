@@ -91,9 +91,11 @@ export async function saveSquadAction(
   const errors = validateSquad(candidate);
   if (errors.length > 0) return { ok: false, errors };
 
-  // Determine the prior reference squad for transfer calculation.
-  // If we already saved this round before, the diff is vs. the saved squad
-  // (so re-edits don't double-count fees). Otherwise, vs. the previous round.
+  // Transfers are always diffed against the PREVIOUS ROUND's committed squad
+  // (never this round's last save). Combined with the delete-then-insert of
+  // transfer rows below, that makes an open round a free-for-all: re-saving,
+  // undoing, or churning swaps never accumulates fees — only the net change
+  // from last round's squad is ever recorded, and reverting to it costs 0.
   const referencePlayerIds = await loadReferencePlayerIds(team.id, round.number);
 
   // Compute transfer diff if this isn't the very first squad ever.
