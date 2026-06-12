@@ -43,6 +43,9 @@ export default async function TabellPage() {
             utbetalning.{" "}
             <Link href="/hur/audit" className="text-cyan">
               SE AUDIT →
+            </Link>{" "}
+            <Link href="/hets" className="text-magenta">
+              ELLER HETS →
             </Link>
           </p>
           <p className="mt-1 text-xs text-dim">

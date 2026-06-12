@@ -730,3 +730,108 @@ export async function getRoundAudit(roundId: string): Promise<RoundAudit | null>
 
   return { round, teams: teamsLines };
 }
+
+// ─── Head-to-head squad summaries (for /hets) ───────────────────────────────
+
+export type H2HPlayer = {
+  id: string;
+  name: string;
+  position: "GK" | "DEF" | "MID" | "FWD";
+  /** ISO 3166-1 alpha-3 of the player's WC nation, if known. */
+  countryCode: string | null;
+  /** Price at the summary round. null if no snapshot. */
+  priceSek: number | null;
+  isCaptain: boolean;
+};
+
+export type H2HSquad = {
+  teamId: string;
+  roundNumber: number;
+  players: H2HPlayer[];
+};
+
+/**
+ * Latest *released* squad per team, keyed by teamId — read-only, for the /hets
+ * head-to-head. "Released" = the round is locked or scored, so the lineup is
+ * already public (matches the anti-cheat rule in getTeamDetail). Returns {} if
+ * no round has been released yet. Prices come from that round's snapshots
+ * (manual wins over api).
+ */
+export async function getH2HSquads(): Promise<Record<string, H2HSquad>> {
+  const [allRounds, allSquads, allSquadPlayers, allPlayers, allClubs, allSnapshots] =
+    await Promise.all([
+      db.select().from(rounds).orderBy(asc(rounds.number)),
+      db.select().from(squads),
+      db.select().from(squadPlayers),
+      db.select().from(players),
+      db.select().from(clubs),
+      db.select().from(playerRoundSnapshots),
+    ]);
+
+  const releasedIds = new Set(
+    allRounds.filter((r) => r.status === "locked" || r.status === "scored").map((r) => r.id),
+  );
+  if (releasedIds.size === 0) return {};
+
+  const roundById = new Map(allRounds.map((r) => [r.id, r]));
+  const roundOrder = new Map(allRounds.map((r, i) => [r.id, i] as const));
+  const playerById = new Map(allPlayers.map((p) => [p.id, p]));
+  const clubById = new Map(allClubs.map((c) => [c.id, c]));
+
+  // Per team, the released squad from the highest-ordered round.
+  const latestByTeam = new Map<string, (typeof allSquads)[number]>();
+  for (const sq of allSquads) {
+    if (!releasedIds.has(sq.roundId)) continue;
+    const cur = latestByTeam.get(sq.teamId);
+    const newIdx = roundOrder.get(sq.roundId) ?? -1;
+    const curIdx = cur ? (roundOrder.get(cur.roundId) ?? -1) : -1;
+    if (newIdx > curIdx) latestByTeam.set(sq.teamId, sq);
+  }
+
+  const playersBySquad = new Map<string, string[]>();
+  for (const sp of allSquadPlayers) {
+    const arr = playersBySquad.get(sp.squadId) ?? [];
+    arr.push(sp.playerId);
+    playersBySquad.set(sp.squadId, arr);
+  }
+
+  const snapshotByRoundPlayer = new Map<string, { priceSek: number; source: "api" | "manual" }>();
+  for (const s of allSnapshots) {
+    const key = `${s.roundId}::${s.playerId}`;
+    const existing = snapshotByRoundPlayer.get(key);
+    if (!existing || (existing.source === "api" && s.source === "manual")) {
+      snapshotByRoundPlayer.set(key, { priceSek: s.priceSek, source: s.source });
+    }
+  }
+
+  const order = { GK: 0, DEF: 1, MID: 2, FWD: 3 } as const;
+  const out: Record<string, H2HSquad> = {};
+  for (const [teamId, sq] of latestByTeam) {
+    const round = roundById.get(sq.roundId);
+    if (!round) continue;
+    const pids = playersBySquad.get(sq.id) ?? [];
+    const squadPlayersList: H2HPlayer[] = pids.flatMap((pid) => {
+      const p = playerById.get(pid);
+      if (!p) return [];
+      const club = p.clubId ? clubById.get(p.clubId) : null;
+      const snap = snapshotByRoundPlayer.get(`${sq.roundId}::${pid}`);
+      return [
+        {
+          id: p.id,
+          name: p.name,
+          position: p.position,
+          countryCode: club?.countryCode ?? null,
+          priceSek: snap?.priceSek ?? null,
+          isCaptain: sq.captainPlayerId === pid,
+        },
+      ];
+    });
+    squadPlayersList.sort((a, b) => {
+      if (order[a.position] !== order[b.position]) return order[a.position] - order[b.position];
+      if (a.isCaptain !== b.isCaptain) return a.isCaptain ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+    out[teamId] = { teamId, roundNumber: round.number, players: squadPlayersList };
+  }
+  return out;
+}
