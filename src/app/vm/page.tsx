@@ -36,6 +36,13 @@ export default async function VMHomePage() {
 
         <nav className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <HubCard
+            href="/live"
+            title="LIVE"
+            subtitle="Dagens matcher"
+            blurb="Dagens spelschema och vilka av våra lag som är exponerade."
+            accent="yellow"
+          />
+          <HubCard
             href="/vm/gruppspel"
             title="GRUPPSPEL"
             subtitle={`${groups.length} grupper · ${groupMatchCount} matcher`}
