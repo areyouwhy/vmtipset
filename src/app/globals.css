@@ -96,6 +96,19 @@ select {
   font-feature-settings: inherit;
 }
 
+/* iOS Safari auto-zooms into any focused form control whose font-size is below
+   16px. Force 16px on mobile only (below the `sm` breakpoint) so focusing the
+   ⌘K search / filters / forms no longer jolts the viewport; desktop keeps its
+   designed text-xs/text-sm sizes. Left UNLAYERED on purpose so it wins over
+   Tailwind utility classes (layered) — see CLAUDE.md cascade note. */
+@media (max-width: 639.98px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 ::selection {
   background: var(--yellow);
   color: #000;
