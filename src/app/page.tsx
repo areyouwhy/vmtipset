@@ -93,6 +93,25 @@ export default async function Home() {
           ) : (
             <SignUpInButtons />
           )}
+
+          {/* Public sections — reachable signed in or out, no login wall. */}
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              href="/tabell"
+              className="border border-magenta/60 bg-magenta/5 px-6 py-3 text-center text-sm font-bold uppercase tracking-widest text-magenta transition hover:border-magenta hover:bg-magenta/15"
+            >
+              [ TABELL ]
+            </Link>
+            <Link
+              href="/live"
+              className="flex items-center justify-center gap-2 border border-red/70 bg-red/10 px-6 py-3 text-center text-sm font-bold uppercase tracking-widest text-red transition hover:border-red hover:bg-red/20"
+            >
+              <span className="animate-pulse" aria-hidden="true">
+                ●
+              </span>
+              LIVE
+            </Link>
+          </div>
         </div>
 
         <section className="grid grid-cols-2 gap-0 border-x border-b border-border">
