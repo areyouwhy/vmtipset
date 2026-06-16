@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { SectionNav } from "@/components/section-nav";
 import { Jersey } from "@/lib/jersey";
 import { getLiveView, type LiveView } from "@/lib/live-exposure-data";
 import type { MatchExposureView, NationExposure } from "@/lib/live-exposure";
@@ -59,6 +60,7 @@ export default async function LivePage({
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-2xl">
         <Breadcrumbs trail={[{ label: "LIVE" }]} />
+        <SectionNav current="live" />
 
         <section className="py-6">
           <p className="text-[10px] uppercase tracking-widest text-dim">

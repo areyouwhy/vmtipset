@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { buildHets } from "@/lib/banter";
 import { getH2HSquads, getLeaderboard } from "@/lib/leaderboard";
+import { SectionNav } from "@/components/section-nav";
 import { RIVALRY_LINKS } from "@/lib/rivalries";
 import { teamSlug } from "@/lib/team-slug";
 import { getLiveView, type LiveView } from "@/lib/live-exposure-data";
@@ -115,17 +116,8 @@ function Shell({
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-3xl">
-        <Breadcrumbs
-          trail={[{ label: "TABELL" }]}
-          right={
-            <Link
-              href="/live"
-              className="border border-cyan/50 px-2 py-0.5 text-[10px] uppercase tracking-widest text-cyan transition hover:border-yellow hover:text-yellow"
-            >
-              ● LIVE
-            </Link>
-          }
-        />
+        <Breadcrumbs trail={[{ label: "TABELL" }]} />
+        <SectionNav current="tabell" />
         <section className="py-6">
           <h1 className="text-2xl font-bold uppercase tracking-tight text-yellow sm:text-3xl">
             TABELL

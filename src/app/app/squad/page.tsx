@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { teams } from "@/db/schema";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { SectionNav } from "@/components/section-nav";
 import { getOrCreateDbUser } from "@/lib/auth";
 import {
   getActiveRound,
@@ -43,6 +44,7 @@ export default async function SquadPage() {
             { label: "TRUPP" },
           ]}
         />
+        <SectionNav current="squad" />
 
         <section className="py-6">
           {round ? (
