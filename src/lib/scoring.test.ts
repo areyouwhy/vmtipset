@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  bankInterestSek,
+  captainBonusSek,
   scoreSquadForRound,
   squadPurchaseCostSek,
   type ScoringInputs,
@@ -375,5 +377,31 @@ describe("squadPurchaseCostSek", () => {
     expect(
       squadPurchaseCostSek([{ priceSek: 4_800_000, growthSek: -200_000 }]),
     ).toBe(5_000_000);
+  });
+});
+
+describe("captainBonusSek — golden masters", () => {
+  it("doubles positive growth at multiplier 2 (the extra ×1)", () => {
+    expect(captainBonusSek(500_000, 2, true)).toBe(500_000);
+  });
+  it("floors at 0 for negative growth when only-positive", () => {
+    expect(captainBonusSek(-300_000, 2, true)).toBe(0);
+  });
+  it("doubles the loss when only-positive is off", () => {
+    expect(captainBonusSek(-300_000, 2, false)).toBe(-300_000);
+  });
+  it("respects a higher multiplier (triple captain = ×2 bonus)", () => {
+    expect(captainBonusSek(400_000, 3, true)).toBe(800_000);
+  });
+});
+
+describe("bankInterestSek — golden masters", () => {
+  it("1% of a positive bank, floored", () => {
+    expect(bankInterestSek(6_060_000, 0.01)).toBe(60_600);
+    expect(bankInterestSek(1_999_999, 0.01)).toBe(19_999); // floor, not round
+  });
+  it("never pays interest on zero or negative cash", () => {
+    expect(bankInterestSek(0, 0.01)).toBe(0);
+    expect(bankInterestSek(-5_000_000, 0.01)).toBe(0);
   });
 });

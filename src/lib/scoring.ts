@@ -105,6 +105,33 @@ export function squadPurchaseCostSek(
   return snaps.reduce((acc, s) => acc + (s.priceSek - s.growthSek), 0);
 }
 
+/**
+ * Captain bonus in SEK: the extra credit on top of the captain's normal squad
+ * drift. `(multiplier − 1) × growth`, floored at 0 when only-positive. Shared
+ * by the scoring engine AND the live leaderboard/exposure projections, so a
+ * "live" captain bonus always equals what scoring will eventually bank.
+ */
+export function captainBonusSek(
+  captainGrowthSek: number,
+  multiplier: number,
+  onlyPositive: boolean,
+): number {
+  const raw = captainGrowthSek * (multiplier - 1);
+  return onlyPositive ? Math.max(0, raw) : raw;
+}
+
+/**
+ * Bank interest in SEK: `floor(bank × pct)`, only on positive cash. Shared by
+ * the engine and the live value projection. Paid every round including the
+ * last — there is no final-round exception (see RULES.md).
+ */
+export function bankInterestSek(
+  bankEnteringSek: number,
+  pctPerRound: number,
+): number {
+  return Math.floor(Math.max(0, bankEnteringSek) * pctPerRound);
+}
+
 export function scoreSquadForRound(args: ScoringInputs): ScoreResult {
   const {
     squad,
@@ -140,14 +167,16 @@ export function scoreSquadForRound(args: ScoringInputs): ScoreResult {
   if (squad.captainPlayerId) {
     const cap = scoreSnapshots.get(squad.captainPlayerId);
     if (cap) {
-      const raw = cap.growthSek * (captainMultiplier - 1);
-      captainBonus = captainBonusOnlyPositive ? Math.max(0, raw) : raw;
+      captainBonus = captainBonusSek(
+        cap.growthSek,
+        captainMultiplier,
+        captainBonusOnlyPositive,
+      );
     }
   }
 
   // Interest is only on cash. Floor at 0 if somehow negative.
-  const interestBase = Math.max(0, bankEnteringSek);
-  const bankInterest = Math.floor(interestBase * bankInterestPctPerRound);
+  const bankInterest = bankInterestSek(bankEnteringSek, bankInterestPctPerRound);
 
   // Bank end = cash entering + interest credit + captain credit. Growth
   // and transfer effects are NOT bank-side: growth moves the squad value,

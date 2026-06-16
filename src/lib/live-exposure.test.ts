@@ -153,12 +153,13 @@ describe("buildExposure (revealed round)", () => {
 
   it("aggregates distinct players and matches per team", () => {
     // Sebastian: Marquinhos+Endrick (match1) + Maignan (match2) = 3 players, 2 matches.
-    // Day growth = 300k − 100k + 150k = 350k.
+    // Day growth = 300k − 100k + 150k = 350k, PLUS captain (Marquinhos) bonus
+    // = +300k (growth ×(2−1), positive) → 650k.
     const seb = result.leaderboard.find((t) => t.teamId === "seb");
     expect(seb).toMatchObject({
       playerCount: 3,
       matchCount: 2,
-      growthSek: 350_000,
+      growthSek: 650_000,
     });
     const lagb = result.leaderboard.find((t) => t.teamId === "lagb");
     expect(lagb).toMatchObject({

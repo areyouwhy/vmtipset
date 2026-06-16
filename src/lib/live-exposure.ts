@@ -16,6 +16,8 @@
  */
 
 import type { Position } from "@/db/schema";
+import { currentRules } from "@/lib/rules";
+import { captainBonusSek } from "@/lib/scoring";
 import type { WcMatch, WcTeam } from "@/lib/wc-tournament";
 
 // ─── Public shapes ───────────────────────────────────────────────────────────
@@ -206,7 +208,19 @@ export function buildExposure(args: {
       const pset = aggPlayers.get(o.teamId)!;
       if (!pset.has(o.playerId)) {
         pset.add(o.playerId);
-        aggGrowth.set(o.teamId, (aggGrowth.get(o.teamId) ?? 0) + o.growthSek);
+        // Captain's growth counts double in the day total (the same captain
+        // bonus scoring will bank), so /live TILLVÄXT matches /tabell value.
+        const bonus = o.isCaptain
+          ? captainBonusSek(
+              o.growthSek,
+              currentRules.captainMultiplier,
+              currentRules.captainBonusOnlyPositive,
+            )
+          : 0;
+        aggGrowth.set(
+          o.teamId,
+          (aggGrowth.get(o.teamId) ?? 0) + o.growthSek + bonus,
+        );
       }
       aggMatches.get(o.teamId)!.add(matchId);
       aggMeta.set(o.teamId, { teamName: o.teamName, teamSlug: o.teamSlug });

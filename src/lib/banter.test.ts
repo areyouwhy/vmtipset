@@ -18,6 +18,8 @@ function row(partial: Partial<LeaderboardRow> & { rank: number }): LeaderboardRo
     roundGrowthSek: partial.roundGrowthSek ?? 0,
     bankSek: partial.bankSek ?? 0,
     teamValueSek: partial.teamValueSek ?? 0,
+    captainBonusProjectedSek: partial.captainBonusProjectedSek ?? 0,
+    bankInterestProjectedSek: partial.bankInterestProjectedSek ?? 0,
   };
 }
 

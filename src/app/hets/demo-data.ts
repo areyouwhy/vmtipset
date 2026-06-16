@@ -42,6 +42,8 @@ export function demoLeaderboardRows(): LeaderboardRow[] {
       roundGrowthSek: s.roundGrowthSek ?? 0,
       bankSek: s.bankSek ?? 0,
       teamValueSek: 48_000_000 + total + (s.bankSek ?? 0),
+      captainBonusProjectedSek: 0,
+      bankInterestProjectedSek: 0,
     } satisfies LeaderboardRow;
   });
 }

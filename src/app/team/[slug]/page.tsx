@@ -163,6 +163,29 @@ function RoundSection({
         </dl>
       )}
 
+      {/* In-progress round: spell out what BANK is made of (the scored rounds
+          show this via the breakdown above; this mirrors it pre-scoring). */}
+      {!line.score && line.bankSek !== null && (
+        <p className="mt-1 text-[10px] uppercase tracking-widest text-dim">
+          BANK = KASSA{" "}
+          <span className="text-foreground">
+            {fmtSek(
+              line.bankSek -
+                line.captainBonusProjectedSek -
+                line.bankInterestProjectedSek,
+            )}
+          </span>{" "}
+          + RÄNTA{" "}
+          <span className="text-foreground">
+            {fmtSek(line.bankInterestProjectedSek)}
+          </span>{" "}
+          + KAPTENBONUS{" "}
+          <span className="text-foreground">
+            {fmtSek(line.captainBonusProjectedSek)}
+          </span>
+        </p>
+      )}
+
       {line.squadHidden ? (
         <p className="mt-3 border border-dashed border-yellow/60 p-3 text-[11px] uppercase tracking-widest text-yellow/80">
           🔒 TRUPPEN VISAS NÄR RONDEN HAR LÅSTS

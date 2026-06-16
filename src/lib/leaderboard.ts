@@ -17,6 +17,7 @@ import {
 } from "@/db/schema";
 import { getBetTotalsByTeam } from "./bets-data";
 import { currentRules } from "./rules";
+import { bankInterestSek, captainBonusSek } from "./scoring";
 
 export type LeaderboardPerRound = {
   roundId: string;
@@ -47,10 +48,19 @@ export type LeaderboardRow = {
    *  squad has gained from price drift). null if no squad yet. */
   roundGrowthSek: number | null;
   /** Bank cash after the latest scored round. budgetSek − initial squad cost
-   *  for round 1; modified by interest, captain bonus, transfers afterward. */
+   *  for round 1; modified by interest, captain bonus, transfers afterward.
+   *  For an in-progress (unscored) latest round this is the PROJECTED bank end
+   *  — it already includes the live captain-bonus + interest projection below,
+   *  so `squadValueSek + bankSek = teamValueSek` always holds. */
   bankSek: number | null;
   /** squadValueSek + bankSek — the metric we rank by. */
   teamValueSek: number | null;
+  /** Live projection of this round's captain bonus, folded into bank/value
+   *  before the round is scored (0 once scored, or when no captain/growth). */
+  captainBonusProjectedSek: number;
+  /** Live projection of this round's bank interest, folded into bank/value
+   *  before the round is scored (0 once scored). */
+  bankInterestProjectedSek: number;
 };
 
 export type DailyBetsRow = {
@@ -257,6 +267,50 @@ async function _getLeaderboard(): Promise<Leaderboard> {
     bankByTeam.set(t.id, bank);
   }
 
+  // ── Live projection of THIS round's captain bonus + bank interest ──────────
+  // While a round is in progress (latest squad's round not yet `scored`), the
+  // captain bonus and interest haven't been banked. Project them from the live
+  // snapshots so the table value/ranking reflect what scoring WILL produce —
+  // without scoring (snapshots untouched). Skipped once the round is `scored`,
+  // where the real figures already live in bank_sek_end (no double-count).
+  // NOTE: exact for Round 1 (no transfers). From Round 2+, `bank` here doesn't
+  // yet fold in the current round's pending transfer cash flow, so the interest
+  // base — and thus the projection — would need that added; revisit then.
+  const roundStatusById = new Map(allRounds.map((r) => [r.id, r.status]));
+  const captainBySquad = new Map(
+    allSquads.map((sq) => [sq.id, sq.captainPlayerId] as const),
+  );
+  const captainProjByTeam = new Map<string, number>();
+  const interestProjByTeam = new Map<string, number>();
+  for (const t of allTeams) {
+    const latest = latestSquadByTeam.get(t.id);
+    const bank = bankByTeam.get(t.id);
+    if (!latest || bank === null || bank === undefined) continue;
+    if (roundStatusById.get(latest.roundId) === "scored") continue;
+
+    const captainId = captainBySquad.get(latest.squadId);
+    const capSnap = captainId
+      ? snapshotByRoundPlayer.get(`${latest.roundId}::${captainId}`)
+      : undefined;
+    const captainProj = capSnap
+      ? captainBonusSek(
+          capSnap.growthSek,
+          currentRules.captainMultiplier,
+          currentRules.captainBonusOnlyPositive,
+        )
+      : 0;
+    // Interest is on the cash ENTERING the round (the bank before bonuses).
+    const interestProj = bankInterestSek(
+      bank,
+      currentRules.bankInterestPctPerRound,
+    );
+
+    captainProjByTeam.set(t.id, captainProj);
+    interestProjByTeam.set(t.id, interestProj);
+    // Fold into bank → flows into teamValue (squad + bank) and ranking below.
+    bankByTeam.set(t.id, bank + captainProj + interestProj);
+  }
+
   const teamValueByTeam = new Map<string, number | null>();
   for (const t of allTeams) {
     const sq = squadValueByTeam.get(t.id);
@@ -317,6 +371,8 @@ async function _getLeaderboard(): Promise<Leaderboard> {
       roundGrowthSek: roundGrowthByTeam.get(t.id) ?? null,
       bankSek: bankByTeam.get(t.id) ?? null,
       teamValueSek: teamValueByTeam.get(t.id) ?? null,
+      captainBonusProjectedSek: captainProjByTeam.get(t.id) ?? 0,
+      bankInterestProjectedSek: interestProjByTeam.get(t.id) ?? 0,
     };
   });
 
@@ -398,6 +454,11 @@ export type TeamDetailRoundLine = {
   /** squadValueSek + bankSek — what the team was worth at the end of this round.
    *  null if either piece is missing. */
   teamValueSek: number | null;
+  /** For the in-progress (unscored) round only: the live projection components
+   *  folded into bankSek, so the UI can write out what BANK is made of. 0 for
+   *  scored rounds (their breakdown comes from `score`) and idle rounds. */
+  captainBonusProjectedSek: number;
+  bankInterestProjectedSek: number;
 };
 
 export type TeamDetail = {
@@ -554,6 +615,8 @@ export async function getTeamDetail(
       squadValueSek: squadHidden ? null : squadValueSek,
       bankSek: squadHidden ? null : bankSek,
       teamValueSek: squadHidden ? null : teamValueSek,
+      captainBonusProjectedSek: 0,
+      bankInterestProjectedSek: 0,
     };
   });
 
@@ -573,7 +636,7 @@ export async function getTeamDetail(
   const latestScoredRound = [...allRounds]
     .reverse()
     .find((r) => r.status === "scored");
-  const currentBankSek =
+  const currentBankSekRaw =
     latestScoredRound !== undefined
       ? (scoreByRound.get(latestScoredRound.id)?.bankSekEnd ?? null)
       : // No round scored yet — derive from round 1 squad if it exists.
@@ -598,10 +661,36 @@ export async function getTeamDetail(
         })();
   const latestWithSquad = [...byRound].reverse().find((l) => l.hasSquad);
   const currentSquadValueSek = latestWithSquad?.squadValueSek ?? null;
+  // Live projection (captain bonus + interest) for the in-progress round,
+  // mirrored from the leaderboard row so /team matches /tabell exactly. Only
+  // applied when the squad value is visible (released round, or owner/admin) —
+  // a hidden squad keeps currentSquadValueSek null, so nothing leaks here.
+  const liveProjectionSek =
+    currentSquadValueSek !== null
+      ? (me?.captainBonusProjectedSek ?? 0) + (me?.bankInterestProjectedSek ?? 0)
+      : 0;
+  const currentBankSek =
+    currentBankSekRaw === null ? null : currentBankSekRaw + liveProjectionSek;
   const currentTeamValueSek =
     currentSquadValueSek !== null && currentBankSek !== null
       ? currentSquadValueSek + currentBankSek
       : null;
+
+  // The in-progress round has no team_round_scores row yet, so its per-round
+  // line would show BANK/LAGVÄRDE as "—". Mirror the projected bank + value
+  // onto that line so the breakdown matches the summary and /tabell. (Mutates
+  // the byRound entry in place; only when the squad is visible + unscored.)
+  if (
+    latestWithSquad &&
+    latestWithSquad.score === null &&
+    currentSquadValueSek !== null &&
+    currentBankSek !== null
+  ) {
+    latestWithSquad.bankSek = currentBankSek;
+    latestWithSquad.teamValueSek = currentTeamValueSek;
+    latestWithSquad.captainBonusProjectedSek = me?.captainBonusProjectedSek ?? 0;
+    latestWithSquad.bankInterestProjectedSek = me?.bankInterestProjectedSek ?? 0;
+  }
 
   return {
     teamId: team.id,
