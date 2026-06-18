@@ -14,22 +14,10 @@ import {
   type RoundTransfersResult,
   type TeamTransfers,
 } from "@/lib/round-transfers-data";
+import { ROUND_TITLES, isKnockoutRound } from "@/lib/round-titles";
 import { RoundStatsLineup } from "./round-stats-lineup";
 
 export const revalidate = 600;
-
-const ROUND_TITLES: Record<number, string> = {
-  1: "GRUPPSPEL · OMGÅNG 1",
-  2: "GRUPPSPEL · OMGÅNG 2",
-  3: "GRUPPSPEL · OMGÅNG 3",
-  4: "SLUTSPEL · SEXTONDELSFINAL",
-  5: "SLUTSPEL · ÅTTONDELSFINAL",
-  6: "SLUTSPEL · KVARTSFINAL",
-  7: "SLUTSPEL · SEMIFINAL & BRONS",
-  8: "SLUTSPEL · FINAL",
-};
-
-const KNOCKOUT_ROUND = (n: number) => n >= 4;
 
 export default async function OmgangPage({
   params,
@@ -65,7 +53,7 @@ export default async function OmgangPage({
     .filter((s): s is { group: WcMatchGroup; matches: typeof matches } => !!s.group)
     .sort((a, b) => a.group.name.localeCompare(b.group.name));
 
-  const isKnockout = KNOCKOUT_ROUND(n);
+  const isKnockout = isKnockoutRound(n);
   const parentLabel = isKnockout ? "SLUTSPEL" : "GRUPPSPEL";
   const parentHref = isKnockout ? "/vm/slutspel" : "/vm/gruppspel";
 
@@ -182,7 +170,12 @@ export default async function OmgangPage({
           ) : (
             <span className="text-dim">—</span>
           )}
-          <span className="text-dim">{n} / 8</span>
+          <Link
+            href="/vm/omgang"
+            className="text-dim transition hover:text-yellow"
+          >
+            ⊞ ALLA · {n}/8
+          </Link>
           {nextN ? (
             <Link
               href={`/vm/omgang/${nextN}`}

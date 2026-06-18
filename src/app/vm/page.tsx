@@ -40,7 +40,14 @@ export default async function VMHomePage() {
             title="LIVE"
             subtitle="Dagens matcher"
             blurb="Dagens spelschema och vilka av våra lag som är exponerade."
-            accent="yellow"
+            accent="red"
+          />
+          <HubCard
+            href="/vm/omgang"
+            title="OMGÅNGAR"
+            subtitle="Översikt · alla ronder"
+            blurb="Rondstatistik, transfers och höjdpunkter — och in i varje omgång."
+            accent="cyan"
           />
           <HubCard
             href="/vm/gruppspel"
@@ -54,7 +61,7 @@ export default async function VMHomePage() {
             title="SLUTSPEL"
             subtitle={`${knockoutMatchCount} matcher`}
             blurb="Sextondelsfinal till final — trädet uppdateras allt eftersom."
-            accent="yellow"
+            accent="cyan"
           />
           <HubCard
             href="/vm/gruppspel"
@@ -94,19 +101,27 @@ function HubCard({
   title: string;
   subtitle: string;
   blurb: string;
-  accent: "cyan" | "yellow";
+  accent: "cyan" | "yellow" | "red";
 }) {
   const ring =
-    accent === "yellow"
-      ? "border-yellow hover:bg-yellow/5"
-      : "border-border hover:border-cyan hover:bg-cyan/5";
-  const titleColor = accent === "yellow" ? "text-yellow" : "text-foreground";
+    accent === "red"
+      ? "border-red hover:bg-red/5"
+      : accent === "yellow"
+        ? "border-yellow hover:bg-yellow/5"
+        : "border-border hover:border-cyan hover:bg-cyan/5";
+  const titleColor =
+    accent === "red"
+      ? "text-red"
+      : accent === "yellow"
+        ? "text-yellow"
+        : "text-foreground";
   return (
     <Link
       href={href}
       className={`block border p-4 transition ${ring}`}
     >
       <p className={`text-lg font-bold uppercase tracking-tight ${titleColor}`}>
+        {accent === "red" && <span className="text-red">● </span>}
         {title}
       </p>
       <p className="mt-0.5 text-[10px] uppercase tracking-widest text-cyan">
