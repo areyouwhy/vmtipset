@@ -5,6 +5,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isAdmin } from "@/lib/auth";
 import { clubSlug as clubSlugLocal } from "@/lib/clubs";
 import { getTeamDetail, type TeamDetailPlayer } from "@/lib/leaderboard";
+import { getAbRank } from "@/lib/ab-highscore";
 import { findTeamBySlug } from "@/lib/team-slug.server";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,13 @@ export default async function TeamPage({
     viewerIsAdmin: admin,
   });
   if (!detail) notFound();
+
+  // Where this team's value would rank in Aftonbladet's ~36k-team league.
+  // Only when the value is visible (released round, or owner/admin).
+  const abRank =
+    detail.currentTeamValueSek !== null
+      ? await getAbRank(detail.currentTeamValueSek)
+      : null;
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
@@ -77,6 +85,22 @@ export default async function TeamPage({
               }
             />
           </div>
+
+          {abRank && (
+            <div className="mt-3 border border-magenta/40 bg-magenta/5 px-3 py-2 text-[11px] uppercase tracking-widest">
+              <span className="text-magenta">AFTONBLADET-LIGAN</span>{" "}
+              <span className="tabular-nums text-foreground">
+                #{abRank.rank.toLocaleString("sv-SE")}
+              </span>{" "}
+              <span className="text-dim">
+                av {abRank.total.toLocaleString("sv-SE")} · topp{" "}
+                {abRank.percentile < 0.1
+                  ? "0.1"
+                  : abRank.percentile.toFixed(1)}
+                %
+              </span>
+            </div>
+          )}
         </section>
 
         <div className="space-y-6 border-t border-border pt-6">
