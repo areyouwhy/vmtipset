@@ -11,8 +11,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // Absolute base so the opengraph-image / twitter-image file conventions
+  // resolve to https://copa.ruy.se/... in shared link previews.
+  metadataBase: new URL("https://copa.ruy.se"),
   title: "LA COPA DEL MUNDO 2026",
   description: "Friend-group fantasy league for the 2026 FIFA World Cup",
+  openGraph: {
+    title: "LA COPA DEL MUNDO 2026",
+    description: "Vänligans fantasy-liga för Fotbolls-VM 2026.",
+    url: "https://copa.ruy.se",
+    siteName: "LA COPA DEL MUNDO 2026",
+    locale: "sv_SE",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LA COPA DEL MUNDO 2026",
+    description: "Vänligans fantasy-liga för Fotbolls-VM 2026.",
+  },
 };
 
 export default async function RootLayout({
