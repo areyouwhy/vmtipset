@@ -9,6 +9,11 @@ import {
   type WcMatchGroup,
 } from "@/lib/wc-tournament";
 import { getRoundStats, type RoundStats } from "@/lib/round-stats-data";
+import {
+  getRoundTransfers,
+  type RoundTransfersResult,
+  type TeamTransfers,
+} from "@/lib/round-transfers-data";
 import { RoundStatsLineup } from "./round-stats-lineup";
 
 export const revalidate = 600;
@@ -35,12 +40,14 @@ export default async function OmgangPage({
   const n = Number.parseInt(nStr, 10);
   if (!Number.isFinite(n) || n < 1 || n > 8) notFound();
 
-  const [allMatches, mgsById, teamsById, roundStats] = await Promise.all([
-    getAllMatches(),
-    getMatchGroups(),
-    getTeamLookup(),
-    getRoundStats(n).catch(() => null),
-  ]);
+  const [allMatches, mgsById, teamsById, roundStats, roundTransfers] =
+    await Promise.all([
+      getAllMatches(),
+      getMatchGroups(),
+      getTeamLookup(),
+      getRoundStats(n).catch(() => null),
+      getRoundTransfers(n).catch(() => null),
+    ]);
   const matches = allMatches
     .filter((m) => m.roundNumber === n)
     .sort((a, b) => a.kickoff.localeCompare(b.kickoff));
@@ -124,6 +131,11 @@ export default async function OmgangPage({
     </section>
   );
 
+  const transfersSection =
+    roundTransfers && roundTransfers.available ? (
+      <TransfersBlock data={roundTransfers} />
+    ) : null;
+
   const matchesAccordion = (
     <details className="group border border-border">
       <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-[10px] uppercase tracking-widest marker:content-none [&::-webkit-details-marker]:hidden">
@@ -185,12 +197,14 @@ export default async function OmgangPage({
 
         {passed ? (
           <div className="space-y-8">
+            {transfersSection}
             {statsSection}
             {matchesAccordion}
           </div>
         ) : (
           <div className="space-y-8">
             <div className="space-y-5">{matchesInner}</div>
+            {transfersSection}
             {statsSection}
           </div>
         )}
@@ -279,5 +293,144 @@ function RoundStatsSummary({ stats }: { stats: RoundStats }) {
         </div>
       ))}
     </dl>
+  );
+}
+
+function TransfersBlock({
+  data,
+}: {
+  data: Extract<RoundTransfersResult, { available: true }>;
+}) {
+  return (
+    <section>
+      <h2 className="border-b border-border pb-1 text-[10px] uppercase tracking-widest text-cyan">
+        TRANSFERS IN I RONDEN
+      </h2>
+      <div className="mt-3 space-y-4">
+        <dl className="grid grid-cols-3 gap-2">
+          <Cell k="BYTEN" v={String(data.total)} />
+          <Cell k="AKTIVA LAG" v={String(data.teamsActive)} />
+          <Cell k="AVGIFTER" v={fmtSek(data.totalFeesSek)} />
+        </dl>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <MovedList title="MEST INKÖPTA" rows={data.mostIn} tone="text-green" />
+          <MovedList title="MEST SÅLDA" rows={data.mostOut} tone="text-red" />
+        </div>
+
+        {data.biggestBuy && (
+          <p className="text-[10px] uppercase tracking-widest text-dim">
+            DYRASTE KÖP:{" "}
+            <span className="text-foreground">{data.biggestBuy.name}</span>{" "}
+            <span className="text-yellow tabular-nums">
+              {fmtSek(data.biggestBuy.priceSek)}
+            </span>{" "}
+            · {data.biggestBuy.teamName}
+          </p>
+        )}
+
+        <div>
+          <h3 className="mb-2 text-[10px] uppercase tracking-widest text-dim">
+            BYTEN PER LAG
+          </h3>
+          <div className="space-y-2">
+            {data.byTeam.map((t) => (
+              <TeamTransferAccordion key={t.teamId} team={t} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Cell({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="border border-border p-2">
+      <dt className="text-[9px] uppercase tracking-widest text-dim">{k}</dt>
+      <dd className="mt-0.5 text-sm tabular-nums text-foreground">{v}</dd>
+    </div>
+  );
+}
+
+function MovedList({
+  title,
+  rows,
+  tone,
+}: {
+  title: string;
+  rows: { player: { id: string; name: string }; count: number }[];
+  tone: string;
+}) {
+  return (
+    <section>
+      <h3 className={`border-b border-border pb-1 text-[10px] uppercase tracking-widest ${tone}`}>
+        {title}
+      </h3>
+      {rows.length === 0 ? (
+        <p className="mt-2 text-[11px] text-dim">— inga —</p>
+      ) : (
+        <ol className="mt-1.5 space-y-1">
+          {rows.map((r, i) => (
+            <li
+              key={r.player.id}
+              className="grid grid-cols-[1.25rem_1fr_auto] items-baseline gap-2 text-[11px]"
+            >
+              <span className="text-right tabular-nums text-dim">{i + 1}</span>
+              <Link href={`/spelare/${r.player.id}`} className="truncate text-foreground hover:text-cyan">
+                {r.player.name}
+              </Link>
+              <span className="tabular-nums text-yellow">{r.count}×</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+function TeamTransferAccordion({ team }: { team: TeamTransfers }) {
+  return (
+    <details className="group border border-border">
+      <summary className="flex cursor-pointer list-none items-baseline justify-between gap-2 px-3 py-2 text-[11px] marker:content-none [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 truncate">
+          <span className="text-dim transition-transform group-open:rotate-90 inline-block">
+            ▸
+          </span>{" "}
+          <Link href={`/team/${team.teamSlug}`} className="text-yellow hover:underline">
+            {team.teamName}
+          </Link>
+          <span className="ml-2 text-dim">
+            {team.swaps.length} {team.swaps.length === 1 ? "byte" : "byten"}
+          </span>
+        </span>
+        <span className="shrink-0 text-[10px] uppercase tracking-widest text-dim">
+          avgift {fmtSek(team.totalFeeSek)}
+        </span>
+      </summary>
+      <ul className="divide-y divide-border/40 border-t border-border">
+        {team.swaps.map((s, i) => (
+          <li
+            key={i}
+            className="grid grid-cols-[1fr_auto_1fr_auto] items-baseline gap-2 px-3 py-2 text-[11px]"
+          >
+            <span className="min-w-0 truncate text-red">
+              <span className="text-[8px] tracking-widest text-dim">{s.out.position}</span>{" "}
+              {s.out.name}{" "}
+              <span className="text-dim tabular-nums">{fmtSek(s.out.priceSek)}</span>
+            </span>
+            <span className="text-dim">→</span>
+            <span className="min-w-0 truncate text-green">
+              <span className="text-[8px] tracking-widest text-dim">{s.in.position}</span>{" "}
+              {s.in.name}{" "}
+              <span className="text-dim tabular-nums">{fmtSek(s.in.priceSek)}</span>
+            </span>
+            <span className="shrink-0 text-[9px] tabular-nums text-dim">
+              −{fmtSek(s.feeSek)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
