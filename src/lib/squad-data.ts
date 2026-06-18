@@ -78,6 +78,17 @@ export async function getActiveRound(): Promise<Round | null> {
 }
 
 /**
+ * The matchday round to surface as "this round" in navigation: the
+ * highest-numbered round that's actually under way (open / locked / scored),
+ * falling back to round 1 before anything has started.
+ */
+export async function getCurrentRoundNumber(): Promise<number> {
+  const all = await db.select().from(rounds).orderBy(asc(rounds.number));
+  const underway = all.filter((r) => r.status !== "upcoming");
+  return underway.at(-1)?.number ?? all[0]?.number ?? 1;
+}
+
+/**
  * The team's most recent squad and the round it belongs to — i.e. their
  * "current team" regardless of whether a round is open. Used between rounds
  * to show the locked squad read-only (no open round → no active round, but

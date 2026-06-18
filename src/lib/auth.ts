@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -53,7 +54,9 @@ export type ViewerAuth = {
   myTeamSlug: string | null;
 };
 
-export async function getViewerAuth(): Promise<ViewerAuth> {
+// Wrapped in React cache so the layout, breadcrumb strip, etc. all share a
+// single execution (and DB round-trip) per request.
+export const getViewerAuth = cache(async (): Promise<ViewerAuth> => {
   const { userId } = await auth();
   if (!userId) {
     return { signedIn: false, approved: false, isAdmin: false, myTeamSlug: null };
@@ -87,7 +90,7 @@ export async function getViewerAuth(): Promise<ViewerAuth> {
     isAdmin: admin,
     myTeamSlug: team ? teamSlug(team.name) : null,
   };
-}
+});
 
 export async function isAdmin(): Promise<boolean> {
   // .trim() guards against stray whitespace/newlines in the env var — easy

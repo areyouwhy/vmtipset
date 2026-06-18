@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { QuickNav } from "@/components/quick-nav";
+import { getViewerAuth } from "@/lib/auth";
+import { getCurrentRoundNumber } from "@/lib/squad-data";
 
 export type Crumb = {
   label: string;
@@ -9,17 +12,24 @@ export type Crumb = {
 /**
  * Top-of-page breadcrumb row. Renders the trail as "A / B / C" with each
  * crumb but the last being a link. Always prepends COPA → "/" so users
- * can get home from anywhere.
+ * can get home from anywhere. Renders the global QuickNav strip directly
+ * underneath, so every page that has a breadcrumb gets the cross-nav in the
+ * same spot (landing + auth screens have no breadcrumb, so they stay clean).
  */
-export function Breadcrumbs({
+export async function Breadcrumbs({
   trail,
   right,
 }: {
   trail: Crumb[];
   right?: React.ReactNode;
 }) {
+  const [viewer, currentRound] = await Promise.all([
+    getViewerAuth(),
+    getCurrentRoundNumber(),
+  ]);
   const full: Crumb[] = [{ label: "COPA", href: "/" }, ...trail];
   return (
+    <>
     <header className="flex items-center justify-between gap-3 border-b border-border pb-3 text-xs uppercase tracking-widest">
       <nav className="flex min-w-0 items-center gap-1 truncate">
         {full.map((c, i) => {
@@ -45,5 +55,10 @@ export function Breadcrumbs({
       </nav>
       {right ? <div className="shrink-0 text-dim">{right}</div> : null}
     </header>
+    <QuickNav
+      showSquad={viewer.approved && viewer.myTeamSlug !== null}
+      currentRound={currentRound}
+    />
+    </>
   );
 }

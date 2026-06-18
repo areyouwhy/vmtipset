@@ -1,5 +1,4 @@
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { SectionNav } from "@/components/section-nav";
 import snackStats from "@/data/snack-stats.json";
 import { SnackClient, type SnackData } from "./snack-client";
 
@@ -17,7 +16,6 @@ export default function SnackPage() {
         <Breadcrumbs
           trail={[{ label: "TABELL", href: "/tabell" }, { label: "SNACKET" }]}
         />
-        <SectionNav current="tabell" />
 
         <section className="py-6">
           <h1 className="text-2xl font-bold uppercase tracking-tight text-yellow sm:text-3xl">
