@@ -8,7 +8,7 @@
 
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { players, rounds, teams, transfers } from "@/db/schema";
+import { players, rounds, squads, teams, transfers } from "@/db/schema";
 import { teamSlug } from "@/lib/team-slug";
 
 export type TransferPlayer = {
@@ -42,6 +42,9 @@ export type RoundTransfersResult =
       mostOut: TopMoved[];
       biggestBuy: { name: string; priceSek: number; teamName: string } | null;
       byTeam: TeamTransfers[];
+      /** Teams that fielded a squad this round but made no transfers. */
+      noChanges: { teamName: string; teamSlug: string }[];
+      teamsNoChanges: number;
     };
 
 export async function getRoundTransfers(
@@ -128,6 +131,17 @@ export async function getRoundTransfers(
     (a, b) => b.swaps.length - a.swaps.length || a.teamName.localeCompare(b.teamName, "sv"),
   );
 
+  // Everyone who fielded a squad this round but didn't move a single player.
+  const squadTeams = await db
+    .select({ teamId: squads.teamId, name: teams.name })
+    .from(squads)
+    .innerJoin(teams, eq(teams.id, squads.teamId))
+    .where(eq(squads.roundId, round.id));
+  const noChanges = squadTeams
+    .filter((s) => !byTeamMap.has(s.teamId))
+    .map((s) => ({ teamName: s.name, teamSlug: teamSlug(s.name) }))
+    .sort((a, b) => a.teamName.localeCompare(b.teamName, "sv"));
+
   return {
     available: true,
     roundNumber,
@@ -138,6 +152,8 @@ export async function getRoundTransfers(
     mostOut: topMoved(outCount),
     biggestBuy,
     byTeam,
+    noChanges,
+    teamsNoChanges: noChanges.length,
   };
 }
 

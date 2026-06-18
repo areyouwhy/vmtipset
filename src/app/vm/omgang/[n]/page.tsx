@@ -339,6 +339,26 @@ function TransfersBlock({
             ))}
           </div>
         </div>
+
+        {data.noChanges.length > 0 && (
+          <div>
+            <h3 className="mb-2 text-[10px] uppercase tracking-widest text-dim">
+              INGA BYTEN ({data.teamsNoChanges})
+            </h3>
+            <ul className="flex flex-wrap gap-1.5 text-[11px]">
+              {data.noChanges.map((t) => (
+                <li key={t.teamSlug}>
+                  <Link
+                    href={`/team/${t.teamSlug}`}
+                    className="inline-block border border-border px-2 py-1 text-dim transition hover:border-cyan hover:text-cyan"
+                  >
+                    {t.teamName}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </section>
   );
