@@ -6,7 +6,9 @@ type Section = "live" | "tabell" | "squad";
 /**
  * Cross-navigation strip between the three "where the action is" pages:
  * LIVE · TABELL · MIN TRUPP. Dropped under the breadcrumb on each of those
- * pages. The current page is highlighted and non-clickable.
+ * pages. The current section is highlighted (yellow) but stays a link, so a
+ * sub-page (e.g. /tabell/snack) can jump back to the section root; on the root
+ * itself it's a harmless self-link.
  *
  * "MIN TRUPP" (the squad picker, gated behind /app) only shows for approved
  * users with a team; signed-out / pending viewers just get LIVE · TABELL — both
@@ -37,13 +39,17 @@ export async function SectionNav({ current }: { current: Section }) {
       {items.map((item, i) => (
         <span key={item.key} className="flex items-center gap-3">
           {i > 0 && <span className="text-dim">|</span>}
-          {item.key === current ? (
-            <span className="text-yellow">{item.label}</span>
-          ) : (
-            <Link href={item.href} className="text-cyan hover:text-yellow">
-              {item.label}
-            </Link>
-          )}
+          <Link
+            href={item.href}
+            aria-current={item.key === current ? "page" : undefined}
+            className={
+              item.key === current
+                ? "text-yellow"
+                : "text-cyan hover:text-yellow"
+            }
+          >
+            {item.label}
+          </Link>
         </span>
       ))}
     </nav>
