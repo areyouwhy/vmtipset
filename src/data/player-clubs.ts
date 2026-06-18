@@ -75,7 +75,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:251605": "PSG",
   "ab:p:251606": "PSG",
   "ab:p:251607": "Manchester United",
-  "ab:p:251608": "Manchester City",
+  "ab:p:251608": "Real Madrid",  // transfer-fix 2026-06-18
   "ab:p:251610": "Al-Nassr",
   "ab:p:251611": "Sporting CP",
   "ab:p:251612": "Juventus",
@@ -180,7 +180,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:254389": "PSG",
   "ab:p:254390": "Al-Hilal",
   "ab:p:254391": "Rennes",
-  "ab:p:254393": "Liverpool",
+  "ab:p:254393": "Real Madrid",  // transfer-fix 2026-06-18
   "ab:p:254394": "Arsenal",
   "ab:p:254395": "Chelsea",
   "ab:p:254396": "Aston Villa",
@@ -221,7 +221,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:251536": "Athletic Bilbao",
   "ab:p:251537": "Real Sociedad",
   "ab:p:251539": "FC Barcelona",
-  "ab:p:251541": "Chelsea",
+  "ab:p:251541": "Real Madrid",  // transfer-fix 2026-06-18
   "ab:p:251542": "Tottenham",
   "ab:p:251545": "FC Barcelona",
   "ab:p:251547": "FC Barcelona",
@@ -346,7 +346,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:248375": "FC Barcelona",
   "ab:p:248376": "Arsenal",
   "ab:p:248388": "Chelsea",
-  "ab:p:249302": "Porto",
+  "ab:p:249302": "Atalanta",  // transfer-fix 2026-06-18
   "ab:p:249303": "Manchester United",
   "ab:p:249307": "Manchester United",
   "ab:p:255174": "Flamengo",
@@ -385,7 +385,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:255262": "Nice",
   "ab:p:255263": "Basel",
   "ab:p:255264": "Strasbourg",
-  "ab:p:255265": "Sporting CP",
+  "ab:p:255265": "RB Leipzig",  // transfer-fix 2026-06-18
   "ab:p:255266": "Monaco",
   "ab:p:249133": "Manchester City",
   "ab:p:249134": "Crystal Palace",
@@ -407,7 +407,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:255567": "Newcastle",
   "ab:p:255569": "Chelsea",
   "ab:p:249171": "Hearts of Oak",
-  "ab:p:249173": "Zulte Waregem",
+  "ab:p:249173": "İstanbul Başakşehir",  // transfer-fix 2026-06-18
   "ab:p:255326": "Dundee United",
   "ab:p:248550": "Sanfrecce Hiroshima",
   "ab:p:248551": "Sint-Truiden",
@@ -432,7 +432,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:255570": "Mainz 05",
   "ab:p:255572": "SC Freiburg",
   "ab:p:255574": "VfL Wolfsburg",
-  "ab:p:255575": "Sint-Truiden",
+  "ab:p:255575": "SC Freiburg",  // transfer-fix 2026-06-18
   "ab:p:255665": "Liverpool",
   "ab:p:248827": "Midtjylland",
   "ab:p:248604": "AEL Limassol",
@@ -442,7 +442,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:248608": "PAOK",
   "ab:p:248611": "Cruz Azul",
   "ab:p:248612": "AEK Athens",
-  "ab:p:248616": "Fulham",
+  "ab:p:248616": "Wolverhampton",  // transfer-fix 2026-06-18
   "ab:p:248618": "Guadalajara",
   "ab:p:248620": "América",
   "ab:p:248623": "Cruz Azul",
@@ -463,7 +463,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:255669": "América",
   "ab:p:248655": "Nottingham Forest",
   "ab:p:248657": "Millwall",
-  "ab:p:248659": "Sheffield United",
+  "ab:p:248659": "Nottingham Forest",  // transfer-fix 2026-06-18
   "ab:p:248660": "Portland Timbers",
   "ab:p:248664": "Wellington Phoenix",
   "ab:p:248665": "Auckland FC",
@@ -473,13 +473,13 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:248670": "Silkeborg",
   "ab:p:248671": "Saint-Étienne",
   "ab:p:248674": "Western Sydney Wanderers",
-  "ab:p:248675": "Auckland FC",
+  "ab:p:248675": "Dundee United",  // transfer-fix 2026-06-18
   "ab:p:249392": "Port Vale",
-  "ab:p:255600": "Lechia Gdańsk",
+  "ab:p:255600": "Bournemouth",  // transfer-fix 2026-06-18
   "ab:p:255601": "Auckland FC",
   "ab:p:255606": "Motherwell",
   "ab:p:255608": "PEC Zwolle",
-  "ab:p:255610": "Wellington Phoenix",
+  "ab:p:255610": "TSC",  // transfer-fix 2026-06-18
   "ab:p:255696": "Wrexham",
   "ab:p:248683": "Barracas Central",
   "ab:p:248684": "Cerro Porteño",
@@ -554,7 +554,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:255158": "Real Salt Lake",
   "ab:p:255165": "Monterrey",
   "ab:p:255167": "Palmeiras",
-  "ab:p:255168": "Sporting CP",
+  "ab:p:255168": "FC Barcelona",  // transfer-fix 2026-06-18
   "ab:p:255169": "América",
   "ab:p:255172": "UANL",
   "ab:p:249238": "New England Revolution",
@@ -655,7 +655,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:255162": "Red Bull Salzburg",
   "ab:p:255163": "Young Boys",
   "ab:p:255164": "Universitatea Cluj",
-  "ab:p:255166": "Jagiellonia Białystok",
+  "ab:p:255166": "Real Zaragoza",  // transfer-fix 2026-06-18
   "ab:p:255170": "Benfica",
   "ab:p:255171": "Sampdoria",
   "ab:p:255723": "Slovan Liberec",
@@ -671,7 +671,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:248549": "Tractor",
   "ab:p:249384": "Sepahan",
   "ab:p:249386": "Persepolis",
-  "ab:p:255585": "Sepahan",
+  "ab:p:255585": "Rostov",  // transfer-fix 2026-06-18
   "ab:p:250452": "Nottingham Forest",
   "ab:p:250453": "Manchester United",
   "ab:p:250454": "Club Brugge",
@@ -717,7 +717,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:255544": "AGF",
   "ab:p:255545": "Cracovia",
   "ab:p:255546": "Al-Talaba",
-  "ab:p:255699": "Luton Town",
+  "ab:p:255699": "Ipswich Town",  // transfer-fix 2026-06-18
   "ab:p:251617": "Nacional",
   "ab:p:251618": "Marathón",
   "ab:p:251619": "Al-Fayha",
@@ -752,7 +752,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:249131": "Nantes",
   "ab:p:249374": "Manchester City",
   "ab:p:255310": "Al Ahly",
-  "ab:p:255311": "ZED",
+  "ab:p:255311": "El Gouna",  // transfer-fix 2026-06-18
   "ab:p:255549": "Ceramica Cleopatra",
   "ab:p:255553": "Al Ain",
   "ab:p:255554": "Nice",
@@ -799,7 +799,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:248777": "Nice",
   "ab:p:248779": "Monaco",
   "ab:p:248780": "Metz",
-  "ab:p:248781": "Samsunspor",
+  "ab:p:248781": "Bayern Munich",  // transfer-fix 2026-06-18
   "ab:p:249398": "Metz",
   "ab:p:249399": "Lazio",
   "ab:p:255529": "Galatasaray",
@@ -831,8 +831,8 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:248735": "Lens",
   "ab:p:248736": "Al-Nassr",
   "ab:p:248738": "Al-Hilal",
-  "ab:p:248739": "Neom",
-  "ab:p:248740": "Neom",
+  "ab:p:248739": "Al-Hilal",  // transfer-fix 2026-06-18
+  "ab:p:248740": "Al-Hilal",  // transfer-fix 2026-06-18
   "ab:p:248742": "Al-Ahli",
   "ab:p:248744": "Al-Nassr",
   "ab:p:248750": "Al-Qadsiah",
@@ -884,7 +884,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:255632": "Kilmarnock",
   "ab:p:248392": "Inter Miami",
   "ab:p:248393": "Chicago Fire",
-  "ab:p:248394": "Rangers",
+  "ab:p:248394": "Marseille",  // transfer-fix 2026-06-18
   "ab:p:248395": "Toronto FC",
   "ab:p:248396": "Sassuolo",
   "ab:p:248397": "Swindon Town",
@@ -917,7 +917,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:249217": "Esteghlal",
   "ab:p:249220": "Manchester City",
   "ab:p:249221": "Neftchi",
-  "ab:p:249223": "Nasaf",
+  "ab:p:249223": "Pakhtakor",  // transfer-fix 2026-06-18
   "ab:p:249227": "Pakhtakor",
   "ab:p:249228": "Neftchi",
   "ab:p:249231": "Persepolis",
@@ -932,7 +932,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:248578": "FC Seoul",
   "ab:p:248579": "Al-Zawraa",
   "ab:p:248581": "Al-Hussein",
-  "ab:p:248583": "Selangor",
+  "ab:p:248583": "Corvinul Hunedoara",  // transfer-fix 2026-06-18
   "ab:p:248584": "Al-Hussein",
   "ab:p:248589": "Qatar SC",
   "ab:p:248590": "Selangor",
@@ -955,7 +955,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:249066": "Chaves",
   "ab:p:249070": "Trabzonspor",
   "ab:p:249071": "Columbus Crew",
-  "ab:p:249072": "Benfica",
+  "ab:p:249072": "Trabzonspor",  // transfer-fix 2026-06-18
   "ab:p:249075": "Puskás Akadémia",
   "ab:p:249077": "Ludogorets Razgrad",
   "ab:p:249084": "Vitória de Guimarães",
@@ -1034,7 +1034,7 @@ export const PLAYER_CLUBS: Record<string, string> = {
   "ab:p:254592": "Sunderland",
   "ab:p:255327": "Zulte Waregem",
   "ab:p:255328": "Tulsa",
-  "ab:p:255329": "Sochaux",
+  "ab:p:255329": "Violette",  // transfer-fix 2026-06-18
   "ab:p:255330": "Auxerre",
   "ab:p:255331": "Toronto",
   "ab:p:255332": "Vizela",
