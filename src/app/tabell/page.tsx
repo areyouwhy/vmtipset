@@ -128,6 +128,12 @@ function Shell({
             sida 3 skämsvrå. Längre ner: ställ två lag mot varandra.{" "}
             <Link href="/tabell/detalj" className="text-cyan">
               DETALJERAD TABELL →
+            </Link>{" "}
+            <Link href="/tabell/snack" className="text-magenta">
+              SNACKET →
+            </Link>{" "}
+            <Link href="/hur/audit" className="text-cyan">
+              AUDIT →
             </Link>
           </p>
         </section>

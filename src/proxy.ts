@@ -1,6 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isProtectedRoute = createRouteMatcher(["/app(.*)", "/admin(.*)"]);
+// /tabell/snack surfaces private WhatsApp-chat stats → signed-in members only.
+const isProtectedRoute = createRouteMatcher([
+  "/app(.*)",
+  "/admin(.*)",
+  "/tabell/snack(.*)",
+]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {

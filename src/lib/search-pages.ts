@@ -92,6 +92,21 @@ export const PAGE_ENTRIES: PageEntry[] = [
     ],
   },
   {
+    id: "tabell-snack",
+    label: "Snacket",
+    href: "/tabell/snack",
+    keywords: [
+      "snack",
+      "snacket",
+      "whatsapp",
+      "chatt",
+      "statistik",
+      "vem snackar mest",
+      "gifs",
+      "tystast",
+    ],
+  },
+  {
     id: "spelare",
     label: "Spelare",
     href: "/spelare",
