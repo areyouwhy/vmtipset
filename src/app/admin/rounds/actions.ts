@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { rounds } from "@/db/schema";
+import { applyDraftsForRound, type DraftApplyReport } from "@/lib/apply-drafts";
 import { isAdmin } from "@/lib/auth";
 import {
   reopenRound,
@@ -16,10 +17,21 @@ async function requireAdmin() {
   if (!(await isAdmin())) throw new Error("Forbidden");
 }
 
-export async function openRoundAction(roundId: string): Promise<void> {
+/**
+ * Open a round for trading, then apply everyone's pre-transfer drafts against
+ * the now-current prices (commit the ones that still fit, reject the rest).
+ * Returns the apply report so the admin sees exactly what happened.
+ */
+export async function openRoundAction(
+  roundId: string,
+): Promise<DraftApplyReport> {
   await requireAdmin();
   await setRoundStatus(roundId, "open");
+  const report = await applyDraftsForRound(roundId);
   revalidatePath("/admin/rounds");
+  revalidatePath("/app");
+  revalidatePath("/tabell");
+  return report;
 }
 
 export async function lockRoundAction(roundId: string): Promise<void> {

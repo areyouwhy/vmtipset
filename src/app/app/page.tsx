@@ -8,6 +8,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getOrCreateDbUser, isAdmin } from "@/lib/auth";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { getOpenBetsForUser } from "@/lib/bets-data";
+import { getDraftableRound, getMyDraft } from "@/lib/draft-data";
 import { formatStockholm } from "@/lib/format-time";
 import {
   getActiveRound,
@@ -56,6 +57,18 @@ export default async function AppPage() {
   const pendingTransfers =
     team && activeRound && user.status === "approved"
       ? await getPendingTransfersForTeamRound(team.id, activeRound.id)
+      : null;
+
+  // Pre-transfers: when there's no open round, the next round can be prepared
+  // ahead of time. When a round IS open, surface the outcome of any draft that
+  // was applied/rejected for it.
+  const approved = !!team && user.status === "approved";
+  const draftRound = approved && !activeRound ? await getDraftableRound() : null;
+  const myDraft =
+    draftRound && team ? await getMyDraft(team.id, draftRound.id) : null;
+  const draftOutcome =
+    approved && activeRound && team
+      ? await getMyDraft(team.id, activeRound.id)
       : null;
 
   const statusLabel: Record<typeof user.status, string> = {
@@ -179,6 +192,22 @@ export default async function AppPage() {
           )}
           {team && user.status === "approved" && (
             <>
+              {draftOutcome &&
+                (draftOutcome.status === "applied" ||
+                  draftOutcome.status === "rejected") && (
+                  <DraftOutcomeBanner
+                    status={draftOutcome.status}
+                    rejectReason={draftOutcome.rejectReason}
+                  />
+                )}
+              {draftRound && (
+                <PreTransferPanel
+                  roundName={draftRound.name}
+                  roundNumber={draftRound.number}
+                  hasDraft={myDraft != null}
+                  draftCount={myDraft?.playerIds.length ?? 0}
+                />
+              )}
               <SquadStatusPanel
                 activeRound={displayRound}
                 squadPlayerCount={
@@ -379,6 +408,64 @@ function fmtSek(n: number): string {
   if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(2)}M`;
   if (abs >= 1_000) return `${sign}${Math.round(abs / 1_000)}k`;
   return `${sign}${abs}`;
+}
+
+function PreTransferPanel({
+  roundName,
+  roundNumber,
+  hasDraft,
+  draftCount,
+}: {
+  roundName: string;
+  roundNumber: number;
+  hasDraft: boolean;
+  draftCount: number;
+}) {
+  return (
+    <section className="border border-cyan/50 bg-cyan/5 p-5">
+      <p className="text-[10px] uppercase tracking-widest text-cyan">
+        FÖRHANDSVAL · ROND #{roundNumber} {roundName}
+      </p>
+      <p className="mt-2 text-xl font-bold uppercase tracking-tight text-foreground">
+        {hasDraft ? "FÖRHANDSVAL SPARAT" : "FÖRBERED DINA BYTEN"}
+      </p>
+      <p className="mt-2 text-sm text-dim">
+        {hasDraft
+          ? `Du har förberett ${draftCount} spelare för nästa rond. Bytena verkställs automatiskt när ronden öppnar — om priserna håller budget.`
+          : "Förbered dina byten redan nu så slipper du missa när ronden öppnar. De verkställs automatiskt om de håller sig inom budget."}
+      </p>
+      <Link
+        href="/app/squad"
+        className="mt-4 inline-block border border-cyan px-6 py-3 text-sm font-bold uppercase tracking-widest text-cyan transition hover:bg-cyan hover:text-black"
+      >
+        {hasDraft ? "[ REDIGERA FÖRHANDSVAL → ]" : "[ FÖRBERED TRUPP → ]"}
+      </Link>
+    </section>
+  );
+}
+
+function DraftOutcomeBanner({
+  status,
+  rejectReason,
+}: {
+  status: "applied" | "rejected";
+  rejectReason: string | null;
+}) {
+  if (status === "applied") {
+    return (
+      <section className="border border-green bg-green/10 px-4 py-3 text-sm text-green">
+        ✓ Ditt förhandsval genomfördes när ronden öppnade.
+      </section>
+    );
+  }
+  return (
+    <section className="border border-red bg-red/10 px-4 py-3 text-sm text-red">
+      <p>✗ Ditt förhandsval kunde inte genomföras — din trupp behölls oförändrad.</p>
+      {rejectReason && (
+        <p className="mt-1 text-[11px] text-foreground">{rejectReason}</p>
+      )}
+    </section>
+  );
 }
 
 function SquadStatusPanel({

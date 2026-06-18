@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { RoundStatus } from "@/db/schema";
+import type { DraftApplyReport } from "@/lib/apply-drafts";
 import type { ScoringSummary } from "@/lib/score-runner";
 import { formatStockholm } from "@/lib/format-time";
 import { teamSlug } from "@/lib/team-slug";
@@ -46,6 +47,7 @@ export function RoundRow({
 }) {
   const [pending, startTransition] = useTransition();
   const [summary, setSummary] = useState<ScoringSummary | null>(null);
+  const [draftReport, setDraftReport] = useState<DraftApplyReport | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function run<T>(fn: () => Promise<T>, onResult?: (r: T) => void) {
@@ -89,7 +91,12 @@ export function RoundRow({
         {status === "upcoming" && (
           <ActionButton
             label="ÖPPNA"
-            onClick={() => run(() => openRoundAction(roundId))}
+            onClick={() =>
+              run(
+                () => openRoundAction(roundId),
+                (r) => setDraftReport(r),
+              )
+            }
             disabled={pending}
             tone="cyan"
           />
@@ -130,7 +137,12 @@ export function RoundRow({
             />
             <ActionButton
               label="ÖPPNA IGEN"
-              onClick={() => run(() => openRoundAction(roundId))}
+              onClick={() =>
+                run(
+                  () => openRoundAction(roundId),
+                  (r) => setDraftReport(r),
+                )
+              }
               disabled={pending}
               tone="dim"
             />
@@ -164,6 +176,30 @@ export function RoundRow({
           ! {error}
         </p>
       )}
+
+      {draftReport &&
+        (draftReport.appliedCount > 0 || draftReport.rejectedCount > 0) && (
+          <div className="mt-4 border border-cyan/40 bg-cyan/5 p-3 text-xs">
+            <p className="text-[10px] uppercase tracking-widest text-cyan">
+              FÖRHANDSTRANSFERS · {draftReport.appliedCount} genomförda ·{" "}
+              {draftReport.rejectedCount} avvisade
+            </p>
+            {draftReport.applied.length > 0 && (
+              <p className="mt-2 text-green">
+                ✓ {draftReport.applied.map((a) => a.teamName).join(", ")}
+              </p>
+            )}
+            {draftReport.rejected.length > 0 && (
+              <ul className="mt-2 space-y-0.5 text-red">
+                {draftReport.rejected.map((r, i) => (
+                  <li key={i}>
+                    ✗ {r.teamName}: {r.reason}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
       {summary && (
         <div className="mt-4 border border-green bg-green/5 p-3">

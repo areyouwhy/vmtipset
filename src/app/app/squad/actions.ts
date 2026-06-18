@@ -1,35 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, asc, eq, lt } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import {
-  rounds,
-  squadPlayers,
-  squads,
-  teams,
-  transfers,
-} from "@/db/schema";
+import { teams } from "@/db/schema";
 import { getOrCreateDbUser } from "@/lib/auth";
-import { currentRules } from "@/lib/rules";
-import {
-  validateSquad,
-  type SquadBudgetContext,
-  type SquadCandidate,
-} from "@/lib/squad";
-import {
-  getActiveRound,
-  getBankEnteringForRound,
-  getCurrentSquad,
-  getPickablePlayers,
-} from "@/lib/squad-data";
-import { computeTransfers } from "@/lib/transfers";
+import { commitSquad, type CommitSquadResult } from "@/lib/commit-squad";
+import { getActiveRound, getCurrentSquad } from "@/lib/squad-data";
 
-export type SaveSquadResult = {
-  ok: boolean;
-  errors: string[];
-  transfers?: { count: number; totalFeeSek: number; freeUsed: number };
-};
+export type SaveSquadResult = CommitSquadResult;
 
 export async function saveSquadAction(
   playerIds: string[],
@@ -72,157 +51,16 @@ export async function saveSquadAction(
   // admin keeps it `open`. Deadlines are display-only; closing the round
   // (status → locked) is what stops trading and reveals lineups.
 
-  const pickable = await getPickablePlayers(round.id);
-  const byId = new Map(pickable.map((p) => [p.id, p]));
-  const players = playerIds.flatMap((id) => {
-    const p = byId.get(id);
-    return p
-      ? [
-          {
-            id: p.id,
-            position: p.position,
-            clubExternalId: p.clubExternalId,
-            countryCode: p.countryCode,
-            priceSek: p.priceSek,
-            growthSek: p.growthSek,
-          },
-        ]
-      : [];
+  const result = await commitSquad({
+    teamId: team.id,
+    round: { id: round.id, number: round.number },
+    playerIds,
+    captainPlayerId,
   });
-  if (players.length !== playerIds.length) {
-    return { ok: false, errors: ["Okänd spelare i truppen."] };
+
+  if (result.ok) {
+    revalidatePath("/app");
+    revalidatePath("/app/squad");
   }
-
-  const candidate: SquadCandidate = { players, captainPlayerId };
-
-  // Transfers are always diffed against the PREVIOUS ROUND's committed squad
-  // (never this round's last save). Combined with the delete-then-insert of
-  // transfer rows below, that makes an open round a free-for-all: re-saving,
-  // undoing, or churning swaps never accumulates fees — only the net change
-  // from last round's squad is ever recorded, and reverting to it costs 0.
-  const referencePlayerIds = await loadReferencePlayerIds(team.id, round.number);
-
-  // Compute transfer diff if this isn't the very first squad ever.
-  const transferDiff =
-    referencePlayerIds === null
-      ? null
-      : computeTransfers({
-          previousPlayerIds: referencePlayerIds,
-          newPlayerIds: playerIds,
-          priceByPlayerId: new Map(pickable.map((p) => [p.id, p.priceSek])),
-          transferFeePct: currentRules.transferFeePct,
-          freeTransfersPerRound: currentRules.freeTransfersPerRound,
-        });
-
-  // Budget validation uses the team-value/bank model (server-authoritative —
-  // never trust the client). Round 1 = build (50M, purchase cost); round ≥2 =
-  // transfer (bank entering + current squad value − fees).
-  const bankEnteringSek = await getBankEnteringForRound(team.id, round.number);
-  const referenceValueSek =
-    referencePlayerIds?.reduce(
-      (acc, id) => acc + (byId.get(id)?.priceSek ?? 0),
-      0,
-    ) ?? 0;
-  const budgetCtx: SquadBudgetContext = {
-    mode: referencePlayerIds === null ? "build" : "transfer",
-    bankEnteringSek,
-    referenceValueSek,
-    transferFeesSek: transferDiff?.totalFeeSek ?? 0,
-  };
-  const errors = validateSquad(candidate, budgetCtx);
-  if (errors.length > 0) return { ok: false, errors };
-
-  // Persist. No transactions over Neon HTTP — sequence carefully.
-  let squadId: string;
-  if (existing) {
-    // Picker only lets the user pick from non-archived players, and
-    // validateSquad has already verified every ID is in the pickable set,
-    // so a successful save proves the squad no longer contains archived
-    // players — clear any invalid flag set by an earlier ingest run.
-    await db
-      .update(squads)
-      .set({
-        captainPlayerId,
-        invalid: false,
-        invalidReason: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(squads.id, existing.squadId));
-    squadId = existing.squadId;
-    await db.delete(squadPlayers).where(eq(squadPlayers.squadId, squadId));
-  } else {
-    const [created] = await db
-      .insert(squads)
-      .values({
-        teamId: team.id,
-        roundId: round.id,
-        captainPlayerId,
-      })
-      .returning();
-    squadId = created.id;
-  }
-
-  await db
-    .insert(squadPlayers)
-    .values(playerIds.map((pid) => ({ squadId, playerId: pid })));
-
-  // Replace transfer rows for this round with the freshly computed diff.
-  await db
-    .delete(transfers)
-    .where(
-      and(eq(transfers.teamId, team.id), eq(transfers.roundId, round.id)),
-    );
-  if (transferDiff && transferDiff.rows.length > 0) {
-    await db.insert(transfers).values(
-      transferDiff.rows.map((r) => ({
-        teamId: team.id,
-        roundId: round.id,
-        playerInId: r.playerInId,
-        playerOutId: r.playerOutId,
-        sellPriceSek: r.sellPriceSek,
-        buyPriceSek: r.buyPriceSek,
-        feeSek: r.feeSek,
-      })),
-    );
-  }
-
-  revalidatePath("/app");
-  revalidatePath("/app/squad");
-  return {
-    ok: true,
-    errors: [],
-    transfers: transferDiff
-      ? {
-          count: transferDiff.rows.length,
-          totalFeeSek: transferDiff.totalFeeSek,
-          freeUsed: transferDiff.freeUsed,
-        }
-      : undefined,
-  };
-}
-
-/**
- * For transfer diffing: pick the squad that the new save is "transferring
- * from". Round 1 has no transfers — return null. Otherwise return the most
- * recent earlier round's squad players.
- */
-async function loadReferencePlayerIds(
-  teamId: string,
-  currentRoundNumber: number,
-): Promise<string[] | null> {
-  if (currentRoundNumber <= 1) return null;
-
-  const earlier = await db
-    .select()
-    .from(rounds)
-    .where(lt(rounds.number, currentRoundNumber))
-    .orderBy(asc(rounds.number));
-  if (earlier.length === 0) return null;
-
-  const prevRound = earlier.at(-1);
-  if (!prevRound) return null;
-
-  const prevSquad = await getCurrentSquad(teamId, prevRound.id);
-  if (!prevSquad) return null;
-  return prevSquad.playerIds;
+  return result;
 }

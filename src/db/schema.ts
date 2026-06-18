@@ -498,6 +498,52 @@ export const reactions = pgTable(
   (t) => [unique("reaction_unique").on(t.targetKey, t.emoji, t.userId)],
 );
 
+/**
+ * Pre-transfers ("förhandsval"): a draft squad a user prepares for an upcoming
+ * round BEFORE the trading window opens. Deliberately isolated from the live
+ * game — nothing in scoring / leaderboard / squad reads this table. When the
+ * admin opens the round, `applyDraftsForRound` re-validates each pending draft
+ * against the then-current prices and commits it via the same engine as a
+ * manual save (status → `applied`), or leaves the carried-forward squad
+ * untouched and records why (status → `rejected`). One draft per (team, round).
+ *
+ * `status` is a plain text column (not a pg enum) so the table can be created
+ * on prod with a single manual CREATE TABLE — no CREATE TYPE — keeping this
+ * additive change zero-risk to existing data (see CLAUDE.md Migrations).
+ */
+export const squadDrafts = pgTable(
+  "squad_drafts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    roundId: uuid("round_id")
+      .notNull()
+      .references(() => rounds.id, { onDelete: "cascade" }),
+    /** Intended starting XI, by player id. */
+    playerIds: jsonb("player_ids").notNull().$type<string[]>(),
+    captainPlayerId: uuid("captain_player_id").references(() => players.id, {
+      onDelete: "set null",
+    }),
+    /** pending → applied | rejected | superseded. */
+    status: text("status")
+      .notNull()
+      .default("pending")
+      .$type<"pending" | "applied" | "rejected" | "superseded">(),
+    /** Human-readable reason when status = rejected (e.g. budget overrun). */
+    rejectReason: text("reject_reason"),
+    appliedAt: timestamp("applied_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [unique("squad_draft_team_round_unique").on(t.teamId, t.roundId)],
+);
+
 // ─── Inferred types ─────────────────────────────────────────────────────────
 
 export type User = typeof users.$inferSelect;
@@ -544,6 +590,10 @@ export type NewRivalryVote = typeof rivalryVotes.$inferInsert;
 
 export type Reaction = typeof reactions.$inferSelect;
 export type NewReaction = typeof reactions.$inferInsert;
+
+export type SquadDraft = typeof squadDrafts.$inferSelect;
+export type NewSquadDraft = typeof squadDrafts.$inferInsert;
+export type DraftStatus = "pending" | "applied" | "rejected" | "superseded";
 
 export type Position = (typeof playerPosition.enumValues)[number];
 export type RoundStatus = (typeof roundStatus.enumValues)[number];

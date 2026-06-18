@@ -7,6 +7,11 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { formatStockholm } from "@/lib/format-time";
 import { getOrCreateDbUser } from "@/lib/auth";
 import {
+  getDraftableRound,
+  getMyDraft,
+  resolveDraftPriceRoundId,
+} from "@/lib/draft-data";
+import {
   getActiveRound,
   getBankEnteringForRound,
   getCurrentSquad,
@@ -31,10 +36,13 @@ export default async function SquadPage() {
   if (!team) redirect("/app");
 
   const round = await getActiveRound();
-  // Between rounds (no open round) we still let the owner view their current
-  // squad — same pitch + lineup, just read-only (no transfers).
-  const latest = round ? null : await getLatestSquadForTeam(team.id);
-  const viewRound = round ?? latest?.round ?? null;
+  // Between rounds (no open round): if the next round is ready, let the owner
+  // prepare a pre-transfer ("förhandsval") for it; otherwise just view their
+  // current squad read-only.
+  const draftRound = round ? null : await getDraftableRound();
+  const latest =
+    round || draftRound ? null : await getLatestSquadForTeam(team.id);
+  const viewRound = round ?? draftRound ?? latest?.round ?? null;
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
@@ -56,6 +64,10 @@ export default async function SquadPage() {
                 AKTIV ROND: {round.name} (#{round.number}) →
               </Link>
             </p>
+          ) : draftRound ? (
+            <p className="text-[10px] uppercase tracking-widest text-cyan">
+              FÖRHANDSVAL · {draftRound.name} (#{draftRound.number})
+            </p>
           ) : viewRound ? (
             <p className="text-[10px] uppercase tracking-widest text-yellow">
               DIN TRUPP · {viewRound.name} (#{viewRound.number}) · LÅST
@@ -68,7 +80,7 @@ export default async function SquadPage() {
           <h1 className="mt-1 text-2xl font-bold uppercase tracking-tight text-yellow">
             {team.name}
           </h1>
-          {!round && viewRound && (
+          {!round && !draftRound && viewRound && (
             <p className="mt-2 text-sm text-dim">
               Inga byten just nu — transfers öppnar när admin öppnar nästa rond.
             </p>
@@ -88,7 +100,13 @@ export default async function SquadPage() {
             deadline={round.deadline}
           />
         )}
-        {!round && viewRound && (
+        {!round && draftRound && (
+          <DraftPickerWrapper
+            teamId={team.id}
+            round={draftRound}
+          />
+        )}
+        {!round && !draftRound && viewRound && (
           <SquadPickerWrapper
             teamId={team.id}
             roundId={viewRound.id}
@@ -137,6 +155,74 @@ function DeadlineBanner({ deadline }: { deadline: Date | null }) {
             : `${mins}m kvar`}
       </span>
     </p>
+  );
+}
+
+async function DraftPickerWrapper({
+  teamId,
+  round,
+}: {
+  teamId: string;
+  round: { id: string; number: number; name: string; deadline: Date | null };
+}) {
+  const priceRoundId = await resolveDraftPriceRoundId(round);
+  const [pickable, inherited, draft, referenceIds, bankEnteringSek] =
+    await Promise.all([
+      getPickablePlayers(priceRoundId),
+      getCurrentSquad(teamId, round.id),
+      getMyDraft(teamId, round.id),
+      getPreviousRoundSquadPlayerIds(teamId, round.number),
+      getBankEnteringForRound(teamId, round.number),
+    ]);
+
+  if (pickable.length === 0) {
+    return (
+      <p className="border border-red bg-red/10 px-3 py-2 text-sm text-red">
+        ! Inga priser tillgängliga ännu — förhandsval öppnar när priserna finns.
+      </p>
+    );
+  }
+
+  const validIds = new Set(pickable.map((p) => p.id));
+  // Prefill from an existing draft, else the carried-forward squad, else the
+  // previous round's squad (the round we're drafting for may not have inherited
+  // squads yet if the prior round isn't scored). Strip any player who isn't
+  // currently pickable so the picker starts in a clean state.
+  const sourceIds =
+    draft?.playerIds ?? inherited?.playerIds ?? referenceIds ?? [];
+  const cleanIds = sourceIds.filter((id) => validIds.has(id));
+  const sourceCaptain = draft?.captainPlayerId ?? inherited?.captainPlayerId ?? null;
+  const cleanCaptain =
+    sourceCaptain && validIds.has(sourceCaptain) ? sourceCaptain : null;
+
+  return (
+    <SquadPicker
+      players={pickable}
+      initialPlayerIds={cleanIds}
+      initialCaptainId={cleanCaptain}
+      locked={false}
+      referencePlayerIds={referenceIds}
+      bankEnteringSek={bankEnteringSek}
+      mode="draft"
+      noteSlot={
+        <div className="border border-cyan/40 bg-cyan/5 px-3 py-2 text-xs">
+          <p className="text-[10px] uppercase tracking-widest text-cyan">
+            FÖRHANDSVAL · {round.name}
+          </p>
+          <p className="mt-1 text-foreground">
+            Förbered dina byten innan ronden öppnar. Priserna här är{" "}
+            <span className="text-yellow">preliminära</span> — när admin öppnar
+            ronden verkställs dina byten automatiskt, men bara om de fortfarande
+            håller sig inom budgeten. Annars behålls din nuvarande trupp.
+          </p>
+          {draft && (
+            <p className="mt-1 text-dim">
+              Du har redan ett sparat förhandsval — spara igen för att uppdatera.
+            </p>
+          )}
+        </div>
+      }
+    />
   );
 }
 

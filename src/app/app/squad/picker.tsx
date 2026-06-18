@@ -20,6 +20,7 @@ import type { PickablePlayer } from "@/lib/squad-data";
 import { Jersey, PitchJersey } from "@/lib/jersey";
 import { FilterRow, TeamComboBox } from "@/components/picker-filters";
 import { saveSquadAction } from "./actions";
+import { saveDraftAction } from "./draft-actions";
 
 const POSITION_FILTERS: Array<"ALL" | Position> = [
   "ALL",
@@ -39,11 +40,19 @@ export function SquadPicker({
   referencePlayerIds,
   bankEnteringSek,
   deadlineSlot,
+  mode = "live",
+  noteSlot,
 }: {
   players: PickablePlayer[];
   initialPlayerIds: string[];
   initialCaptainId: string | null;
   locked: boolean;
+  /** "live" saves the real squad for the open round; "draft" saves a
+   *  pre-transfer for the upcoming round (re-checked when it opens). */
+  mode?: "live" | "draft";
+  /** Optional banner rendered at the very top of the picker (e.g. the
+   *  pre-transfer explanation). */
+  noteSlot?: React.ReactNode;
   /** Squad from the previous round. Used to display pending transfers + offer
    *  undo. null = round 1 (no transfers possible). */
   referencePlayerIds: string[] | null;
@@ -345,7 +354,8 @@ export function SquadPicker({
     setSavedAt(null);
     setSavedTransfers(null);
     startTransition(async () => {
-      const result = await saveSquadAction(Array.from(selected), captainId);
+      const action = mode === "draft" ? saveDraftAction : saveSquadAction;
+      const result = await action(Array.from(selected), captainId);
       if (result.ok) {
         setSavedAt(Date.now());
         if (result.transfers) setSavedTransfers(result.transfers);
@@ -369,6 +379,7 @@ export function SquadPicker({
 
   return (
     <div className="pb-24">
+      {noteSlot && <div className="mb-3">{noteSlot}</div>}
       {/* Compact sticky summary — single dense line on mobile, position
           counts get a second line only on sm+ to save vertical space. */}
       <section className="sticky top-0 z-20 -mx-4 border-y border-border bg-background px-4 py-1.5 sm:-mx-6 sm:px-6">
@@ -737,7 +748,13 @@ export function SquadPicker({
       )}
       {savedAt && (
         <div className="mt-4 border border-green bg-green/10 px-3 py-2 text-sm text-green">
-          <p>✓ TRUPPEN SPARAD</p>
+          <p>{mode === "draft" ? "✓ FÖRHANDSVAL SPARAT" : "✓ TRUPPEN SPARAD"}</p>
+          {mode === "draft" && (
+            <p className="mt-1 text-[11px] text-foreground">
+              Dina byten genomförs automatiskt när ronden öppnar — om priserna
+              fortfarande håller sig inom budget.
+            </p>
+          )}
           {savedTransfers && savedTransfers.count > 0 && (
             <p className="mt-1 text-[11px] text-foreground">
               {savedTransfers.count} BYTEN ·{" "}
@@ -767,7 +784,9 @@ export function SquadPicker({
                 ? "[ SPARAR... ]"
                 : liveErrors.length > 0
                   ? `[ ${liveErrors.length} FEL KVAR ]`
-                  : "[ SPARA TRUPP → ]"}
+                  : mode === "draft"
+                    ? "[ SPARA FÖRHANDSVAL → ]"
+                    : "[ SPARA TRUPP → ]"}
           </button>
         </div>
       </div>

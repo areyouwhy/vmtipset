@@ -22,7 +22,8 @@ The previous Astro/Blob/PIN-auth prototype was thrown away. This is the current 
 
 ### Game flow
 - **Team creation** at `/app` (one team per user, name unique).
-- **Squad picker** at `/app/squad` — 11 starters within a 50 M SEK budget, formation/position constraints from `src/lib/rules.ts`, captain selection, max-3-from-the-same-country cap, mid-tournament transfers with 1% fee on the outgoing player's price.
+- **Squad picker** at `/app/squad` — 11 starters within a 50 M SEK budget, formation/position constraints from `src/lib/rules.ts`, captain selection, max-3-from-the-same-country cap, mid-tournament transfers with 1% fee on the outgoing player's price. The validate-and-persist core is `src/lib/commit-squad.ts` (`evaluateSquad` dry-run + `commitSquad` write), shared by the live save and the pre-transfer apply.
+- **Pre-transfers ("förhandsval")** — between rounds (no round `open`), users prepare a draft squad for the next round on `/app/squad`. Drafts live in the **isolated `squad_drafts` table** (nothing in scoring/leaderboard reads it). When the admin opens the round (`openRoundAction` → `applyDraftsForRound`), each pending draft is re-validated against the now-current prices via `commitSquad`: it commits if it still fits, else the carried-forward squad stays and the draft is marked `rejected` with a reason. Read layer `src/lib/draft-data.ts`, actions `src/app/app/squad/draft-actions.ts`, apply `src/lib/apply-drafts.ts`. Admin sees an apply report on `/admin/rounds`; users see the outcome on `/app`.
 - **Round lifecycle**: rounds come from Aftonbladet (status `upcoming → open → locked → scored`). `squads.lockedAt` is flipped by the `lock-deadlines` cron when a round's deadline passes; the picker hides edit controls past that point.
 - **Scoring**: pure engine in `src/lib/scoring.ts` (sum of price growth, captain bonus, bank interest, minus transfer fees). Run per-round via `src/lib/score-runner.ts`. Output stored in `team_round_scores`.
 - **Leaderboard** at `/tabell` (`src/lib/leaderboard.ts`) — total points, per-round, rank delta, team value, daily-bets points as a separate column.
@@ -145,7 +146,7 @@ src/
         aftonbladet-refresh   — re-runs ingest
   db/
     index.ts                  — Drizzle + Neon HTTP client
-    schema.ts                 — 16 tables (see Data model)
+    schema.ts                 — 18 tables (see Data model)
   lib/
     auth.ts                   — getOrCreateDbUser, isAdmin
     rules.ts                  — RuleSet source of truth (read by app + /hur)
@@ -167,7 +168,7 @@ vercel.json                   — framework: nextjs + region arn1 + cron schedul
 
 ## Data model
 
-16 tables in `src/db/schema.ts`. All FKs from `users` / `teams` are `ON DELETE CASCADE`, so `DELETE FROM users` wipes the whole player-side graph cleanly (used during the 2026-05-16 prod reset). `rivalry_votes` is the one exception — deliberately isolated (no FK), see below.
+18 tables in `src/db/schema.ts`. All FKs from `users` / `teams` are `ON DELETE CASCADE`, so `DELETE FROM users` wipes the whole player-side graph cleanly (used during the 2026-05-16 prod reset). `rivalry_votes` and `reactions` are the exceptions — deliberately isolated (no FK), see below. `squad_drafts` keeps cascade FKs but is functionally isolated (no live-game read path).
 
 People & teams
 - `users` — keyed by Clerk userId. Status enum: `pending` | `approved` | `rejected`. Row is lazily created on first `/app` visit via `getOrCreateDbUser()`.
@@ -183,6 +184,7 @@ Squad state
 - `squads` — one per (team, round). `lockedAt` set by the cron when the round's deadline passes.
 - `squad_players` — composite (squad_id, player_id), with `is_captain`.
 - `transfers` — outgoing/incoming player pair + `fee_sek`. One row per swap.
+- `squad_drafts` — pre-transfers ("förhandsval"). One row per (team, round): intended `player_ids` (jsonb) + captain + `status` (`pending`/`applied`/`rejected`/`superseded`, plain text col). **Isolated** from the live game — only the pre-transfer flow reads it; applied at round-open via `commitSquad`. Created on prod via manual `CREATE TABLE` (migration baseline unseeded — see Migrations).
 
 Money + side games
 - `team_round_scores` — output of the scoring engine per (team, round): `points_sek`, captain bonus, bank interest, transfer fees.
