@@ -46,3 +46,6 @@ scripts/label-clubs-data.json
 /backups/
 scripts/backup-teams.js
 
+# throwaway debug/one-off scripts (scripts/_dbg.ts etc.)
+scripts/_*.ts
+
