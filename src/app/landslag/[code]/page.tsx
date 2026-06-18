@@ -274,6 +274,11 @@ function Chip({
           ? "—"
           : `${(player.priceSek / 1_000_000).toFixed(1)}M`}
       </span>
+      {player.growthSek !== null && player.growthSek !== 0 && (
+        <span className="line-clamp-1 max-w-[100px] bg-black/80 px-1 text-[9px] leading-tight">
+          <GrowthTag growthSek={player.growthSek} />
+        </span>
+      )}
     </Link>
   );
 }
