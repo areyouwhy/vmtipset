@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { getRejectedTeamIds } from "@/lib/active-teams";
 import { isAdmin } from "@/lib/auth";
 import { clubSlug as clubSlugLocal } from "@/lib/clubs";
 import {
@@ -24,6 +25,11 @@ export default async function TeamPage({
   const team = await findTeamBySlug(slug);
   if (!team) notFound();
   const [{ userId }, admin] = await Promise.all([auth(), isAdmin()]);
+  // Rejected teams aren't in the league; only admins can still inspect them.
+  if (!admin) {
+    const rejected = await getRejectedTeamIds();
+    if (rejected.has(team.id)) notFound();
+  }
   const detail = await getTeamDetail(team.id, {
     viewerUserId: userId,
     viewerIsAdmin: admin,

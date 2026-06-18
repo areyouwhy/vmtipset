@@ -2,6 +2,7 @@ import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
+import { getRejectedTeamIds } from "@/lib/active-teams";
 import { teamSlug } from "@/lib/team-slug";
 import {
   clubs,
@@ -494,10 +495,10 @@ export async function getPlayerOwners(
   const latest = released.at(-1);
   if (!latest) return null;
 
-  const roundSquads = await db
-    .select()
-    .from(squads)
-    .where(eq(squads.roundId, latest.id));
+  const rejected = await getRejectedTeamIds();
+  const roundSquads = (
+    await db.select().from(squads).where(eq(squads.roundId, latest.id))
+  ).filter((s) => !rejected.has(s.teamId));
   if (roundSquads.length === 0) return null;
 
   const owningRows = await db

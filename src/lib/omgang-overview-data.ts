@@ -11,6 +11,7 @@
 import { asc, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { players, rounds, teams, transfers } from "@/db/schema";
+import { getRejectedTeamIds } from "@/lib/active-teams";
 import { getRoundStats } from "@/lib/round-stats-data";
 import { teamSlug } from "@/lib/team-slug";
 
@@ -59,7 +60,10 @@ export async function getOmgangOverview(): Promise<OmgangOverview> {
     (r) => r.status === "locked" || r.status === "scored",
   );
 
-  const txRows = await db.select().from(transfers);
+  const rejected = await getRejectedTeamIds();
+  const txRows = (await db.select().from(transfers)).filter(
+    (r) => !rejected.has(r.teamId),
+  );
   const playerIds = [
     ...new Set(txRows.flatMap((r) => [r.playerInId, r.playerOutId])),
   ];

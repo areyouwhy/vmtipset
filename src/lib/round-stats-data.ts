@@ -17,6 +17,7 @@ import {
   squads,
   teams,
 } from "@/db/schema";
+import { getRejectedTeamIds } from "@/lib/active-teams";
 import { teamSlug } from "@/lib/team-slug";
 import {
   buildOptimalEleven,
@@ -74,7 +75,7 @@ export async function getRoundStats(
     return { available: false, roundNumber, status: round?.status ?? null };
   }
 
-  const [snapRows, squadRows, allPlayers, allClubs, allTeams] =
+  const [snapRows, squadRowsRaw, allPlayers, allClubs, allTeams, rejected] =
     await Promise.all([
       db
         .select()
@@ -84,7 +85,10 @@ export async function getRoundStats(
       db.select().from(players),
       db.select().from(clubs),
       db.select().from(teams).orderBy(asc(teams.name)),
+      getRejectedTeamIds(),
     ]);
+  // Rejected owners aren't in the league — drop their squads from all stats.
+  const squadRows = squadRowsRaw.filter((s) => !rejected.has(s.teamId));
 
   const clubById = new Map(allClubs.map((c) => [c.id, c]));
   const teamById = new Map(allTeams.map((t) => [t.id, t]));

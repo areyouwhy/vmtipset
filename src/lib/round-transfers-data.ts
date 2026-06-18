@@ -9,6 +9,7 @@
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { players, rounds, squads, teams, transfers } from "@/db/schema";
+import { getRejectedTeamIds } from "@/lib/active-teams";
 import { teamSlug } from "@/lib/team-slug";
 
 export type TransferPlayer = {
@@ -59,10 +60,10 @@ export async function getRoundTransfers(
     return { available: false, roundNumber };
   }
 
-  const rows = await db
-    .select()
-    .from(transfers)
-    .where(eq(transfers.roundId, round.id));
+  const rejected = await getRejectedTeamIds();
+  const rows = (
+    await db.select().from(transfers).where(eq(transfers.roundId, round.id))
+  ).filter((r) => !rejected.has(r.teamId));
   if (rows.length === 0) return { available: false, roundNumber };
 
   const playerIds = [
@@ -138,7 +139,7 @@ export async function getRoundTransfers(
     .innerJoin(teams, eq(teams.id, squads.teamId))
     .where(eq(squads.roundId, round.id));
   const noChanges = squadTeams
-    .filter((s) => !byTeamMap.has(s.teamId))
+    .filter((s) => !byTeamMap.has(s.teamId) && !rejected.has(s.teamId))
     .map((s) => ({ teamName: s.name, teamSlug: teamSlug(s.name) }))
     .sort((a, b) => a.teamName.localeCompare(b.teamName, "sv"));
 

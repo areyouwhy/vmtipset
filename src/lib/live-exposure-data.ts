@@ -18,6 +18,7 @@ import {
   squads,
   teams,
 } from "@/db/schema";
+import { getRejectedTeamIds } from "@/lib/active-teams";
 import { teamSlug } from "@/lib/team-slug";
 import {
   buildExposure,
@@ -75,20 +76,24 @@ async function loadOwnership(
   if (revealedRoundIdToNumber.size === 0) return { ownership, revealedRounds };
 
   const revealedRoundIds = [...revealedRoundIdToNumber.keys()];
-  const [squadRows, clubRows, teamRows, snapRows] = await Promise.all([
-    db.select().from(squads).where(inArray(squads.roundId, revealedRoundIds)),
-    db.select().from(clubs),
-    db.select().from(teams).orderBy(asc(teams.name)),
-    db
-      .select({
-        roundId: playerRoundSnapshots.roundId,
-        playerId: playerRoundSnapshots.playerId,
-        growthSek: playerRoundSnapshots.growthSek,
-        source: playerRoundSnapshots.source,
-      })
-      .from(playerRoundSnapshots)
-      .where(inArray(playerRoundSnapshots.roundId, revealedRoundIds)),
-  ]);
+  const [squadRowsRaw, clubRows, teamRows, snapRows, rejected] =
+    await Promise.all([
+      db.select().from(squads).where(inArray(squads.roundId, revealedRoundIds)),
+      db.select().from(clubs),
+      db.select().from(teams).orderBy(asc(teams.name)),
+      db
+        .select({
+          roundId: playerRoundSnapshots.roundId,
+          playerId: playerRoundSnapshots.playerId,
+          growthSek: playerRoundSnapshots.growthSek,
+          source: playerRoundSnapshots.source,
+        })
+        .from(playerRoundSnapshots)
+        .where(inArray(playerRoundSnapshots.roundId, revealedRoundIds)),
+      getRejectedTeamIds(),
+    ]);
+  // Rejected owners aren't in the league — exclude their squads from exposure.
+  const squadRows = squadRowsRaw.filter((s) => !rejected.has(s.teamId));
 
   // (round|player) → growthSek, preferring manual over api (repo convention).
   const growthByKey = new Map<string, number>();
