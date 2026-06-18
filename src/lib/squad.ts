@@ -14,7 +14,12 @@ export type SquadCandidatePlayer = {
   position: Position;
   clubExternalId: string | null;
   countryCode: string | null;
+  /** Current market price this round. */
   priceSek: number;
+  /** This-round growth. Needed only for the round-1 build budget, where cost is
+   *  the purchase price = priceSek − growthSek (price drift mustn't eat budget).
+   *  Defaults to 0 when omitted (= no growth → cost is just priceSek). */
+  growthSek?: number;
 };
 
 export type SquadCandidate = {
@@ -58,7 +63,68 @@ export function summarize(c: SquadCandidate): SquadSummary {
   };
 }
 
-export function validateSquad(c: SquadCandidate): SquadValidationError[] {
+/**
+ * Budget context. Two modes:
+ *
+ *  - "build" (round 1, no prior squad): you have the 50M budget and pay each
+ *    player's PURCHASE price (priceSek − growthSek). In-round price drift must
+ *    not eat into the budget — a squad that gained value isn't "over budget".
+ *
+ *  - "transfer" (round ≥2): spending power = bank entering the round + the
+ *    market value of the squad you're transferring FROM. You sell/buy at market
+ *    price, fees come out of the bank. KVAR = the bank left after the swaps.
+ *
+ *  TEAM VALUE = SQUAD VALUE + BANK; this models the BANK side of a save.
+ */
+export type SquadBudgetContext = {
+  mode: "build" | "transfer";
+  /** 50M for build; bank_end of the previous round for transfer. */
+  bankEnteringSek: number;
+  /** Market value of the squad being transferred from (0 for build). */
+  referenceValueSek: number;
+  /** Σ transfer fees for this submission (0 for build). */
+  transferFeesSek: number;
+};
+
+export type SquadBudget = {
+  /** Total you can spend on the squad: 50M (build) or bank + reference value. */
+  spendingPowerSek: number;
+  /** What the chosen squad costs: Σ purchase price (build) or Σ market (transfer). */
+  squadCostSek: number;
+  feesSek: number;
+  /** spendingPower − squadCost − fees. This is KVAR (the bank after the save). */
+  remainingSek: number;
+  overBudget: boolean;
+};
+
+export function computeSquadBudget(
+  players: Pick<SquadCandidatePlayer, "priceSek" | "growthSek">[],
+  ctx: SquadBudgetContext,
+): SquadBudget {
+  const spendingPowerSek =
+    ctx.mode === "build"
+      ? currentRules.budgetSek
+      : ctx.bankEnteringSek + ctx.referenceValueSek;
+  const squadCostSek = players.reduce(
+    (acc, p) =>
+      acc +
+      (ctx.mode === "build" ? p.priceSek - (p.growthSek ?? 0) : p.priceSek),
+    0,
+  );
+  const remainingSek = spendingPowerSek - squadCostSek - ctx.transferFeesSek;
+  return {
+    spendingPowerSek,
+    squadCostSek,
+    feesSek: ctx.transferFeesSek,
+    remainingSek,
+    overBudget: remainingSek < 0,
+  };
+}
+
+export function validateSquad(
+  c: SquadCandidate,
+  budgetCtx?: SquadBudgetContext,
+): SquadValidationError[] {
   const errors: SquadValidationError[] = [];
   const r = currentRules;
 
@@ -105,12 +171,25 @@ export function validateSquad(c: SquadCandidate): SquadValidationError[] {
     }
   }
 
-  // 5. Budget
-  const totalPrice = c.players.reduce((acc, p) => acc + p.priceSek, 0);
-  if (totalPrice > r.budgetSek) {
-    errors.push(
-      `Över budget: ${totalPrice.toLocaleString("sv-SE")} > ${r.budgetSek.toLocaleString("sv-SE")} SEK.`,
-    );
+  // 5. Budget. With a context, use the team-value/bank model (build vs
+  // transfer); without one, fall back to the flat 50M-at-current-price check
+  // (round-1 build at pick time, where growth is 0 so the two agree).
+  if (budgetCtx) {
+    const b = computeSquadBudget(c.players, budgetCtx);
+    if (b.overBudget) {
+      errors.push(
+        `Över budget: kostar ${b.squadCostSek.toLocaleString("sv-SE")}${
+          b.feesSek ? ` + avgift ${b.feesSek.toLocaleString("sv-SE")}` : ""
+        } > ${b.spendingPowerSek.toLocaleString("sv-SE")} SEK.`,
+      );
+    }
+  } else {
+    const totalPrice = c.players.reduce((acc, p) => acc + p.priceSek, 0);
+    if (totalPrice > r.budgetSek) {
+      errors.push(
+        `Över budget: ${totalPrice.toLocaleString("sv-SE")} > ${r.budgetSek.toLocaleString("sv-SE")} SEK.`,
+      );
+    }
   }
 
   // 6. Same-club limit

@@ -12,9 +12,14 @@ import {
 } from "@/db/schema";
 import { getOrCreateDbUser } from "@/lib/auth";
 import { currentRules } from "@/lib/rules";
-import { validateSquad, type SquadCandidate } from "@/lib/squad";
+import {
+  validateSquad,
+  type SquadBudgetContext,
+  type SquadCandidate,
+} from "@/lib/squad";
 import {
   getActiveRound,
+  getBankEnteringForRound,
   getCurrentSquad,
   getPickablePlayers,
 } from "@/lib/squad-data";
@@ -79,6 +84,7 @@ export async function saveSquadAction(
             clubExternalId: p.clubExternalId,
             countryCode: p.countryCode,
             priceSek: p.priceSek,
+            growthSek: p.growthSek,
           },
         ]
       : [];
@@ -88,8 +94,6 @@ export async function saveSquadAction(
   }
 
   const candidate: SquadCandidate = { players, captainPlayerId };
-  const errors = validateSquad(candidate);
-  if (errors.length > 0) return { ok: false, errors };
 
   // Transfers are always diffed against the PREVIOUS ROUND's committed squad
   // (never this round's last save). Combined with the delete-then-insert of
@@ -109,6 +113,24 @@ export async function saveSquadAction(
           transferFeePct: currentRules.transferFeePct,
           freeTransfersPerRound: currentRules.freeTransfersPerRound,
         });
+
+  // Budget validation uses the team-value/bank model (server-authoritative —
+  // never trust the client). Round 1 = build (50M, purchase cost); round ≥2 =
+  // transfer (bank entering + current squad value − fees).
+  const bankEnteringSek = await getBankEnteringForRound(team.id, round.number);
+  const referenceValueSek =
+    referencePlayerIds?.reduce(
+      (acc, id) => acc + (byId.get(id)?.priceSek ?? 0),
+      0,
+    ) ?? 0;
+  const budgetCtx: SquadBudgetContext = {
+    mode: referencePlayerIds === null ? "build" : "transfer",
+    bankEnteringSek,
+    referenceValueSek,
+    transferFeesSek: transferDiff?.totalFeeSek ?? 0,
+  };
+  const errors = validateSquad(candidate, budgetCtx);
+  if (errors.length > 0) return { ok: false, errors };
 
   // Persist. No transactions over Neon HTTP — sequence carefully.
   let squadId: string;

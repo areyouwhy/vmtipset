@@ -5,8 +5,10 @@ import { useMemo, useState, useTransition } from "react";
 import type { Position } from "@/db/schema";
 import {
   autoPickSquad,
+  computeSquadBudget,
   summarize,
   validateSquad,
+  type SquadBudgetContext,
   type SquadCandidate,
 } from "@/lib/squad";
 import {
@@ -35,6 +37,7 @@ export function SquadPicker({
   initialCaptainId,
   locked,
   referencePlayerIds,
+  bankEnteringSek,
   deadlineSlot,
 }: {
   players: PickablePlayer[];
@@ -44,6 +47,9 @@ export function SquadPicker({
   /** Squad from the previous round. Used to display pending transfers + offer
    *  undo. null = round 1 (no transfers possible). */
   referencePlayerIds: string[] | null;
+  /** Cash entering this round: 50M for round 1, else bank_end of the previous
+   *  round. Combined with the current squad value it forms the transfer budget. */
+  bankEnteringSek: number;
   /** Optional banner rendered inside the picker, directly after the picker
    *  body and just above the fixed save bar. Lets the page hand the deadline
    *  notice down without leaving a gap of bottom padding above it. */
@@ -156,6 +162,7 @@ export function SquadPicker({
                 clubExternalId: p.clubExternalId,
                 countryCode: p.countryCode,
                 priceSek: p.priceSek,
+                growthSek: p.growthSek,
               },
             ]
           : [];
@@ -165,14 +172,28 @@ export function SquadPicker({
     [selected, captainId, playersById],
   );
 
+  // Budget model: round 1 = build (50M, purchase-cost basis); round ≥2 =
+  // transfer (bank entering + current squad value, market basis, minus fees).
+  const budgetCtx: SquadBudgetContext = useMemo(() => {
+    const mode = referencePlayerIds === null ? "build" : "transfer";
+    const referenceValueSek =
+      referencePlayerIds?.reduce(
+        (acc, id) => acc + (playersById.get(id)?.priceSek ?? 0),
+        0,
+      ) ?? 0;
+    const transferFeesSek = pendingTransfers.reduce((acc, t) => acc + t.feeSek, 0);
+    return { mode, bankEnteringSek, referenceValueSek, transferFeesSek };
+  }, [referencePlayerIds, playersById, pendingTransfers, bankEnteringSek]);
+
   const summary = summarize(candidate);
-  const liveErrors = validateSquad(candidate);
+  const budget = computeSquadBudget(candidate.players, budgetCtx);
+  const liveErrors = validateSquad(candidate, budgetCtx);
 
   // Why a player can't be added right now (null = pickable). Selected players
   // are always pickable in the UI sense — the toggle is "remove".
   function reasonNotPickable(p: PickablePlayer): string | null {
     if (selected.has(p.id)) return null;
-    if (p.priceSek > summary.remainingBudgetSek) return "EJ RÅD";
+    if (p.priceSek > budget.remainingSek) return "EJ RÅD";
     const range = currentRules.positions[p.position];
     if (summary.byPosition[p.position] >= range.max) return "POSITION FULL";
     if (p.clubExternalId) {
@@ -201,7 +222,7 @@ export function SquadPicker({
       }
       if (onlyAffordable) {
         const isSel = selected.has(p.id);
-        if (!isSel && p.priceSek > summary.remainingBudgetSek) return false;
+        if (!isSel && p.priceSek > budget.remainingSek) return false;
       }
       if (onlyFits) {
         if (reasonNotPickable(p) !== null) return false;
@@ -343,7 +364,7 @@ export function SquadPicker({
   const captainName = captainId
     ? (playersById.get(captainId)?.name ?? null)
     : null;
-  const overBudget = summary.remainingBudgetSek < 0;
+  const overBudget = budget.overBudget;
   const fullSquad = summary.count === currentRules.squadSize;
 
   return (
@@ -367,7 +388,7 @@ export function SquadPicker({
           <span>
             <span className="text-dim">KVAR </span>
             <span className={overBudget ? "text-red" : "text-green"}>
-              {(summary.remainingBudgetSek / 1_000_000).toFixed(1)}M
+              {(budget.remainingSek / 1_000_000).toFixed(1)}M
             </span>
           </span>
           <span className="min-w-0 flex-1 truncate text-right">

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lt } from "drizzle-orm";
 import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
 import {
@@ -8,10 +8,12 @@ import {
   rounds,
   squadPlayers,
   squads,
+  teamRoundScores,
   transfers,
   type Position,
   type Round,
 } from "@/db/schema";
+import { currentRules } from "@/lib/rules";
 
 export type PickablePlayer = {
   id: string;
@@ -42,6 +44,29 @@ export type PickablePlayer = {
    *  Static lookup keyed by Aftonbladet player externalId. */
   domesticClub: string | null;
 };
+
+/**
+ * Cash entering a round for budget purposes: 50M for round 1 (the build), else
+ * the bank_end of the most recent SCORED round before it. The transfer budget
+ * is `bankEntering + current squad value`. Falls back to 0 for round ≥2 if no
+ * prior round is scored yet (shouldn't happen in normal sequential play).
+ */
+export async function getBankEnteringForRound(
+  teamId: string,
+  roundNumber: number,
+): Promise<number> {
+  if (roundNumber <= 1) return currentRules.budgetSek;
+  const rows = await db
+    .select({ bank: teamRoundScores.bankSekEnd })
+    .from(teamRoundScores)
+    .innerJoin(rounds, eq(rounds.id, teamRoundScores.roundId))
+    .where(
+      and(eq(teamRoundScores.teamId, teamId), lt(rounds.number, roundNumber)),
+    )
+    .orderBy(desc(rounds.number))
+    .limit(1);
+  return rows[0]?.bank ?? 0;
+}
 
 export async function getActiveRound(): Promise<Round | null> {
   // Fully manual lifecycle: the live trading round is whichever one the admin

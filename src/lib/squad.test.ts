@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { isValidSquad, summarize, validateSquad, type SquadCandidate } from "./squad";
+import {
+  computeSquadBudget,
+  isValidSquad,
+  summarize,
+  validateSquad,
+  type SquadBudgetContext,
+  type SquadCandidate,
+} from "./squad";
 
 function p(
   id: string,
@@ -203,5 +210,92 @@ describe("summarize", () => {
     expect(s.byClub["club:bay"]).toBe(2);
     expect(s.totalPriceSek).toBeLessThan(50_000_000);
     expect(s.remainingBudgetSek).toBeGreaterThan(0);
+  });
+});
+
+describe("computeSquadBudget", () => {
+  const build = (
+    players: { priceSek: number; growthSek?: number }[],
+    ctx?: Partial<SquadBudgetContext>,
+  ) =>
+    computeSquadBudget(players, {
+      mode: "build",
+      bankEnteringSek: 0,
+      referenceValueSek: 0,
+      transferFeesSek: 0,
+      ...ctx,
+    });
+
+  it("build: cost is the PURCHASE price (price − growth), so growth never eats budget", () => {
+    // Spent exactly 50M; squad then grew 0.9M → current value 50.9M.
+    const players = [
+      { priceSek: 50_900_000, growthSek: 900_000 }, // one synthetic "squad"
+    ];
+    const b = build(players);
+    expect(b.spendingPowerSek).toBe(50_000_000);
+    expect(b.squadCostSek).toBe(50_000_000); // 50.9M − 0.9M
+    expect(b.remainingSek).toBe(0); // NOT −0.9M
+    expect(b.overBudget).toBe(false);
+  });
+
+  it("transfer: spending power = bank + reference value; KVAR is the bank after swaps", () => {
+    // Bank 620k, current squad worth 51M, swap a 5M player for a 6M one (fee 42k).
+    const newSquad = [{ priceSek: 52_000_000 }]; // squad value after the swap
+    const b = computeSquadBudget(newSquad, {
+      mode: "transfer",
+      bankEnteringSek: 620_000,
+      referenceValueSek: 51_000_000,
+      transferFeesSek: 42_000,
+    });
+    expect(b.spendingPowerSek).toBe(51_620_000);
+    // 51.62M − 52.0M − 0.042M = −422k → can't afford it.
+    expect(b.remainingSek).toBe(-422_000);
+    expect(b.overBudget).toBe(true);
+  });
+
+  it("transfer: keeping the same squad leaves exactly the bank as KVAR", () => {
+    const b = computeSquadBudget([{ priceSek: 51_000_000 }], {
+      mode: "transfer",
+      bankEnteringSek: 620_000,
+      referenceValueSek: 51_000_000,
+      transferFeesSek: 0,
+    });
+    expect(b.remainingSek).toBe(620_000);
+    expect(b.overBudget).toBe(false);
+  });
+});
+
+describe("validateSquad budget context", () => {
+  function fullSquad(): SquadCandidate {
+    // 4-3-3 of 5M players = 55M at current price (grew 5M total from 50M cost).
+    const players = [
+      p("gk1", "GK", 5_000_000),
+      p("def1", "DEF", 5_000_000),
+      p("def2", "DEF", 5_000_000),
+      p("def3", "DEF", 5_000_000),
+      p("def4", "DEF", 5_000_000),
+      p("mid1", "MID", 5_000_000),
+      p("mid2", "MID", 5_000_000),
+      p("mid3", "MID", 5_000_000),
+      p("fwd1", "FWD", 5_000_000),
+      p("fwd2", "FWD", 5_000_000),
+      p("fwd3", "FWD", 5_000_000),
+    ].map((pl) => ({ ...pl, growthSek: 600_000 })); // cost = 55M − 6.6M = 48.4M
+    return { captainPlayerId: "fwd1", players };
+  }
+
+  it("build mode: a grown 55M squad that cost 50M is NOT over budget", () => {
+    const errs = validateSquad(fullSquad(), {
+      mode: "build",
+      bankEnteringSek: 0,
+      referenceValueSek: 0,
+      transferFeesSek: 0,
+    });
+    expect(errs.filter((e) => e.includes("budget"))).toHaveLength(0);
+  });
+
+  it("no context: legacy flat 50M-at-current-price still flags the 55M squad", () => {
+    const errs = validateSquad(fullSquad());
+    expect(errs.some((e) => e.includes("budget"))).toBe(true);
   });
 });

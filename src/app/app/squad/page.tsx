@@ -8,6 +8,7 @@ import { SectionNav } from "@/components/section-nav";
 import { getOrCreateDbUser } from "@/lib/auth";
 import {
   getActiveRound,
+  getBankEnteringForRound,
   getCurrentSquad,
   getLatestSquadForTeam,
   getPickablePlayers,
@@ -156,10 +157,11 @@ async function SquadPickerWrapper({
   deadline: Date | null;
   readOnly?: boolean;
 }) {
-  const [pickable, current, referenceIds] = await Promise.all([
+  const [pickable, current, referenceIds, bankEnteringSek] = await Promise.all([
     getPickablePlayers(roundId),
     getCurrentSquad(teamId, roundId),
     getPreviousRoundSquadPlayerIds(teamId, roundNumber),
+    getBankEnteringForRound(teamId, roundNumber),
   ]);
 
   if (pickable.length === 0) {
@@ -227,6 +229,7 @@ async function SquadPickerWrapper({
         initialCaptainId={cleanCaptainId}
         locked={readOnly || current?.lockedAt != null}
         referencePlayerIds={referenceIds}
+        bankEnteringSek={bankEnteringSek}
         deadlineSlot={readOnly ? null : <DeadlineBanner deadline={deadline} />}
       />
     </>
