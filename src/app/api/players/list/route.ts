@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { db } from "@/db";
 import { clubs, players } from "@/db/schema";
@@ -7,7 +7,11 @@ import { clubs, players } from "@/db/schema";
 const getActivePlayersList = unstable_cache(
   async () => {
     const [allPlayers, allClubs] = await Promise.all([
-      db.select().from(players).where(eq(players.active, true)).orderBy(asc(players.name)),
+      db
+        .select()
+        .from(players)
+        .where(and(eq(players.active, true), isNull(players.archivedAt)))
+        .orderBy(asc(players.name)),
       db.select().from(clubs),
     ]);
     const clubById = new Map(allClubs.map((c) => [c.id, c]));

@@ -1,4 +1,4 @@
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, eq, isNull, ne } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
@@ -58,7 +58,7 @@ const buildSearchCatalog = unstable_cache(
           clubId: players.clubId,
         })
         .from(players)
-        .where(eq(players.active, true))
+        .where(and(eq(players.active, true), isNull(players.archivedAt)))
         .orderBy(asc(players.name)),
       db
         .select({

@@ -1,4 +1,4 @@
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { clubFor, PLAYER_CLUBS } from "@/data/player-clubs";
 import { db } from "@/db";
@@ -89,7 +89,10 @@ async function _getClubDetail(slug: string): Promise<ClubDetail | null> {
   ];
 
   const [allPlayers, allClubs, allSnapshots] = await Promise.all([
-    db.select().from(players).where(eq(players.active, true)),
+    db
+      .select()
+      .from(players)
+      .where(and(eq(players.active, true), isNull(players.archivedAt))),
     db.select().from(clubs),
     priceRoundIds.length > 0
       ? db
