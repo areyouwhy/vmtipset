@@ -11,6 +11,7 @@ import {
   squads,
   teamRoundScores,
   teams,
+  transfers,
   users,
   type Round,
   type TeamRoundScore,
@@ -101,6 +102,7 @@ async function _getLeaderboard(): Promise<Leaderboard> {
     allSquads,
     allSquadPlayers,
     allSnapshots,
+    allTransfers,
   ] = await Promise.all([
     db.select().from(rounds).orderBy(asc(rounds.number)),
     db.select().from(teamRoundScores),
@@ -110,7 +112,22 @@ async function _getLeaderboard(): Promise<Leaderboard> {
     db.select().from(squads),
     db.select().from(squadPlayers),
     db.select().from(playerRoundSnapshots),
+    db.select().from(transfers),
   ]);
+
+  // Net transfer cash flow per (team, round): Σ(sell − buy − fee). For an
+  // in-progress (unscored) round this hasn't hit any bank_end yet, so the
+  // projection must fold it in — otherwise buying a pricier player inflates
+  // squad value without the matching cash leaving the bank.
+  const cashFlowByTeamRound = new Map<string, number>();
+  for (const tr of allTransfers) {
+    const key = `${tr.teamId}::${tr.roundId}`;
+    cashFlowByTeamRound.set(
+      key,
+      (cashFlowByTeamRound.get(key) ?? 0) +
+        (tr.sellPriceSek - tr.buyPriceSek - tr.feeSek),
+    );
+  }
 
   const userById = new Map(allUsers.map((u) => [u.id, u]));
   // Hide teams whose owner is rejected — they're not in the league.
@@ -299,16 +316,19 @@ async function _getLeaderboard(): Promise<Leaderboard> {
           currentRules.captainBonusOnlyPositive,
         )
       : 0;
-    // Interest is on the cash ENTERING the round (the bank before bonuses).
+    // Bank entering this round = prior bank_end + this round's transfer cash
+    // flow (sell − buy − fee). Interest is on that entering balance.
+    const cashFlow = cashFlowByTeamRound.get(`${t.id}::${latest.roundId}`) ?? 0;
+    const bankEntering = bank + cashFlow;
     const interestProj = bankInterestSek(
-      bank,
+      bankEntering,
       currentRules.bankInterestPctPerRound,
     );
 
     captainProjByTeam.set(t.id, captainProj);
     interestProjByTeam.set(t.id, interestProj);
     // Fold into bank → flows into teamValue (squad + bank) and ranking below.
-    bankByTeam.set(t.id, bank + captainProj + interestProj);
+    bankByTeam.set(t.id, bankEntering + captainProj + interestProj);
   }
 
   const teamValueByTeam = new Map<string, number | null>();
@@ -489,7 +509,7 @@ export async function getTeamDetail(
     .limit(1);
   if (!team) return null;
 
-  const [allRounds, owner, allSquads, allSquadPlayers, allPlayers, allClubs, allSnapshots, allScores] =
+  const [allRounds, owner, allSquads, allSquadPlayers, allPlayers, allClubs, allSnapshots, allScores, allTransfers] =
     await Promise.all([
       db.select().from(rounds).orderBy(asc(rounds.number)),
       db
@@ -517,7 +537,18 @@ export async function getTeamDetail(
         .select()
         .from(teamRoundScores)
         .where(eq(teamRoundScores.teamId, teamId)),
+      db.select().from(transfers).where(eq(transfers.teamId, teamId)),
     ]);
+
+  // Net transfer cash flow per round for this team: Σ(sell − buy − fee).
+  const cashFlowByRound = new Map<string, number>();
+  for (const tr of allTransfers) {
+    cashFlowByRound.set(
+      tr.roundId,
+      (cashFlowByRound.get(tr.roundId) ?? 0) +
+        (tr.sellPriceSek - tr.buyPriceSek - tr.feeSek),
+    );
+  }
 
   const playerById = new Map(allPlayers.map((p) => [p.id, p]));
   const clubById = new Map(allClubs.map((c) => [c.id, c]));
@@ -669,8 +700,19 @@ export async function getTeamDetail(
     currentSquadValueSek !== null
       ? (me?.captainBonusProjectedSek ?? 0) + (me?.bankInterestProjectedSek ?? 0)
       : 0;
+  // In-progress round's transfer cash flow (sell − buy − fee) isn't in any
+  // bank_end yet — fold it into the live bank so buying a pricier player
+  // doesn't inflate team value (matches the leaderboard projection).
+  const inProgressCashFlowSek =
+    currentSquadValueSek !== null &&
+    latestWithSquad &&
+    latestWithSquad.score === null
+      ? (cashFlowByRound.get(latestWithSquad.roundId) ?? 0)
+      : 0;
   const currentBankSek =
-    currentBankSekRaw === null ? null : currentBankSekRaw + liveProjectionSek;
+    currentBankSekRaw === null
+      ? null
+      : currentBankSekRaw + inProgressCashFlowSek + liveProjectionSek;
   const currentTeamValueSek =
     currentSquadValueSek !== null && currentBankSek !== null
       ? currentSquadValueSek + currentBankSek
