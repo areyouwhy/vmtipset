@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { teams } from "@/db/schema";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { SectionNav } from "@/components/section-nav";
+import { formatStockholm } from "@/lib/format-time";
 import { getOrCreateDbUser } from "@/lib/auth";
 import {
   getActiveRound,
@@ -113,8 +114,7 @@ function DeadlineBanner({ deadline }: { deadline: Date | null }) {
   if (isPast) {
     return (
       <p className="mt-2 border border-red bg-red/10 px-3 py-2 text-xs uppercase tracking-widest text-red">
-        ! DEADLINE PASSERAD ·{" "}
-        {new Date(deadline).toISOString().slice(0, 16).replace("T", " ")} UTC
+        ! DEADLINE PASSERAD · {formatStockholm(deadline)}
       </p>
     );
   }
@@ -129,9 +129,7 @@ function DeadlineBanner({ deadline }: { deadline: Date | null }) {
       className={`mt-2 border px-3 py-2 text-xs uppercase tracking-widest ${colorClass}`}
     >
       DEADLINE{" "}
-      <span className="text-foreground">
-        {new Date(deadline).toISOString().slice(0, 16).replace("T", " ")} UTC
-      </span>
+      <span className="text-foreground">{formatStockholm(deadline)}</span>
       <span className="ml-2 tabular-nums">
         ·{" "}
         {days > 0

@@ -5,6 +5,7 @@ import type { BetWithMeta } from "@/lib/bets-data";
 import type { BetAnswer } from "@/db/schema";
 import { PlayerPicker } from "@/app/admin/bets/bet-card";
 import { submitBetAnswerAction } from "./bets/actions";
+import { formatStockholm } from "@/lib/format-time";
 
 export function BetsSection({
   bets,
@@ -92,7 +93,7 @@ function BetAnswerRow({
           <>
             {" "}
             · DEADLINE{" "}
-            {new Date(bet.deadline).toISOString().slice(0, 16).replace("T", " ")}
+            {formatStockholm(bet.deadline)}
           </>
         )}
       </p>

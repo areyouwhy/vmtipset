@@ -8,6 +8,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getOrCreateDbUser, isAdmin } from "@/lib/auth";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { getOpenBetsForUser } from "@/lib/bets-data";
+import { formatStockholm } from "@/lib/format-time";
 import {
   getActiveRound,
   getCurrentSquad,
@@ -573,7 +574,7 @@ function CountdownLine({ deadline }: { deadline: Date }) {
     <p className="mt-3 text-xs uppercase tracking-widest text-dim">
       DEADLINE{" "}
       <span className="text-foreground">
-        {new Date(deadline).toISOString().slice(0, 16).replace("T", " ")} UTC
+        {formatStockholm(deadline)}
       </span>{" "}
       <span className="text-foreground tabular-nums">· {time}</span>
     </p>

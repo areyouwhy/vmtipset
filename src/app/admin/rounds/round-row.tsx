@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { RoundStatus } from "@/db/schema";
 import type { ScoringSummary } from "@/lib/score-runner";
+import { formatStockholm } from "@/lib/format-time";
 import {
   lockRoundAction,
   openRoundAction,
@@ -73,7 +74,7 @@ export function RoundRow({
       <dl className="mt-3 grid grid-cols-3 gap-2 text-[11px] tabular-nums">
         <Stat
           k="DEADLINE"
-          v={deadline ? deadline.toISOString().slice(0, 16).replace("T", " ") : "—"}
+          v={deadline ? formatStockholm(deadline) : "—"}
         />
         <Stat k="TRUPPER" v={squadCount} />
         <Stat
