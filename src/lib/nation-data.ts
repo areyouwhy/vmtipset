@@ -1,4 +1,4 @@
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { db } from "@/db";
 import {
@@ -295,7 +295,9 @@ async function _getNationDetail(
   );
 
   const roster: NationPlayer[] = allPlayers
-    .filter((p: Player) => p.active)
+    // Mirror the "in the game" definition used by the squad picker + /spelare:
+    // active AND not archived by the ingest (archived = dropped from the pool).
+    .filter((p: Player) => p.active && !p.archivedAt)
     .map((p: Player) => {
       const priceSek = latest.get(p.id) ?? baseline.get(p.id) ?? null;
       const basePriceSek = baseline.get(p.id) ?? null;
@@ -365,7 +367,10 @@ async function _getAllNations(): Promise<NationSummary[]> {
 
   const [allClubs, allPlayers, allSnapshots] = await Promise.all([
     db.select().from(clubs),
-    db.select().from(players).where(eq(players.active, true)),
+    db
+      .select()
+      .from(players)
+      .where(and(eq(players.active, true), isNull(players.archivedAt))),
     priceRoundIds.length > 0
       ? db
           .select({
