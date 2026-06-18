@@ -116,13 +116,20 @@ function RoundSection({
   return (
     <section className="border border-border p-4">
       <header className="flex items-baseline justify-between gap-3 text-xs uppercase tracking-widest">
-        <span>
-          <span className="text-dim">ROND </span>
+        <Link
+          href={`/vm/omgang/${line.roundNumber}`}
+          className="group/round transition hover:text-cyan"
+        >
+          <span className="text-dim group-hover/round:text-cyan">ROND </span>
           <span className="text-yellow tabular-nums">
             {String(line.roundNumber).padStart(2, "0")}
           </span>
-          <span className="text-foreground"> — {line.roundName}</span>
-        </span>
+          <span className="text-foreground group-hover/round:text-cyan">
+            {" "}
+            — {line.roundName}
+          </span>
+          <span className="ml-1 text-dim group-hover/round:text-cyan">→</span>
+        </Link>
         <span className={statusColor[line.status]}>
           {statusLabel[line.status]}
         </span>

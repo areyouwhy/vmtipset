@@ -8,6 +8,8 @@ import {
   getTeamLookup,
   type WcMatchGroup,
 } from "@/lib/wc-tournament";
+import { getRoundStats, type RoundStats } from "@/lib/round-stats-data";
+import { RoundStatsLineup } from "./round-stats-lineup";
 
 export const revalidate = 600;
 
@@ -33,10 +35,11 @@ export default async function OmgangPage({
   const n = Number.parseInt(nStr, 10);
   if (!Number.isFinite(n) || n < 1 || n > 8) notFound();
 
-  const [allMatches, mgsById, teamsById] = await Promise.all([
+  const [allMatches, mgsById, teamsById, roundStats] = await Promise.all([
     getAllMatches(),
     getMatchGroups(),
     getTeamLookup(),
+    getRoundStats(n).catch(() => null),
   ]);
   const matches = allMatches
     .filter((m) => m.roundNumber === n)
@@ -144,7 +147,106 @@ export default async function OmgangPage({
             );
           })}
         </div>
+
+        <section className="mt-10">
+          <h2 className="border-b border-border pb-1 text-[10px] uppercase tracking-widest text-cyan">
+            RONDSTATISTIK
+          </h2>
+          {!roundStats || !roundStats.available ? (
+            <p className="mt-3 border border-dashed border-border p-3 text-xs text-dim">
+              — statistik visas när ronden har spelats —
+            </p>
+          ) : (
+            <div className="mt-3 space-y-4">
+              <RoundStatsSummary stats={roundStats.stats} />
+              <RoundStatsLineup lineups={roundStats.lineups} />
+            </div>
+          )}
+        </section>
       </div>
     </main>
+  );
+}
+
+function fmtSek(n: number): string {
+  if (n === 0) return "0";
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "−" : "";
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(2)}M`;
+  if (abs >= 1_000) return `${sign}${Math.round(abs / 1_000)}k`;
+  return `${sign}${abs}`;
+}
+
+function growthLabel(n: number): string {
+  const arrow = n > 0 ? "↑" : n < 0 ? "↓" : "";
+  return `${arrow}${fmtSek(n)}`;
+}
+
+function RoundStatsSummary({ stats }: { stats: RoundStats }) {
+  const cells: { label: string; value: string; sub?: string; tone?: string }[] = [];
+  if (stats.topPlayer)
+    cells.push({
+      label: "POPULÄRAST",
+      value: stats.topPlayer.player.name,
+      sub: `${stats.topPlayer.count} lag`,
+    });
+  if (stats.topCaptain)
+    cells.push({
+      label: "POPULÄRAST © KAPTEN",
+      value: stats.topCaptain.player.name,
+      sub: `${stats.topCaptain.count} lag`,
+    });
+  if (stats.topCountry)
+    cells.push({
+      label: "POPULÄRAST LAND",
+      value: stats.topCountry.name,
+      sub: `${stats.topCountry.count} val`,
+    });
+  if (stats.bestPick)
+    cells.push({
+      label: "BÄSTA VALET",
+      value: stats.bestPick.name,
+      sub: growthLabel(stats.bestPick.growthSek),
+      tone: "text-green",
+    });
+  if (stats.worstPick)
+    cells.push({
+      label: "SÄMSTA VALET",
+      value: stats.worstPick.name,
+      sub: growthLabel(stats.worstPick.growthSek),
+      tone: "text-red",
+    });
+  if (stats.bestCaptainPick)
+    cells.push({
+      label: "BÄSTA © KAPTENVALET",
+      value: stats.bestCaptainPick.player.name,
+      sub: `${growthLabel(stats.bestCaptainPick.player.growthSek)} · ${stats.bestCaptainPick.count} lag`,
+      tone: "text-green",
+    });
+
+  if (cells.length === 0) {
+    return (
+      <p className="text-xs text-dim">— inga lagval denna rond —</p>
+    );
+  }
+
+  return (
+    <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      {cells.map((c) => (
+        <div key={c.label} className="border border-border p-2">
+          <dt className="text-[9px] uppercase tracking-widest text-dim">
+            {c.label}
+          </dt>
+          <dd className="mt-0.5 truncate text-sm text-foreground" title={c.value}>
+            {c.value}
+          </dd>
+          {c.sub && (
+            <dd className={`text-[10px] tabular-nums ${c.tone ?? "text-dim"}`}>
+              {c.sub}
+            </dd>
+          )}
+        </div>
+      ))}
+    </dl>
   );
 }
