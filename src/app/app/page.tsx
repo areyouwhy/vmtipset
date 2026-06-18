@@ -242,7 +242,8 @@ function LeagueTablePanel({
   const mine = myTeamId ? rows.find((r) => r.teamId === myTeamId) : null;
   const mineOutsideTop =
     mine && !top.some((r) => r.teamId === myTeamId) ? mine : null;
-  const headerLabel = anyScored ? "POÄNG" : "VÄRDE";
+  // Always show team value (squad + bank) to match /tabell's ranking metric.
+  const headerLabel = "VÄRDE";
 
   return (
     <section className="border border-border">
@@ -256,14 +257,14 @@ function LeagueTablePanel({
       </header>
       <ul className="divide-y divide-border">
         {top.map((row) => (
-          <LeagueRow key={row.teamId} row={row} mine={row.teamId === myTeamId} anyScored={anyScored} />
+          <LeagueRow key={row.teamId} row={row} mine={row.teamId === myTeamId} />
         ))}
         {mineOutsideTop && (
           <>
             <li className="px-4 py-1 text-center text-[10px] uppercase tracking-widest text-dim">
               · · ·
             </li>
-            <LeagueRow row={mineOutsideTop} mine anyScored={anyScored} />
+            <LeagueRow row={mineOutsideTop} mine />
           </>
         )}
       </ul>
@@ -280,13 +281,11 @@ function LeagueTablePanel({
 function LeagueRow({
   row,
   mine,
-  anyScored,
 }: {
   row: Awaited<ReturnType<typeof getLeaderboard>>["rows"][number];
   mine: boolean;
-  anyScored: boolean;
 }) {
-  const value = anyScored ? row.totalPointsSek : row.teamValueSek;
+  const value = row.teamValueSek;
   return (
     <li
       className={`grid grid-cols-[2.25rem_1fr_auto] items-baseline gap-3 px-4 py-2 text-sm ${
