@@ -186,10 +186,20 @@ async function _getLeaderboard(): Promise<Leaderboard> {
   };
 
   // Squad value: sum of current player prices for the team's most recent
-  // squad's round. Manual snapshots win over api when both exist.
+  // RELEASED squad's round. Anti-cheat: while a round is `open` (transfer
+  // window), its squads are secret + in-flux — valuing/ranking by them would
+  // leak round-N moves before the deadline. So we only consider locked/scored
+  // rounds (same gate as getH2HSquads); standings freeze at the last locked
+  // round until the open round closes.
+  const releasedRoundIds = new Set(
+    allRounds
+      .filter((r) => r.status === "locked" || r.status === "scored")
+      .map((r) => r.id),
+  );
   const roundOrderIndex = new Map(allRounds.map((r, i) => [r.id, i] as const));
   const latestSquadByTeam = new Map<string, { roundId: string; squadId: string }>();
   for (const sq of allSquads) {
+    if (!releasedRoundIds.has(sq.roundId)) continue;
     const cur = latestSquadByTeam.get(sq.teamId);
     const curIdx = cur ? (roundOrderIndex.get(cur.roundId) ?? -1) : -1;
     const newIdx = roundOrderIndex.get(sq.roundId) ?? -1;
