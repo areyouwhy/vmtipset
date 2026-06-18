@@ -4,7 +4,11 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { clubFor } from "@/data/player-clubs";
 import { clubSlug } from "@/lib/clubs";
 import { Jersey } from "@/lib/jersey";
-import { getPlayerDetail, type ScoreBreakdownItem } from "@/lib/players-data";
+import {
+  getPlayerDetail,
+  getPlayerOwners,
+  type ScoreBreakdownItem,
+} from "@/lib/players-data";
 
 export const revalidate = 600;
 
@@ -16,6 +20,8 @@ export default async function PublicPlayerPage({
   const { id } = await params;
   const detail = await getPlayerDetail(id).catch(() => null);
   if (!detail) notFound();
+  // Which of our teams own this player (latest released round; anti-cheat-gated).
+  const owners = await getPlayerOwners(id).catch(() => null);
 
   const {
     player,
@@ -93,6 +99,31 @@ export default async function PublicPlayerPage({
             <StatCell label="⭐" value={stats.manOfTheMatch.toString()} />
           </dl>
         </section>
+
+        {owners && owners.total > 0 && (
+          <section className="mb-6">
+            <h2 className="border-b border-border pb-1 text-[10px] uppercase tracking-widest text-cyan">
+              I TRUPPER · {owners.roundName}{" "}
+              <span className="text-dim">
+                · {owners.total} {owners.total === 1 ? "lag" : "lag"}
+                {owners.captainCount > 0 ? ` · © ${owners.captainCount}` : ""}
+              </span>
+            </h2>
+            <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
+              {owners.owners.map((o) => (
+                <li key={o.teamSlug}>
+                  <Link
+                    href={`/team/${o.teamSlug}`}
+                    className="text-foreground hover:text-cyan"
+                  >
+                    {o.isCaptain && <span className="text-yellow">© </span>}
+                    {o.teamName}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="space-y-4">
           <h2 className="text-[10px] uppercase tracking-widest text-dim">

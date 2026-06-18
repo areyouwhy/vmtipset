@@ -1,7 +1,8 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
+import { teamSlug } from "@/lib/team-slug";
 import {
   clubs,
   eventTypes,
@@ -11,6 +12,7 @@ import {
   rounds,
   squadPlayers,
   squads,
+  teams,
   type Player,
   type Club,
   type EventType,
@@ -462,5 +464,92 @@ async function _getPlayerDetail(
     scoreBreakdownByRound,
     eventTypes: allEventTypes,
     stats: statsMap.get(player.id) ?? emptyStats(),
+  };
+}
+
+// ─── Player ownership (which of our teams hold this player) ─────────────────
+
+export type PlayerOwners = {
+  /** The round these ownerships are from (latest released round). */
+  roundNumber: number;
+  roundName: string;
+  /** Teams owning the player + how many captain them. */
+  total: number;
+  captainCount: number;
+  owners: { teamName: string; teamSlug: string; isCaptain: boolean }[];
+};
+
+/**
+ * Which of our teams have this player in their latest RELEASED squad.
+ * Anti-cheat: only locked/scored rounds — never exposes open-round squads.
+ * Returns null when no released round exists yet.
+ */
+export async function getPlayerOwners(
+  playerId: string,
+): Promise<PlayerOwners | null> {
+  const allRounds = await db.select().from(rounds).orderBy(asc(rounds.number));
+  const released = allRounds.filter(
+    (r) => r.status === "locked" || r.status === "scored",
+  );
+  const latest = released.at(-1);
+  if (!latest) return null;
+
+  const roundSquads = await db
+    .select()
+    .from(squads)
+    .where(eq(squads.roundId, latest.id));
+  if (roundSquads.length === 0) return null;
+
+  const owningRows = await db
+    .select({ squadId: squadPlayers.squadId })
+    .from(squadPlayers)
+    .where(
+      and(
+        eq(squadPlayers.playerId, playerId),
+        inArray(
+          squadPlayers.squadId,
+          roundSquads.map((s) => s.id),
+        ),
+      ),
+    );
+  const owningSquadIds = new Set(owningRows.map((r) => r.squadId));
+  const owningSquads = roundSquads.filter((s) => owningSquadIds.has(s.id));
+  if (owningSquads.length === 0) {
+    return {
+      roundNumber: latest.number,
+      roundName: latest.name,
+      total: 0,
+      captainCount: 0,
+      owners: [],
+    };
+  }
+
+  const teamRows = await db
+    .select()
+    .from(teams)
+    .where(inArray(teams.id, owningSquads.map((s) => s.teamId)));
+  const teamById = new Map(teamRows.map((t) => [t.id, t]));
+
+  const owners = owningSquads
+    .map((sq) => {
+      const t = teamById.get(sq.teamId);
+      return {
+        teamName: t?.name ?? "—",
+        teamSlug: t ? teamSlug(t.name) : "",
+        isCaptain: sq.captainPlayerId === playerId,
+      };
+    })
+    .sort(
+      (a, b) =>
+        Number(b.isCaptain) - Number(a.isCaptain) ||
+        a.teamName.localeCompare(b.teamName, "sv"),
+    );
+
+  return {
+    roundNumber: latest.number,
+    roundName: latest.name,
+    total: owners.length,
+    captainCount: owners.filter((o) => o.isCaptain).length,
+    owners,
   };
 }
