@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { getOmgangOverview, type OmgangOverview } from "@/lib/omgang-overview-data";
+import {
+  getOmgangOverview,
+  getSeasonLineups,
+  type OmgangOverview,
+} from "@/lib/omgang-overview-data";
 import { ROUND_TITLES } from "@/lib/round-titles";
 import { getAllMatches } from "@/lib/wc-tournament";
+import { RoundStatsLineup } from "./[n]/round-stats-lineup";
 
 export const revalidate = 600;
 
@@ -26,9 +31,10 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default async function OmgangOverviewPage() {
-  const [overview, allMatches] = await Promise.all([
+  const [overview, allMatches, seasonLineups] = await Promise.all([
     getOmgangOverview(),
     getAllMatches().catch(() => []),
+    getSeasonLineups().catch(() => []),
   ]);
 
   const matchCountByRound = new Map<number, number>();
@@ -59,6 +65,16 @@ export default async function OmgangOverviewPage() {
 
         <div className="space-y-8">
           <HighlightsBlock h={overview.highlights} />
+          {seasonLineups.length > 0 && (
+            <section>
+              <h2 className="border-b border-border pb-1 text-[10px] uppercase tracking-widest text-cyan">
+                ELVOR · ALLA RONDER
+              </h2>
+              <div className="mt-3">
+                <RoundStatsLineup lineups={seasonLineups} />
+              </div>
+            </section>
+          )}
           <TransfersTotals t={overview.transfers} played={overview.playedCount} />
 
           <section>

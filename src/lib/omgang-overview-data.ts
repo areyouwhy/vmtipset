@@ -8,11 +8,21 @@
  * locked/scored — so nothing here leaks an open round's picks.
  */
 
-import { asc, inArray } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { players, rounds, teams, transfers } from "@/db/schema";
+import {
+  clubs,
+  playerRoundSnapshots,
+  players,
+  rounds,
+  squadPlayers,
+  squads,
+  teams,
+  transfers,
+} from "@/db/schema";
 import { getRejectedTeamIds } from "@/lib/active-teams";
-import { getRoundStats } from "@/lib/round-stats-data";
+import { buildElevenBy, type RoundStatPlayer } from "@/lib/round-stats";
+import { getRoundStats, type LineupOption } from "@/lib/round-stats-data";
 import { teamSlug } from "@/lib/team-slug";
 
 export type OverviewPlayerCount = {
@@ -227,4 +237,89 @@ export async function getOmgangOverview(): Promise<OmgangOverview> {
     },
     highlights,
   };
+}
+
+/**
+ * Season-aggregate Most Popular / Most Unique XIs for the overview hub. Owner
+ * count = total selections across ALL played rounds (a player owned by many
+ * teams across many rounds floats up). Popular = most-selected legal XI; unique
+ * = least-selected legal XI among players picked at least once. Excludes
+ * rejected teams. Returns [] if no played rounds / not enough players.
+ */
+export async function getSeasonLineups(): Promise<LineupOption[]> {
+  const allRounds = await db.select().from(rounds).orderBy(asc(rounds.number));
+  const played = allRounds.filter(
+    (r) => r.status === "locked" || r.status === "scored",
+  );
+  if (played.length === 0) return [];
+  const playedIds = played.map((r) => r.id);
+  const latestPlayed = played[played.length - 1];
+
+  const rejected = await getRejectedTeamIds();
+  const playedSquads = (
+    await db.select().from(squads).where(inArray(squads.roundId, playedIds))
+  ).filter((s) => !rejected.has(s.teamId));
+  if (playedSquads.length === 0) return [];
+
+  const sqIds = playedSquads.map((s) => s.id);
+  const sps = await db
+    .select()
+    .from(squadPlayers)
+    .where(inArray(squadPlayers.squadId, sqIds));
+  const ownTotal = new Map<string, number>();
+  for (const sp of sps) {
+    ownTotal.set(sp.playerId, (ownTotal.get(sp.playerId) ?? 0) + 1);
+  }
+  const ownedIds = [...ownTotal.keys()];
+  if (ownedIds.length === 0) return [];
+
+  const [playerRows, clubRows, latestSnaps] = await Promise.all([
+    db.select().from(players).where(inArray(players.id, ownedIds)),
+    db.select().from(clubs),
+    db
+      .select({ playerId: playerRoundSnapshots.playerId, priceSek: playerRoundSnapshots.priceSek })
+      .from(playerRoundSnapshots)
+      .where(eq(playerRoundSnapshots.roundId, latestPlayed.id)),
+  ]);
+  const clubById = new Map(clubRows.map((c) => [c.id, c]));
+  const priceById = new Map(latestSnaps.map((s) => [s.playerId, s.priceSek]));
+
+  const pool: RoundStatPlayer[] = playerRows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    position: p.position,
+    countryCode: p.clubId ? (clubById.get(p.clubId)?.countryCode ?? null) : null,
+    growthSek: 0,
+    priceSek: priceById.get(p.id) ?? 0,
+    ownerCount: ownTotal.get(p.id) ?? 0,
+  }));
+
+  const weight = (p: RoundStatPlayer) => p.ownerCount ?? 0;
+  const popular = buildElevenBy(pool, weight, "max");
+  const unique = buildElevenBy(pool, weight, "min");
+
+  const out: LineupOption[] = [];
+  if (popular) {
+    out.push({
+      key: "popular",
+      label: "MEST POPULÄRA",
+      sublabel: "Mest valda elvan · alla ronder",
+      href: null,
+      eleven: popular,
+      metric: "ownership",
+      ownerUnit: "val",
+    });
+  }
+  if (unique) {
+    out.push({
+      key: "unique",
+      label: "MEST UNIKA",
+      sublabel: "Minst valda elvan · alla ronder",
+      href: null,
+      eleven: unique,
+      metric: "ownership",
+      ownerUnit: "val",
+    });
+  }
+  return out;
 }

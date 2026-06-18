@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { clubFor } from "@/data/player-clubs";
 import { db } from "@/db";
@@ -14,6 +14,7 @@ import {
   squadPlayers,
   squads,
   teams,
+  transfers,
   type Player,
   type Club,
   type EventType,
@@ -553,4 +554,90 @@ export async function getPlayerOwners(
     captainCount: owners.filter((o) => o.isCaptain).length,
     owners,
   };
+}
+
+// ─── Ownership + transfer timeline (per round) ──────────────────────────────
+
+export type PlayerTimelineRow = {
+  roundNumber: number;
+  roundName: string;
+  /** Our teams owning the player in this round. */
+  ownerCount: number;
+  /** Our teams that transferred the player IN this round. */
+  inCount: number;
+  /** Our teams that transferred the player OUT this round. */
+  outCount: number;
+};
+
+/**
+ * Per-round ownership + transfer activity for a player across all PLAYED rounds
+ * (locked/scored) — "how the game reacted to them". Rejected teams excluded.
+ */
+export async function getPlayerOwnershipTimeline(
+  playerId: string,
+): Promise<PlayerTimelineRow[]> {
+  const allRounds = await db.select().from(rounds).orderBy(asc(rounds.number));
+  const played = allRounds.filter(
+    (r) => r.status === "locked" || r.status === "scored",
+  );
+  if (played.length === 0) return [];
+  const playedIds = played.map((r) => r.id);
+
+  const rejected = await getRejectedTeamIds();
+
+  const [squadRowsRaw, txRowsRaw] = await Promise.all([
+    db.select().from(squads).where(inArray(squads.roundId, playedIds)),
+    db
+      .select()
+      .from(transfers)
+      .where(
+        and(
+          inArray(transfers.roundId, playedIds),
+          or(
+            eq(transfers.playerInId, playerId),
+            eq(transfers.playerOutId, playerId),
+          ),
+        ),
+      ),
+  ]);
+
+  const ourSquads = squadRowsRaw.filter((s) => !rejected.has(s.teamId));
+  const squadRound = new Map(ourSquads.map((s) => [s.id, s.roundId]));
+  const ownByRound = new Map<string, number>();
+  if (ourSquads.length > 0) {
+    const owns = await db
+      .select({ squadId: squadPlayers.squadId })
+      .from(squadPlayers)
+      .where(
+        and(
+          eq(squadPlayers.playerId, playerId),
+          inArray(
+            squadPlayers.squadId,
+            ourSquads.map((s) => s.id),
+          ),
+        ),
+      );
+    for (const o of owns) {
+      const rid = squadRound.get(o.squadId);
+      if (rid) ownByRound.set(rid, (ownByRound.get(rid) ?? 0) + 1);
+    }
+  }
+
+  const inByRound = new Map<string, number>();
+  const outByRound = new Map<string, number>();
+  for (const t of txRowsRaw) {
+    if (rejected.has(t.teamId)) continue;
+    if (t.playerInId === playerId)
+      inByRound.set(t.roundId, (inByRound.get(t.roundId) ?? 0) + 1);
+    if (t.playerOutId === playerId)
+      outByRound.set(t.roundId, (outByRound.get(t.roundId) ?? 0) + 1);
+  }
+
+  return played.map((r) => ({
+    roundNumber: r.number,
+    roundName: r.name,
+    ownerCount: ownByRound.get(r.id) ?? 0,
+    inCount: inByRound.get(r.id) ?? 0,
+    outCount: outByRound.get(r.id) ?? 0,
+  }));
 }

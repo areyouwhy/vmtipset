@@ -64,26 +64,58 @@ export function RoundStatsLineup({ lineups }: { lineups: LineupOption[] }) {
           <span className="ml-2 text-dim">{opt.eleven.formation}</span>
         </span>
         <span className="shrink-0 uppercase tracking-widest text-dim">
-          Σ <GrowthTag n={opt.eleven.totalGrowthSek} />
+          {opt.metric === "ownership" ? (
+            <>
+              Ø {avgOwners(opt.eleven)} {opt.ownerUnit ?? "lag"}
+            </>
+          ) : (
+            <>
+              Σ <GrowthTag n={opt.eleven.totalGrowthSek} />
+            </>
+          )}
         </span>
       </div>
 
-      <Pitch eleven={opt.eleven} />
+      <Pitch
+        eleven={opt.eleven}
+        metric={opt.metric ?? "growth"}
+        ownerUnit={opt.ownerUnit ?? "lag"}
+      />
     </div>
   );
 }
 
-function Pitch({ eleven }: { eleven: RoundEleven }) {
+function avgOwners(eleven: RoundEleven): number {
+  const all = [...eleven.GK, ...eleven.DEF, ...eleven.MID, ...eleven.FWD];
+  if (all.length === 0) return 0;
+  const total = all.reduce((acc, p) => acc + (p.ownerCount ?? 0), 0);
+  return Math.round(total / all.length);
+}
+
+function Pitch({
+  eleven,
+  metric,
+  ownerUnit,
+}: {
+  eleven: RoundEleven;
+  metric: "growth" | "ownership";
+  ownerUnit: string;
+}) {
   return (
     <div
       className="relative w-full overflow-hidden bg-[#0e2916]"
       style={{ aspectRatio: "3 / 4" }}
     >
       <div className="absolute inset-0 flex flex-col justify-around p-2">
-        <Row players={eleven.GK} captainId={eleven.captainId} />
-        <Row players={eleven.DEF} captainId={eleven.captainId} />
-        <Row players={eleven.MID} captainId={eleven.captainId} />
-        <Row players={eleven.FWD} captainId={eleven.captainId} />
+        {(["GK", "DEF", "MID", "FWD"] as const).map((row) => (
+          <Row
+            key={row}
+            players={eleven[row]}
+            captainId={eleven.captainId}
+            metric={metric}
+            ownerUnit={ownerUnit}
+          />
+        ))}
       </div>
     </div>
   );
@@ -92,14 +124,24 @@ function Pitch({ eleven }: { eleven: RoundEleven }) {
 function Row({
   players,
   captainId,
+  metric,
+  ownerUnit,
 }: {
   players: RoundStatPlayer[];
   captainId: string | null;
+  metric: "growth" | "ownership";
+  ownerUnit: string;
 }) {
   return (
     <div className="flex items-end justify-around gap-1">
       {players.map((p) => (
-        <Chip key={p.id} player={p} isCaptain={p.id === captainId} />
+        <Chip
+          key={p.id}
+          player={p}
+          isCaptain={p.id === captainId}
+          metric={metric}
+          ownerUnit={ownerUnit}
+        />
       ))}
     </div>
   );
@@ -108,9 +150,13 @@ function Row({
 function Chip({
   player,
   isCaptain,
+  metric,
+  ownerUnit,
 }: {
   player: RoundStatPlayer;
   isCaptain: boolean;
+  metric: "growth" | "ownership";
+  ownerUnit: string;
 }) {
   const lastName = player.name.split(" ").slice(-1)[0] ?? player.name;
   return (
@@ -135,7 +181,13 @@ function Chip({
         {lastName}
       </span>
       <span className="text-[9px]">
-        <GrowthTag n={player.growthSek} />
+        {metric === "ownership" ? (
+          <span className="tabular-nums text-cyan">
+            {player.ownerCount ?? 0} {ownerUnit}
+          </span>
+        ) : (
+          <GrowthTag n={player.growthSek} />
+        )}
       </span>
     </Link>
   );

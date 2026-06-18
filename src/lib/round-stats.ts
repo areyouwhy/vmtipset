@@ -17,6 +17,10 @@ export type RoundStatPlayer = {
   countryCode: string | null;
   growthSek: number;
   priceSek: number;
+  /** How many of OUR league's teams own this player this round (for the
+   *  most-popular / most-unique XIs). Optional — only set where ownership is
+   *  loaded. */
+  ownerCount?: number;
 };
 
 /** One starting XI for the lineup preview (a real team's squad, or an optimal
@@ -46,6 +50,22 @@ export function buildOptimalEleven(
   players: RoundStatPlayer[],
   dir: "max" | "min",
 ): RoundEleven | null {
+  return buildElevenBy(players, (p) => p.growthSek, dir);
+}
+
+/**
+ * Generalised version of buildOptimalEleven: builds the best (max) / worst
+ * (min) legal XI ranked by an arbitrary per-player `weight`. Used for the
+ * most-popular (max ownership) and most-unique (min ownership) XIs. Captain =
+ * the most-extreme-by-weight player in the chosen XI. `totalGrowthSek` always
+ * reports the XI's Σ growth (so the value column stays meaningful regardless of
+ * what it was ranked by).
+ */
+export function buildElevenBy(
+  players: RoundStatPlayer[],
+  weight: (p: RoundStatPlayer) => number,
+  dir: "max" | "min",
+): RoundEleven | null {
   const sign = dir === "max" ? 1 : -1;
   const byPos: Record<Position, RoundStatPlayer[]> = {
     GK: [],
@@ -54,11 +74,13 @@ export function buildOptimalEleven(
     FWD: [],
   };
   for (const p of players) byPos[p.position].push(p);
-  // max → highest growth first; min → lowest growth first.
   for (const k of POSITIONS) {
-    byPos[k].sort((a, b) => sign * (b.growthSek - a.growthSek));
+    byPos[k].sort((a, b) => sign * (weight(b) - weight(a)));
   }
   if (byPos.GK.length === 0) return null;
+
+  const sumW = (xs: RoundStatPlayer[]) =>
+    xs.reduce((acc, p) => acc + weight(p), 0);
 
   let best: {
     f: { def: number; mid: number; fwd: number };
@@ -73,10 +95,10 @@ export function buildOptimalEleven(
       continue;
     }
     const total =
-      sum(byPos.GK.slice(0, 1)) +
-      sum(byPos.DEF.slice(0, f.def)) +
-      sum(byPos.MID.slice(0, f.mid)) +
-      sum(byPos.FWD.slice(0, f.fwd));
+      sumW(byPos.GK.slice(0, 1)) +
+      sumW(byPos.DEF.slice(0, f.def)) +
+      sumW(byPos.MID.slice(0, f.mid)) +
+      sumW(byPos.FWD.slice(0, f.fwd));
     // Strictly better in the chosen direction.
     if (best === null || sign * (total - best.total) > 0) best = { f, total };
   }
@@ -89,7 +111,7 @@ export function buildOptimalEleven(
   const FWD = byPos.FWD.slice(0, f.fwd);
   const xi = [...GK, ...DEF, ...MID, ...FWD];
   const captain =
-    [...xi].sort((a, b) => sign * (b.growthSek - a.growthSek))[0] ?? null;
+    [...xi].sort((a, b) => sign * (weight(b) - weight(a)))[0] ?? null;
 
   return {
     GK,
@@ -98,7 +120,7 @@ export function buildOptimalEleven(
     FWD,
     captainId: captain?.id ?? null,
     formation: formationToString({ def: f.def, mid: f.mid, fwd: f.fwd }),
-    totalGrowthSek: best.total,
+    totalGrowthSek: sum(xi),
   };
 }
 

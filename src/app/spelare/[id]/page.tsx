@@ -7,6 +7,7 @@ import { Jersey } from "@/lib/jersey";
 import {
   getPlayerDetail,
   getPlayerOwners,
+  getPlayerOwnershipTimeline,
   type ScoreBreakdownItem,
 } from "@/lib/players-data";
 
@@ -22,6 +23,11 @@ export default async function PublicPlayerPage({
   if (!detail) notFound();
   // Which of our teams own this player (latest released round; anti-cheat-gated).
   const owners = await getPlayerOwners(id).catch(() => null);
+  // Per-round ownership + transfer activity ("how the game reacted").
+  const timeline = await getPlayerOwnershipTimeline(id).catch(() => []);
+  const hasTimelineActivity = timeline.some(
+    (t) => t.ownerCount > 0 || t.inCount > 0 || t.outCount > 0,
+  );
 
   const {
     player,
@@ -122,6 +128,50 @@ export default async function PublicPlayerPage({
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {hasTimelineActivity && (
+          <section className="mb-6">
+            <h2 className="border-b border-border pb-1 text-[10px] uppercase tracking-widest text-cyan">
+              ÄGANDE &amp; BYTEN PER ROND
+            </h2>
+            <table className="mt-2 w-full text-[11px] tabular-nums">
+              <thead>
+                <tr className="text-[9px] uppercase tracking-widest text-dim">
+                  <th className="py-1 text-left">ROND</th>
+                  <th className="py-1 text-right">ÄGS AV</th>
+                  <th className="py-1 text-right">IN</th>
+                  <th className="py-1 text-right">UT</th>
+                </tr>
+              </thead>
+              <tbody>
+                {timeline.map((t) => (
+                  <tr
+                    key={t.roundNumber}
+                    className="border-t border-dotted border-border/60"
+                  >
+                    <td className="py-1 text-foreground">
+                      <Link
+                        href={`/vm/omgang/${t.roundNumber}`}
+                        className="hover:text-cyan"
+                      >
+                        {t.roundName}
+                      </Link>
+                    </td>
+                    <td className="py-1 text-right text-cyan">
+                      {t.ownerCount} lag
+                    </td>
+                    <td className="py-1 text-right text-green">
+                      {t.inCount > 0 ? `↑ ${t.inCount}` : "—"}
+                    </td>
+                    <td className="py-1 text-right text-red">
+                      {t.outCount > 0 ? `↓ ${t.outCount}` : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </section>
         )}
 

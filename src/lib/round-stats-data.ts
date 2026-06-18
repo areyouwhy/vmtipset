@@ -20,6 +20,7 @@ import {
 import { getRejectedTeamIds } from "@/lib/active-teams";
 import { teamSlug } from "@/lib/team-slug";
 import {
+  buildElevenBy,
   buildOptimalEleven,
   elevenFromSquad,
   roundPerformanceSek,
@@ -44,13 +45,25 @@ export type RoundStats = {
 };
 
 export type LineupOption = {
-  key: "bestLeague" | "bestPossible" | "worstPossible" | "worstLeague";
+  key:
+    | "bestLeague"
+    | "bestPossible"
+    | "worstPossible"
+    | "worstLeague"
+    | "popular"
+    | "unique";
   label: string;
   /** Team name, or a description for the optimal/nightmare XIs. */
   sublabel: string;
   /** Link target for real teams (the public team page); null for dream XIs. */
   href: string | null;
   eleven: RoundEleven;
+  /** Which per-player figure the pitch shows: round growth (default) or
+   *  our-league ownership (for the popular / unique XIs). */
+  metric?: "growth" | "ownership";
+  /** Unit label for the ownership figure: "lag" (teams owning, per round) or
+   *  "val" (total selections across rounds, on the season overview). */
+  ownerUnit?: string;
 };
 
 export type RoundStatsResult =
@@ -204,6 +217,18 @@ export async function getRoundStats(
   const bestPossible = buildOptimalEleven(allRoundPlayers, "max");
   const worstPossible = buildOptimalEleven(allRoundPlayers, "min");
 
+  // Most popular / most unique XIs, ranked by OUR-league ownership. Popular =
+  // most-owned legal XI from the whole pool; unique = least-owned legal XI
+  // among players at least one team actually fielded (the contrarian XI).
+  const withOwner = allRoundPlayers.map((p) => ({
+    ...p,
+    ownerCount: pickCount.get(p.id) ?? 0,
+  }));
+  const ownedOnly = withOwner.filter((p) => (p.ownerCount ?? 0) >= 1);
+  const ownerWeight = (p: RoundStatPlayer) => p.ownerCount ?? 0;
+  const popularXI = buildElevenBy(withOwner, ownerWeight, "max");
+  const uniqueXI = buildElevenBy(ownedOnly, ownerWeight, "min");
+
   // Real teams ranked by round performance (Σ growth + captain bonus).
   const teamLineups = squadRows
     .map((sq) => {
@@ -229,6 +254,26 @@ export async function getRoundStats(
       sublabel: t?.name ?? "—",
       href: t ? `/team/${teamSlug(t.name)}` : null,
       eleven: elevenFromSquad(bestTeam.roster, bestTeam.sq.captainPlayerId),
+    });
+  }
+  if (popularXI) {
+    lineups.push({
+      key: "popular",
+      label: "MEST POPULÄRA",
+      sublabel: "Mest ägda elvan",
+      href: null,
+      eleven: popularXI,
+      metric: "ownership",
+    });
+  }
+  if (uniqueXI) {
+    lineups.push({
+      key: "unique",
+      label: "MEST UNIKA",
+      sublabel: "Minst ägda elvan (ägd av ≥1 lag)",
+      href: null,
+      eleven: uniqueXI,
+      metric: "ownership",
     });
   }
   if (bestPossible) {

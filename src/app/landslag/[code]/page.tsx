@@ -90,7 +90,40 @@ export default async function NationPage({
                   {detail.players.length}
                 </span>
               </span>
+              {detail.latestRoundNumber != null && (
+                <span>
+                  <span className="text-dim">Δ VÄRDE </span>
+                  <GrowthTag growthSek={detail.totalGrowthSek} />
+                </span>
+              )}
             </p>
+            {detail.latestRoundNumber != null &&
+              (detail.ownedByTeamCount > 0 || detail.mostPicked) && (
+                <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-widest">
+                  <span>
+                    <span className="text-dim">ÄGS AV </span>
+                    <span className="text-cyan tabular-nums">
+                      {detail.ownedByTeamCount}
+                    </span>
+                    <span className="text-dim"> / {detail.ourTeamTotal} LAG</span>
+                  </span>
+                  {detail.mostPicked && (
+                    <span>
+                      <span className="text-dim">POPULÄRAST </span>
+                      <Link
+                        href={`/spelare/${detail.mostPicked.id}`}
+                        className="text-foreground hover:text-cyan"
+                      >
+                        {detail.mostPicked.name}
+                      </Link>
+                      <span className="text-dim tabular-nums">
+                        {" "}
+                        ({detail.mostPicked.count})
+                      </span>
+                    </span>
+                  )}
+                </p>
+              )}
           </div>
         </section>
 
@@ -323,6 +356,20 @@ function RosterByPosition({ players }: { players: NationPlayer[] }) {
                           >
                             {club}
                           </Link>
+                        )}
+                        {(p.ourOwnerCount > 0 || p.abPopularityPct >= 0.5) && (
+                          <span className="block text-[10px] uppercase tracking-widest text-dim">
+                            {p.ourOwnerCount > 0 && (
+                              <span className="text-cyan">
+                                {p.ourOwnerCount} lag
+                              </span>
+                            )}
+                            {p.ourOwnerCount > 0 &&
+                              p.abPopularityPct >= 0.5 &&
+                              " · "}
+                            {p.abPopularityPct >= 0.5 &&
+                              `${p.abPopularityPct.toFixed(0)}% AB`}
+                          </span>
                         )}
                       </span>
                       <span className="tabular-nums text-foreground">

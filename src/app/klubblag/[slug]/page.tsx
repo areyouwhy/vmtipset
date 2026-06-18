@@ -51,6 +51,18 @@ export default async function ClubPage({
                 {detail.players.length}
               </span>
             </span>
+            <span>
+              <span className="text-dim">LAGVÄRDE </span>
+              <span className="text-yellow tabular-nums">
+                {(detail.squadValueSek / 1_000_000).toFixed(1)}M
+              </span>
+            </span>
+            {detail.latestRoundNumber != null && (
+              <span>
+                <span className="text-dim">Δ VÄRDE </span>
+                <GrowthInline n={detail.totalGrowthSek} />
+              </span>
+            )}
             {countries.length > 0 && (
               <span className="flex items-center gap-1">
                 <span className="text-dim">LANDSLAG </span>
@@ -67,6 +79,33 @@ export default async function ClubPage({
               </span>
             )}
           </p>
+          {detail.latestRoundNumber != null &&
+            (detail.ownedByTeamCount > 0 || detail.mostPicked) && (
+              <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-widest">
+                <span>
+                  <span className="text-dim">ÄGS AV </span>
+                  <span className="text-cyan tabular-nums">
+                    {detail.ownedByTeamCount}
+                  </span>
+                  <span className="text-dim"> / {detail.ourTeamTotal} LAG</span>
+                </span>
+                {detail.mostPicked && (
+                  <span>
+                    <span className="text-dim">POPULÄRAST </span>
+                    <Link
+                      href={`/spelare/${detail.mostPicked.id}`}
+                      className="text-foreground hover:text-cyan"
+                    >
+                      {detail.mostPicked.name}
+                    </Link>
+                    <span className="text-dim tabular-nums">
+                      {" "}
+                      ({detail.mostPicked.count})
+                    </span>
+                  </span>
+                )}
+              </p>
+            )}
         </section>
 
         <div className="space-y-5">
@@ -102,12 +141,31 @@ export default async function ClubPage({
                           </span>
                           <span className="block text-[10px] uppercase tracking-widest text-dim">
                             {p.countryCode ?? "—"}
+                            {p.ourOwnerCount > 0 && (
+                              <span className="text-cyan">
+                                {" · "}
+                                {p.ourOwnerCount} lag
+                              </span>
+                            )}
+                            {p.abPopularityPct >= 0.5 && (
+                              <span className="text-dim">
+                                {" · "}
+                                {p.abPopularityPct.toFixed(0)}% AB
+                              </span>
+                            )}
                           </span>
                         </span>
-                        <span className="tabular-nums text-foreground">
-                          {p.priceSek === null
-                            ? "—"
-                            : `${(p.priceSek / 1_000_000).toFixed(1)}M`}
+                        <span className="text-right tabular-nums">
+                          <span className="block text-foreground">
+                            {p.priceSek === null
+                              ? "—"
+                              : `${(p.priceSek / 1_000_000).toFixed(1)}M`}
+                          </span>
+                          {p.growthSek != null && p.growthSek !== 0 && (
+                            <span className="block text-[10px]">
+                              <GrowthInline n={p.growthSek} />
+                            </span>
+                          )}
                         </span>
                       </Link>
                     </li>
@@ -118,5 +176,24 @@ export default async function ClubPage({
         </div>
       </div>
     </main>
+  );
+}
+
+function GrowthInline({ n }: { n: number }) {
+  const color = n > 0 ? "text-green" : n < 0 ? "text-red" : "text-dim";
+  const arrow = n > 0 ? "↑" : n < 0 ? "↓" : "";
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "−" : "";
+  const v =
+    abs >= 1_000_000
+      ? `${sign}${(abs / 1_000_000).toFixed(2)}M`
+      : abs >= 1_000
+        ? `${sign}${Math.round(abs / 1_000)}k`
+        : `${sign}${abs}`;
+  return (
+    <span className={`${color} tabular-nums`}>
+      {arrow}
+      {v}
+    </span>
   );
 }

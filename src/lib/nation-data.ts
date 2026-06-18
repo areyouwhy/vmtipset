@@ -6,8 +6,11 @@ import {
   playerRoundSnapshots,
   players,
   rounds,
+  squadPlayers,
+  squads,
   type Player,
 } from "@/db/schema";
+import { getRejectedTeamIds } from "@/lib/active-teams";
 
 /**
  * Minimal projection of a snapshot row — just what the price-map builders
@@ -21,6 +24,7 @@ type SnapshotPriceRow = {
   priceSek: number;
   /** Cumulative value change through this round (vs the player's start price). */
   totalGrowthSek: number;
+  popularity: number;
   source: "api" | "manual";
 };
 import { currentRules } from "@/lib/rules";
@@ -43,6 +47,10 @@ export type NationPlayer = {
   /** Cumulative value change over the tournament (latest snapshot's
    *  totalGrowthSek). null when there's no snapshot. */
   growthSek: number | null;
+  /** Aftonbladet global ownership %. */
+  abPopularityPct: number;
+  /** How many of OUR teams own this player in the latest played round. */
+  ourOwnerCount: number;
 };
 
 export type StartingEleven = {
@@ -77,6 +85,18 @@ export type NationDetail = {
    *  `unstable_cache`, which serializes it — a Map would come back as a
    *  non-Map and crash `.get()` on cache hits. The page rebuilds the Map. */
   wcTeams: WcTeam[];
+  /** Latest played round these our-game figures reflect; null if none played. */
+  latestRoundNumber: number | null;
+  /** Σ current price across the roster. */
+  squadValueSek: number;
+  /** Σ cumulative growth across the roster. */
+  totalGrowthSek: number;
+  /** Distinct OUR teams owning ≥1 player from this nation (latest played round). */
+  ownedByTeamCount: number;
+  /** Total OUR teams with a squad that round. */
+  ourTeamTotal: number;
+  /** Roster player our teams pick most. */
+  mostPicked: { id: string; name: string; count: number } | null;
 };
 
 function priceOf(p: NationPlayer): number {
@@ -191,10 +211,12 @@ function buildPriceMaps(
   baseline: Map<string, number>;
   latest: Map<string, number>;
   latestGrowth: Map<string, number>;
+  latestPop: Map<string, number>;
 } {
   const baseline = new Map<string, number>();
   const latest = new Map<string, number>();
   const latestGrowth = new Map<string, number>();
+  const latestPop = new Map<string, number>();
   const baselineSrc = new Map<string, "api" | "manual">();
   const latestSrc = new Map<string, "api" | "manual">();
   for (const s of allSnapshots) {
@@ -211,11 +233,12 @@ function buildPriceMaps(
       if (!prev || (prev === "api" && s.source === "manual")) {
         latest.set(s.playerId, s.priceSek);
         latestGrowth.set(s.playerId, s.totalGrowthSek);
+        latestPop.set(s.playerId, s.popularity);
         latestSrc.set(s.playerId, s.source);
       }
     }
   }
-  return { baseline, latest, latestGrowth };
+  return { baseline, latest, latestGrowth, latestPop };
 }
 
 /**
@@ -242,15 +265,23 @@ async function _getNationDetail(
   // Pull rounds first so we can filter the snapshot query to just the
   // two rounds we actually consume (base + latest). One extra RTT, much
   // less wire data.
+  // base = round 1 (entry prices); latest = the latest PLAYED round (current
+  // prices / growth / ownership). Rounds with no snapshots (e.g. round 8) would
+  // otherwise show stale base prices.
   const allRounds = await db.select().from(rounds).orderBy(asc(rounds.number));
-  const baseRoundId = allRounds[0]?.id;
-  const latestRoundId = allRounds[allRounds.length - 1]?.id;
+  const baseRound = allRounds[0] ?? null;
+  const playedRounds = allRounds.filter(
+    (r) => r.status === "locked" || r.status === "scored",
+  );
+  const latestRound = playedRounds.at(-1) ?? baseRound;
+  const baseRoundId = baseRound?.id;
+  const latestRoundId = latestRound?.id;
   const priceRoundIds = [
     ...new Set([baseRoundId, latestRoundId].filter((x): x is string => !!x)),
   ];
 
-  const [allPlayers, allSnapshots, wcTeamsById, allMatches] = await Promise.all(
-    [
+  const [allPlayers, allSnapshots, wcTeamsById, allMatches, rejected, latestSquads] =
+    await Promise.all([
       db
         .select()
         .from(players)
@@ -263,6 +294,7 @@ async function _getNationDetail(
               roundId: playerRoundSnapshots.roundId,
               priceSek: playerRoundSnapshots.priceSek,
               totalGrowthSek: playerRoundSnapshots.totalGrowthSek,
+              popularity: playerRoundSnapshots.popularity,
               source: playerRoundSnapshots.source,
             })
             .from(playerRoundSnapshots)
@@ -270,8 +302,11 @@ async function _getNationDetail(
         : Promise.resolve<SnapshotPriceRow[]>([]),
       getTeamLookup(),
       getAllMatches(),
-    ],
-  );
+      getRejectedTeamIds(),
+      latestRoundId
+        ? db.select().from(squads).where(eq(squads.roundId, latestRoundId))
+        : Promise.resolve<(typeof squads.$inferSelect)[]>([]),
+    ]);
 
   // Match this nation to its WC team by ISO code. Fixtures we surface are
   // those where the team is either home or away.
@@ -287,12 +322,42 @@ async function _getNationDetail(
     : [];
 
   const playerIds = new Set(allPlayers.map((p) => p.id));
-  const { baseline, latest, latestGrowth } = buildPriceMaps(
+  const { baseline, latest, latestGrowth, latestPop } = buildPriceMaps(
     allSnapshots,
     baseRoundId,
     latestRoundId,
     playerIds,
   );
+
+  // OUR-league ownership in the latest played round (rejected teams excluded).
+  const ourSquads = latestSquads.filter((s) => !rejected.has(s.teamId));
+  const squadTeam = new Map(ourSquads.map((s) => [s.id, s.teamId]));
+  const ownerCountByPlayer = new Map<string, number>();
+  const owningTeamsByPlayer = new Map<string, Set<string>>();
+  if (ourSquads.length > 0) {
+    const sps = await db
+      .select()
+      .from(squadPlayers)
+      .where(
+        inArray(
+          squadPlayers.squadId,
+          ourSquads.map((s) => s.id),
+        ),
+      );
+    for (const sp of sps) {
+      if (!playerIds.has(sp.playerId)) continue;
+      ownerCountByPlayer.set(
+        sp.playerId,
+        (ownerCountByPlayer.get(sp.playerId) ?? 0) + 1,
+      );
+      const tid = squadTeam.get(sp.squadId);
+      if (tid) {
+        const set = owningTeamsByPlayer.get(sp.playerId) ?? new Set<string>();
+        set.add(tid);
+        owningTeamsByPlayer.set(sp.playerId, set);
+      }
+    }
+  }
 
   const roster: NationPlayer[] = allPlayers
     // Mirror the "in the game" definition used by the squad picker + /spelare:
@@ -309,6 +374,8 @@ async function _getNationDetail(
         priceSek,
         basePriceSek,
         growthSek: latestGrowth.get(p.id) ?? null,
+        abPopularityPct: (latestPop.get(p.id) ?? 0) * 100,
+        ourOwnerCount: ownerCountByPlayer.get(p.id) ?? 0,
       };
     });
 
@@ -324,6 +391,18 @@ async function _getNationDetail(
     return priceOf(b) - priceOf(a);
   });
 
+  const teamsOwning = new Set<string>();
+  for (const p of roster) {
+    for (const tid of owningTeamsByPlayer.get(p.id) ?? []) teamsOwning.add(tid);
+  }
+  const mostPicked = roster.reduce<NationDetail["mostPicked"]>((best, p) => {
+    if (p.ourOwnerCount <= 0) return best;
+    if (!best || p.ourOwnerCount > best.count) {
+      return { id: p.id, name: p.name, count: p.ourOwnerCount };
+    }
+    return best;
+  }, null);
+
   return {
     countryCode: code,
     countryName: club.name,
@@ -333,6 +412,13 @@ async function _getNationDetail(
     dreamTeamValueSek,
     matches,
     wcTeams: [...wcTeamsById.values()],
+    latestRoundNumber:
+      playedRounds.length > 0 ? (latestRound?.number ?? null) : null,
+    squadValueSek: roster.reduce((acc, p) => acc + (p.priceSek ?? 0), 0),
+    totalGrowthSek: roster.reduce((acc, p) => acc + (p.growthSek ?? 0), 0),
+    ownedByTeamCount: teamsOwning.size,
+    ourTeamTotal: ourSquads.length,
+    mostPicked,
   };
 }
 
@@ -357,10 +443,13 @@ export const getAllNations = unstable_cache(
 );
 
 async function _getAllNations(): Promise<NationSummary[]> {
-  // Rounds first so we can filter snapshots to (base, latest) only.
+  // base + latest PLAYED round (rounds with no snapshots would show stale base
+  // prices otherwise).
   const allRounds = await db.select().from(rounds).orderBy(asc(rounds.number));
   const baseRoundId = allRounds[0]?.id;
-  const latestRoundId = allRounds[allRounds.length - 1]?.id;
+  const latestRoundId =
+    allRounds.filter((r) => r.status === "locked" || r.status === "scored").at(-1)
+      ?.id ?? baseRoundId;
   const priceRoundIds = [
     ...new Set([baseRoundId, latestRoundId].filter((x): x is string => !!x)),
   ];
@@ -378,6 +467,7 @@ async function _getAllNations(): Promise<NationSummary[]> {
             roundId: playerRoundSnapshots.roundId,
             priceSek: playerRoundSnapshots.priceSek,
             totalGrowthSek: playerRoundSnapshots.totalGrowthSek,
+            popularity: playerRoundSnapshots.popularity,
             source: playerRoundSnapshots.source,
           })
           .from(playerRoundSnapshots)
@@ -416,6 +506,8 @@ async function _getAllNations(): Promise<NationSummary[]> {
             priceSek,
             basePriceSek,
             growthSek: latestGrowth.get(p.id) ?? null,
+            abPopularityPct: 0,
+            ourOwnerCount: 0,
           };
         },
       );

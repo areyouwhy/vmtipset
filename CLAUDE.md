@@ -41,7 +41,8 @@ The previous Astro/Blob/PIN-auth prototype was thrown away. This is the current 
 
 ### Tournament data
 - WC bracket views at `/vm`, `/vm/gruppspel`, `/vm/omgang/[n]`, `/vm/slutspel`. Backed by `src/lib/wc-tournament.ts`.
-- Player + club browsing at `/spelare`, `/spelare/[id]`, `/klubblag`, `/klubblag/[slug]`, `/landslag/[code]`.
+- Player + club browsing at `/spelare`, `/spelare/[id]`, `/klubblag`, `/klubblag/[slug]`, `/landslag/[code]`. These catalog pages are wired into our game: each surfaces current price + cumulative growth + AB% + our-league ownership ("N lag"), with club/nation header strips (squad value, Δ, owned-by-N, most-picked). They read the **latest played round** for current figures (not the last-by-number, which has no snapshots). Player pages also show an ownership/transfer-per-round timeline (`getPlayerOwnershipTimeline`).
+- **Most Popular / Most Unique XI**: `buildElevenBy(players, weight, dir)` in `src/lib/round-stats.ts` builds a legal XI ranked by our-league ownership (popular = max, unique = min among players ≥1 team fielded). Per-round on `/vm/omgang/[n]` (RONDSTATISTIK lineups) and season-aggregate on `/vm/omgang` (`getSeasonLineups`). The pitch renderer has an `ownership` metric mode.
 
 ### Admin surface (all `ADMIN_EMAIL`-gated)
 - `/admin` — user approvals.
