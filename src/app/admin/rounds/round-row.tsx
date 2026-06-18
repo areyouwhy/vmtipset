@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { RoundStatus } from "@/db/schema";
 import type { ScoringSummary } from "@/lib/score-runner";
 import { formatStockholm } from "@/lib/format-time";
+import { teamSlug } from "@/lib/team-slug";
 import {
   lockRoundAction,
   openRoundAction,
@@ -192,7 +194,14 @@ export function RoundRow({
                 {summary.results.slice(0, 10).map((r, i) => (
                   <tr key={r.teamId} className="border-b border-dotted border-border/60">
                     <td className="py-1 text-dim">{i + 1}</td>
-                    <td className="py-1 text-foreground">{r.teamName}</td>
+                    <td className="py-1 text-foreground">
+                      <Link
+                        href={`/team/${teamSlug(r.teamName)}`}
+                        className="hover:text-cyan"
+                      >
+                        {r.teamName}
+                      </Link>
+                    </td>
                     <td className="py-1 text-right">
                       {fmt(r.sumGrowthSek)}
                     </td>

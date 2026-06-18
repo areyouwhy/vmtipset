@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -71,7 +72,20 @@ export default async function PlayerDetailPage({
         <section className="py-6">
           <p className="text-[10px] uppercase tracking-widest text-dim">
             {player.position} · {club?.shortName ?? club?.name ?? "—"} ·{" "}
-            {club?.countryCode ?? "—"}
+            {club?.countryCode ? (
+              <Link
+                href={`/landslag/${club.countryCode}`}
+                className="hover:text-cyan"
+              >
+                {club.countryCode}
+              </Link>
+            ) : (
+              "—"
+            )}
+            {" · "}
+            <Link href={`/spelare/${player.id}`} className="hover:text-cyan">
+              PUBLIK SIDA →
+            </Link>
           </p>
           <h1 className="mt-1 text-2xl font-bold uppercase tracking-tight text-yellow">
             {player.name}

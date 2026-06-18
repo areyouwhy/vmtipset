@@ -254,7 +254,12 @@ function NationColumn({ nation }: { nation: NationExposure | null }) {
                     <span className="text-[8px] tracking-widest text-dim">
                       {p.position}
                     </span>{" "}
-                    <span className="text-white">{p.playerName}</span>
+                    <Link
+                      href={`/spelare/${p.playerId}`}
+                      className="text-white hover:text-cyan"
+                    >
+                      {p.playerName}
+                    </Link>
                     {p.isCaptain && <span className="text-yellow"> ★</span>}
                   </li>
                 ))}

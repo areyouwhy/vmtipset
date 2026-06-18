@@ -208,7 +208,11 @@ async function SquadPickerWrapper({
           {dropped.length > 0 && (
             <ul className="mt-2 ml-3 list-disc text-foreground">
               {dropped.map((d) => (
-                <li key={d.id}>{d.name}</li>
+                <li key={d.id}>
+                  <Link href={`/spelare/${d.id}`} className="hover:text-cyan">
+                    {d.name}
+                  </Link>
+                </li>
               ))}
             </ul>
           )}

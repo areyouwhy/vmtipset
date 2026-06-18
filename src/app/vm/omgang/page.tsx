@@ -108,12 +108,14 @@ function HighlightsBlock({ h }: { h: OmgangOverview["highlights"] }) {
     value: string;
     sub?: string;
     tone?: string;
+    href?: string;
   }[] = [];
   if (h.topPlayer)
     cells.push({
       label: "POPULÄRAST",
       value: h.topPlayer.name,
       sub: `${h.topPlayer.count} lag · R${h.topPlayer.roundNumber}`,
+      href: `/spelare/${h.topPlayer.id}`,
     });
   if (h.bestPick)
     cells.push({
@@ -121,6 +123,7 @@ function HighlightsBlock({ h }: { h: OmgangOverview["highlights"] }) {
       value: h.bestPick.name,
       sub: `${growthLabel(h.bestPick.growthSek)} · R${h.bestPick.roundNumber}`,
       tone: "text-green",
+      href: `/spelare/${h.bestPick.id}`,
     });
   if (h.worstPick)
     cells.push({
@@ -128,6 +131,7 @@ function HighlightsBlock({ h }: { h: OmgangOverview["highlights"] }) {
       value: h.worstPick.name,
       sub: `${growthLabel(h.worstPick.growthSek)} · R${h.worstPick.roundNumber}`,
       tone: "text-red",
+      href: `/spelare/${h.worstPick.id}`,
     });
   if (h.bestCaptain)
     cells.push({
@@ -135,6 +139,7 @@ function HighlightsBlock({ h }: { h: OmgangOverview["highlights"] }) {
       value: h.bestCaptain.name,
       sub: `${growthLabel(h.bestCaptain.growthSek)} · R${h.bestCaptain.roundNumber}`,
       tone: "text-green",
+      href: `/spelare/${h.bestCaptain.id}`,
     });
 
   return (
@@ -149,7 +154,14 @@ function HighlightsBlock({ h }: { h: OmgangOverview["highlights"] }) {
       ) : (
         <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {cells.map((c) => (
-            <Cell key={c.label} k={c.label} v={c.value} sub={c.sub} tone={c.tone} />
+            <Cell
+              key={c.label}
+              k={c.label}
+              v={c.value}
+              sub={c.sub}
+              tone={c.tone}
+              href={c.href}
+            />
           ))}
         </dl>
       )}
@@ -187,6 +199,7 @@ function TransfersTotals({
                 v={t.mostIn.name}
                 sub={`${t.mostIn.count}×`}
                 tone="text-green"
+                href={`/spelare/${t.mostIn.id}`}
               />
             )}
             {t.mostOut && (
@@ -195,6 +208,7 @@ function TransfersTotals({
                 v={t.mostOut.name}
                 sub={`${t.mostOut.count}×`}
                 tone="text-red"
+                href={`/spelare/${t.mostOut.id}`}
               />
             )}
             {t.mostActiveTeam && (
@@ -203,6 +217,7 @@ function TransfersTotals({
                 v={t.mostActiveTeam.teamName}
                 sub={`${t.mostActiveTeam.count} byten`}
                 tone="text-yellow"
+                href={`/team/${t.mostActiveTeam.teamSlug}`}
               />
             )}
             {t.biggestBuy && (
@@ -211,6 +226,7 @@ function TransfersTotals({
                 v={t.biggestBuy.name}
                 sub={`${fmtSek(t.biggestBuy.priceSek)} · R${t.biggestBuy.roundNumber}`}
                 tone="text-yellow"
+                href={`/spelare/${t.biggestBuy.id}`}
               />
             )}
             {t.highestFee && (
@@ -236,17 +252,25 @@ function Cell({
   v,
   sub,
   tone,
+  href,
 }: {
   k: string;
   v: string;
   sub?: string;
   tone?: string;
+  href?: string;
 }) {
   return (
     <div className="border border-border p-2">
       <dt className="text-[9px] uppercase tracking-widest text-dim">{k}</dt>
-      <dd className="mt-0.5 truncate text-sm text-foreground" title={v}>
-        {v}
+      <dd className="mt-0.5 truncate text-sm" title={v}>
+        {href ? (
+          <Link href={href} className="text-foreground hover:text-cyan">
+            {v}
+          </Link>
+        ) : (
+          <span className="text-foreground">{v}</span>
+        )}
       </dd>
       {sub && (
         <dd className={`text-[10px] tabular-nums ${tone ?? "text-dim"}`}>

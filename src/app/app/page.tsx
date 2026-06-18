@@ -476,7 +476,11 @@ function SquadStatusPanel({
       {hasDropped && (
         <ul className="mt-3 ml-4 list-disc text-xs text-foreground">
           {droppedPlayers.map((d) => (
-            <li key={d.id}>{d.name}</li>
+            <li key={d.id}>
+              <Link href={`/spelare/${d.id}`} className="hover:text-cyan">
+                {d.name}
+              </Link>
+            </li>
           ))}
         </ul>
       )}
@@ -534,9 +538,19 @@ function PendingTransfersList({ data }: { data: PendingTransfersForRound }) {
           >
             <span className="text-yellow">{t.playerOut.position}</span>
             <span className="truncate">
-              <span className="text-red">{t.playerOut.name}</span>
+              <Link
+                href={`/spelare/${t.playerOut.id}`}
+                className="text-red hover:text-cyan"
+              >
+                {t.playerOut.name}
+              </Link>
               <span className="mx-2 text-dim">→</span>
-              <span className="text-green">{t.playerIn.name}</span>
+              <Link
+                href={`/spelare/${t.playerIn.id}`}
+                className="text-green hover:text-cyan"
+              >
+                {t.playerIn.name}
+              </Link>
             </span>
             <span className="text-right text-dim">
               {fmtSek(t.sellPriceSek)} → {fmtSek(t.buyPriceSek)} ·{" "}

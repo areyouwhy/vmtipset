@@ -41,7 +41,12 @@ export type RoundTransfersResult =
       totalFeesSek: number;
       mostIn: TopMoved[];
       mostOut: TopMoved[];
-      biggestBuy: { name: string; priceSek: number; teamName: string } | null;
+      biggestBuy: {
+        id: string;
+        name: string;
+        priceSek: number;
+        teamName: string;
+      } | null;
       byTeam: TeamTransfers[];
       /** Teams that fielded a squad this round but made no transfers. */
       noChanges: { teamName: string; teamSlug: string }[];
@@ -80,8 +85,9 @@ export async function getRoundTransfers(
   const inCount = new Map<string, number>();
   const outCount = new Map<string, number>();
   let totalFees = 0;
-  let biggestBuy: { name: string; priceSek: number; teamName: string } | null =
-    null;
+  let biggestBuy:
+    | { id: string; name: string; priceSek: number; teamName: string }
+    | null = null;
   const byTeamMap = new Map<string, TeamTransfers>();
 
   for (const r of rows.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())) {
@@ -95,7 +101,12 @@ export async function getRoundTransfers(
     const teamName = team?.name ?? "—";
 
     if (pIn && (!biggestBuy || r.buyPriceSek > biggestBuy.priceSek)) {
-      biggestBuy = { name: pIn.name, priceSek: r.buyPriceSek, teamName };
+      biggestBuy = {
+        id: r.playerInId,
+        name: pIn.name,
+        priceSek: r.buyPriceSek,
+        teamName,
+      };
     }
 
     let tt = byTeamMap.get(r.teamId);

@@ -314,7 +314,12 @@ function TransfersBlock({
         {data.biggestBuy && (
           <p className="text-[10px] uppercase tracking-widest text-dim">
             DYRASTE KÖP:{" "}
-            <span className="text-foreground">{data.biggestBuy.name}</span>{" "}
+            <Link
+              href={`/spelare/${data.biggestBuy.id}`}
+              className="text-foreground hover:text-cyan"
+            >
+              {data.biggestBuy.name}
+            </Link>{" "}
             <span className="text-yellow tabular-nums">
               {fmtSek(data.biggestBuy.priceSek)}
             </span>{" "}
@@ -429,13 +434,17 @@ function TeamTransferAccordion({ team }: { team: TeamTransfers }) {
           >
             <span className="min-w-0 truncate text-red">
               <span className="text-[8px] tracking-widest text-dim">{s.out.position}</span>{" "}
-              {s.out.name}{" "}
+              <Link href={`/spelare/${s.out.id}`} className="hover:text-cyan">
+                {s.out.name}
+              </Link>{" "}
               <span className="text-dim tabular-nums">{fmtSek(s.out.priceSek)}</span>
             </span>
             <span className="text-dim">→</span>
             <span className="min-w-0 truncate text-green">
               <span className="text-[8px] tracking-widest text-dim">{s.in.position}</span>{" "}
-              {s.in.name}{" "}
+              <Link href={`/spelare/${s.in.id}`} className="hover:text-cyan">
+                {s.in.name}
+              </Link>{" "}
               <span className="text-dim tabular-nums">{fmtSek(s.in.priceSek)}</span>
             </span>
             <span className="shrink-0 text-[9px] tabular-nums text-dim">

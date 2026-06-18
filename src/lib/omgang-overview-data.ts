@@ -21,6 +21,13 @@ export type OverviewPlayerCount = {
   count: number;
 };
 
+export type PickHighlight = {
+  id: string;
+  name: string;
+  growthSek: number;
+  roundNumber: number;
+};
+
 export type OmgangOverview = {
   rounds: { number: number; status: string; transferCount: number }[];
   playedCount: number;
@@ -31,6 +38,7 @@ export type OmgangOverview = {
     mostIn: OverviewPlayerCount | null;
     mostOut: OverviewPlayerCount | null;
     biggestBuy: {
+      id: string;
       name: string;
       priceSek: number;
       teamName: string;
@@ -46,10 +54,10 @@ export type OmgangOverview = {
     mostActiveTeam: { teamName: string; teamSlug: string; count: number } | null;
   };
   highlights: {
-    bestPick: { name: string; growthSek: number; roundNumber: number } | null;
-    worstPick: { name: string; growthSek: number; roundNumber: number } | null;
-    bestCaptain: { name: string; growthSek: number; roundNumber: number } | null;
-    topPlayer: { name: string; count: number; roundNumber: number } | null;
+    bestPick: PickHighlight | null;
+    worstPick: PickHighlight | null;
+    bestCaptain: PickHighlight | null;
+    topPlayer: { id: string; name: string; count: number; roundNumber: number } | null;
   };
 };
 
@@ -97,6 +105,7 @@ export async function getOmgangOverview(): Promise<OmgangOverview> {
     const teamName = teamById.get(r.teamId)?.name ?? "—";
     if (!biggestBuy || r.buyPriceSek > biggestBuy.priceSek) {
       biggestBuy = {
+        id: r.playerInId,
         name: playerById.get(r.playerInId)?.name ?? "—",
         priceSek: r.buyPriceSek,
         teamName,
@@ -156,6 +165,7 @@ export async function getOmgangOverview(): Promise<OmgangOverview> {
       (!highlights.bestPick || bestPick.growthSek > highlights.bestPick.growthSek)
     ) {
       highlights.bestPick = {
+        id: bestPick.id,
         name: bestPick.name,
         growthSek: bestPick.growthSek,
         roundNumber: rn,
@@ -167,6 +177,7 @@ export async function getOmgangOverview(): Promise<OmgangOverview> {
         worstPick.growthSek < highlights.worstPick.growthSek)
     ) {
       highlights.worstPick = {
+        id: worstPick.id,
         name: worstPick.name,
         growthSek: worstPick.growthSek,
         roundNumber: rn,
@@ -178,6 +189,7 @@ export async function getOmgangOverview(): Promise<OmgangOverview> {
         bestCaptainPick.player.growthSek > highlights.bestCaptain.growthSek)
     ) {
       highlights.bestCaptain = {
+        id: bestCaptainPick.player.id,
         name: bestCaptainPick.player.name,
         growthSek: bestCaptainPick.player.growthSek,
         roundNumber: rn,
@@ -188,6 +200,7 @@ export async function getOmgangOverview(): Promise<OmgangOverview> {
       (!highlights.topPlayer || topPlayer.count > highlights.topPlayer.count)
     ) {
       highlights.topPlayer = {
+        id: topPlayer.player.id,
         name: topPlayer.player.name,
         count: topPlayer.count,
         roundNumber: rn,

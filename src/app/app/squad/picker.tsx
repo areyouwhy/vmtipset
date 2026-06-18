@@ -478,16 +478,30 @@ export function SquadPicker({
                   className="grid grid-cols-[1fr_auto] items-baseline gap-3 border-b border-cyan/10 py-1 last:border-b-0"
                 >
                   <span className="truncate tabular-nums">
-                    <span className="text-red">
-                      {t.outPlayer?.name ?? "?"}
-                    </span>{" "}
+                    {t.outPlayer ? (
+                      <Link
+                        href={`/spelare/${t.outId}`}
+                        className="text-red hover:text-cyan"
+                      >
+                        {t.outPlayer.name}
+                      </Link>
+                    ) : (
+                      <span className="text-red">?</span>
+                    )}{" "}
                     <span className="text-dim">
                       ({fmtSekShort(t.outPlayer?.priceSek ?? 0)})
                     </span>
                     <span className="mx-2 text-dim">→</span>
-                    <span className="text-green">
-                      {t.inPlayer?.name ?? "?"}
-                    </span>{" "}
+                    {t.inPlayer ? (
+                      <Link
+                        href={`/spelare/${t.inId}`}
+                        className="text-green hover:text-cyan"
+                      >
+                        {t.inPlayer.name}
+                      </Link>
+                    ) : (
+                      <span className="text-green">?</span>
+                    )}{" "}
                     <span className="text-dim">
                       ({fmtSekShort(t.inPlayer?.priceSek ?? 0)})
                     </span>

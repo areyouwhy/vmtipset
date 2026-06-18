@@ -135,10 +135,22 @@ export default async function AuditPage({
                           {pl.isCaptain && (
                             <span className="text-yellow">© </span>
                           )}
-                          {pl.playerName}{" "}
-                          <span className="text-dim">
-                            {pl.countryCode ?? "—"}
-                          </span>
+                          <Link
+                            href={`/spelare/${pl.playerId}`}
+                            className="hover:text-cyan"
+                          >
+                            {pl.playerName}
+                          </Link>{" "}
+                          {pl.countryCode ? (
+                            <Link
+                              href={`/landslag/${pl.countryCode}`}
+                              className="text-dim hover:text-cyan"
+                            >
+                              {pl.countryCode}
+                            </Link>
+                          ) : (
+                            <span className="text-dim">—</span>
+                          )}
                         </td>
                         <td className="py-1 text-right text-foreground">
                           {(pl.priceSek / 1_000_000).toFixed(1)}M

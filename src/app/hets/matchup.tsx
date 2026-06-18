@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { H2HPlayer, H2HSquad, LeaderboardRow } from "@/lib/leaderboard";
 
 /**
@@ -149,7 +150,13 @@ function SquadDuel({
   return (
     <div className="border-t border-border">
       <p className="px-3 pt-3 text-[9px] uppercase tracking-widest text-dim">
-        TRUPPJÄMFÖRELSE · ROND {squadA.roundNumber}
+        TRUPPJÄMFÖRELSE ·{" "}
+        <Link
+          href={`/vm/omgang/${squadA.roundNumber}`}
+          className="hover:text-yellow"
+        >
+          ROND {squadA.roundNumber}
+        </Link>
       </p>
 
       <table className="mt-1 w-full text-xs tabular-nums">
@@ -177,7 +184,15 @@ function SquadDuel({
           <span className="text-green">Noll gemensamma spelare. Helt egna vägar.</span>
         ) : (
           <span className="text-yellow">
-            {shared.length} st: {shared.map((p) => p.name).join(", ")}
+            {shared.length} st:{" "}
+            {shared.map((p, i) => (
+              <span key={p.id}>
+                {i > 0 && ", "}
+                <Link href={`/spelare/${p.id}`} className="hover:text-cyan">
+                  {p.name}
+                </Link>
+              </span>
+            ))}
           </span>
         )}
       </p>
@@ -216,7 +231,9 @@ function RosterColumn({
               }`}
             >
               <span className="mr-1 inline-block w-7 text-dim">{p.position}</span>
-              {p.name}
+              <Link href={`/spelare/${p.id}`} className="hover:text-cyan">
+                {p.name}
+              </Link>
               {p.isCaptain && <span className="ml-1 text-magenta">(C)</span>}
             </span>
             <span className="shrink-0 tabular-nums text-dim">

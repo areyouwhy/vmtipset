@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
+import { teamSlug } from "@/lib/team-slug";
 import { approveUser, rejectUser, reinstateUser } from "./actions";
 
 type Row = {
@@ -19,7 +21,16 @@ export function UserRow({ row }: { row: Row }) {
     <li className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <p className="truncate text-sm">
-          <span className="text-yellow">{row.teamName ?? "(inget lag)"}</span>
+          {row.teamName ? (
+            <Link
+              href={`/team/${teamSlug(row.teamName)}`}
+              className="text-yellow hover:text-cyan"
+            >
+              {row.teamName}
+            </Link>
+          ) : (
+            <span className="text-dim">(inget lag)</span>
+          )}
         </p>
         <p className="truncate text-xs text-dim">
           {row.displayName ? `${row.displayName} · ` : ""}
