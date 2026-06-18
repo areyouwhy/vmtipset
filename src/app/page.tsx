@@ -188,6 +188,9 @@ export default async function Home() {
           <Link href="/tabell" className="text-cyan">
             [ TABELL ]
           </Link>
+          <Link href="/vibes" className="text-cyan">
+            [ VIBES ]
+          </Link>
           <Link href="/hur" className="text-cyan">
             [ HUR FUNKAR DET? ]
           </Link>

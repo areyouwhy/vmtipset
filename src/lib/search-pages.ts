@@ -137,6 +137,12 @@ export const PAGE_ENTRIES: PageEntry[] = [
     keywords: ["knockout", "bracket", "playoffs", "slut"],
   },
   {
+    id: "vibes",
+    label: "Vibes",
+    href: "/vibes",
+    keywords: ["vibes", "video", "fan film", "stämning", "hype", "klipp"],
+  },
+  {
     id: "hur",
     label: "Hur funkar det",
     href: "/hur",
