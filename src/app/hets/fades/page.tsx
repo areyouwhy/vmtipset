@@ -1,8 +1,12 @@
 import Image, { type StaticImageData } from "next/image";
+import { auth } from "@clerk/nextjs/server";
 import { RivalryShell } from "../rivalry-ui";
+import { getMyReactions, getReactionCounts } from "@/lib/reactions";
+import { ReactionBar } from "./reactions";
 import kajlerDeadline from "./kajler-deadline.png";
 
-export const revalidate = 300;
+// Per-request: reads the viewer's auth + their reactions, so it can't be cached.
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "DIIIFS FADÄS — Copa del Mundo 2026",
@@ -10,6 +14,8 @@ export const metadata = {
 };
 
 type Fadas = {
+  /** Stable id for reactions (don't reuse / reorder). */
+  key: string;
   who: string;
   title: string;
   body: string;
@@ -20,6 +26,7 @@ type Fadas = {
 
 const FADASER: Fadas[] = [
   {
+    key: "kajler-spara",
     who: "Robert Kajler",
     title: "SPARA-KNAPPEN SOM GLAPPADE",
     body: "Fick syn på startelvorna inför Tjeckien–Sydafrika och såg svart på vitt att hans spelare var petad och satt på bänken. Lyckades ändå inte byta ut honom innan deadline.",
@@ -28,7 +35,16 @@ const FADASER: Fadas[] = [
   },
 ];
 
-export default function FadesPage() {
+export default async function FadesPage() {
+  const { userId } = await auth();
+  const targetKeys = FADASER.map((f) => `fades:${f.key}`);
+  const [counts, mine] = await Promise.all([
+    getReactionCounts(targetKeys),
+    userId
+      ? getMyReactions(targetKeys, userId)
+      : Promise.resolve<Record<string, string[]>>({}),
+  ]);
+
   return (
     <RivalryShell
       title="DIIIFS FADÄS"
@@ -36,7 +52,7 @@ export default function FadesPage() {
     >
       <div className="mt-2 space-y-4">
         {FADASER.map((f, i) => (
-          <article key={i} className="border border-red/40 bg-red/5 p-4">
+          <article key={f.key} className="border border-red/40 bg-red/5 p-4">
             <header className="flex items-baseline justify-between gap-3">
               <span className="text-sm font-bold uppercase tracking-widest text-red">
                 {f.who}
@@ -63,6 +79,12 @@ export default function FadesPage() {
                 className="mt-3 w-full border border-border"
               />
             )}
+            <ReactionBar
+              targetKey={`fades:${f.key}`}
+              counts={counts[`fades:${f.key}`] ?? {}}
+              mine={mine[`fades:${f.key}`] ?? []}
+              signedIn={!!userId}
+            />
           </article>
         ))}
       </div>

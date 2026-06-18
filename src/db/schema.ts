@@ -477,6 +477,27 @@ export const rivalryVotes = pgTable(
   (t) => [unique("rivalry_vote_unique").on(t.rivalrySlug, t.userId)],
 );
 
+/**
+ * Emoji reactions (e.g. the /hets/fades hall of shame). Isolated like
+ * rivalry_votes — no FK to the game graph. One row per (target, emoji, user);
+ * re-clicking the same emoji toggles it off. `targetKey` namespaces what's
+ * reacted to, e.g. "fades:kajler-spara". Created on prod via manual CREATE
+ * TABLE (the migration baseline is unseeded — see CLAUDE.md Migrations).
+ */
+export const reactions = pgTable(
+  "reactions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    targetKey: text("target_key").notNull(),
+    emoji: text("emoji").notNull(),
+    userId: text("user_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [unique("reaction_unique").on(t.targetKey, t.emoji, t.userId)],
+);
+
 // ─── Inferred types ─────────────────────────────────────────────────────────
 
 export type User = typeof users.$inferSelect;
@@ -520,6 +541,9 @@ export type NewIngestRun = typeof ingestRuns.$inferInsert;
 
 export type RivalryVote = typeof rivalryVotes.$inferSelect;
 export type NewRivalryVote = typeof rivalryVotes.$inferInsert;
+
+export type Reaction = typeof reactions.$inferSelect;
+export type NewReaction = typeof reactions.$inferInsert;
 
 export type Position = (typeof playerPosition.enumValues)[number];
 export type RoundStatus = (typeof roundStatus.enumValues)[number];
