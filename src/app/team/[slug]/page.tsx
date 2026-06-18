@@ -4,8 +4,13 @@ import { auth } from "@clerk/nextjs/server";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isAdmin } from "@/lib/auth";
 import { clubSlug as clubSlugLocal } from "@/lib/clubs";
-import { getTeamDetail, type TeamDetailPlayer } from "@/lib/leaderboard";
+import {
+  getTeamDetail,
+  type TeamDetailPlayer,
+  type TeamDetailRoundLine,
+} from "@/lib/leaderboard";
 import { getAbRank } from "@/lib/ab-highscore";
+import { getCurrentRoundNumber } from "@/lib/squad-data";
 import { findTeamBySlug } from "@/lib/team-slug.server";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +36,13 @@ export default async function TeamPage({
     detail.currentTeamValueSek !== null
       ? await getAbRank(detail.currentTeamValueSek)
       : null;
+
+  // Current matchday round goes on top, expanded; everything else collapses
+  // into accordions below.
+  const currentRound = await getCurrentRoundNumber();
+  const currentLine =
+    detail.byRound.find((l) => l.roundNumber === currentRound) ?? null;
+  const otherLines = detail.byRound.filter((l) => l !== currentLine);
 
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
@@ -104,61 +116,134 @@ export default async function TeamPage({
         </section>
 
         <div className="space-y-6 border-t border-border pt-6">
-          {detail.byRound.map((line) => (
-            <RoundSection key={line.roundId} line={line} />
-          ))}
+          {currentLine && (
+            <div>
+              <p className="mb-2 text-[10px] uppercase tracking-widest text-cyan">
+                DENNA OMGÅNG
+              </p>
+              <section className="border border-border p-4">
+                <RoundHeader line={currentLine} />
+                <RoundBody line={currentLine} />
+              </section>
+            </div>
+          )}
+
+          {otherLines.length > 0 && (
+            <div>
+              <p className="mb-2 text-[10px] uppercase tracking-widest text-dim">
+                ÖVRIGA RONDER
+              </p>
+              <div className="space-y-2">
+                {otherLines.map((line) => (
+                  <RoundAccordion key={line.roundId} line={line} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </main>
   );
 }
 
-function RoundSection({
-  line,
-}: {
-  line: Awaited<ReturnType<typeof getTeamDetail>> extends infer T
-    ? T extends { byRound: infer R }
-      ? R extends Array<infer U>
-        ? U
-        : never
-      : never
-    : never;
-}) {
-  const statusColor: Record<string, string> = {
-    upcoming: "text-dim",
-    open: "text-cyan",
-    locked: "text-yellow",
-    scored: "text-green",
-  };
-  const statusLabel: Record<string, string> = {
-    upcoming: "KOMMANDE",
-    open: "ÖPPEN",
-    locked: "LÅST",
-    scored: "POÄNGSATT",
-  };
+const STATUS_COLOR: Record<string, string> = {
+  upcoming: "text-dim",
+  open: "text-cyan",
+  locked: "text-yellow",
+  scored: "text-green",
+};
+const STATUS_LABEL: Record<string, string> = {
+  upcoming: "KOMMANDE",
+  open: "ÖPPEN",
+  locked: "LÅST",
+  scored: "POÄNGSATT",
+};
 
+/** One-line summary figure for a collapsed round: Δ value if scored, else
+ *  team value if known, else nothing. */
+function roundSummaryStat(line: TeamDetailRoundLine): {
+  label: string;
+  value: string;
+  tone: "yellow" | "green";
+} | null {
+  if (line.score) {
+    return {
+      label: "Δ VÄRDE",
+      value: fmtSek(line.score.totalPointsSek),
+      tone: "yellow",
+    };
+  }
+  if (line.teamValueSek !== null) {
+    return { label: "LAGVÄRDE", value: fmtSek(line.teamValueSek), tone: "green" };
+  }
+  return null;
+}
+
+function RoundAccordion({ line }: { line: TeamDetailRoundLine }) {
+  const stat = roundSummaryStat(line);
   return (
-    <section className="border border-border p-4">
-      <header className="flex items-baseline justify-between gap-3 text-xs uppercase tracking-widest">
-        <Link
-          href={`/vm/omgang/${line.roundNumber}`}
-          className="group/round transition hover:text-cyan"
-        >
-          <span className="text-dim group-hover/round:text-cyan">ROND </span>
+    <details className="group border border-border">
+      <summary className="flex cursor-pointer list-none items-baseline justify-between gap-3 px-4 py-3 text-xs uppercase tracking-widest marker:content-none [&::-webkit-details-marker]:hidden">
+        <span className="flex min-w-0 items-baseline gap-2">
+          <span className="text-dim transition-transform group-open:rotate-90">
+            ▸
+          </span>
+          <span className="text-dim">ROND</span>
           <span className="text-yellow tabular-nums">
             {String(line.roundNumber).padStart(2, "0")}
           </span>
-          <span className="text-foreground group-hover/round:text-cyan">
-            {" "}
-            — {line.roundName}
-          </span>
-          <span className="ml-1 text-dim group-hover/round:text-cyan">→</span>
-        </Link>
-        <span className={statusColor[line.status]}>
-          {statusLabel[line.status]}
+          <span className="truncate text-foreground">— {line.roundName}</span>
         </span>
-      </header>
+        <span className="flex shrink-0 items-baseline gap-3">
+          {stat && (
+            <span className="tabular-nums">
+              <span className="text-dim">{stat.label} </span>
+              <span
+                className={stat.tone === "yellow" ? "text-yellow" : "text-green"}
+              >
+                {stat.value}
+              </span>
+            </span>
+          )}
+          <span className={STATUS_COLOR[line.status]}>
+            {STATUS_LABEL[line.status]}
+          </span>
+        </span>
+      </summary>
+      <div className="border-t border-border p-4">
+        <RoundBody line={line} />
+      </div>
+    </details>
+  );
+}
 
+function RoundHeader({ line }: { line: TeamDetailRoundLine }) {
+  return (
+    <header className="flex items-baseline justify-between gap-3 text-xs uppercase tracking-widest">
+      <Link
+        href={`/vm/omgang/${line.roundNumber}`}
+        className="group/round transition hover:text-cyan"
+      >
+        <span className="text-dim group-hover/round:text-cyan">ROND </span>
+        <span className="text-yellow tabular-nums">
+          {String(line.roundNumber).padStart(2, "0")}
+        </span>
+        <span className="text-foreground group-hover/round:text-cyan">
+          {" "}
+          — {line.roundName}
+        </span>
+        <span className="ml-1 text-dim group-hover/round:text-cyan">→</span>
+      </Link>
+      <span className={STATUS_COLOR[line.status]}>
+        {STATUS_LABEL[line.status]}
+      </span>
+    </header>
+  );
+}
+
+function RoundBody({ line }: { line: TeamDetailRoundLine }) {
+  return (
+    <>
       {line.score && (
         <dl className="mt-3 grid grid-cols-2 gap-2 text-[11px] tabular-nums sm:grid-cols-6">
           <KV k="TILLVÄXT" v={fmtSek(line.score.sumGrowthSek)} />
@@ -230,7 +315,7 @@ function RoundSection({
       ) : (
         <p className="mt-3 text-xs text-dim">— ingen trupp —</p>
       )}
-    </section>
+    </>
   );
 }
 
