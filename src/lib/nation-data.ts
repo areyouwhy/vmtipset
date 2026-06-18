@@ -19,6 +19,8 @@ type SnapshotPriceRow = {
   playerId: string;
   roundId: string;
   priceSek: number;
+  /** Cumulative value change through this round (vs the player's start price). */
+  totalGrowthSek: number;
   source: "api" | "manual";
 };
 import { currentRules } from "@/lib/rules";
@@ -38,6 +40,9 @@ export type NationPlayer = {
   /** Most recent snapshot price; falls back to baseline; null if none. */
   priceSek: number | null;
   basePriceSek: number | null;
+  /** Cumulative value change over the tournament (latest snapshot's
+   *  totalGrowthSek). null when there's no snapshot. */
+  growthSek: number | null;
 };
 
 export type StartingEleven = {
@@ -185,9 +190,11 @@ function buildPriceMaps(
 ): {
   baseline: Map<string, number>;
   latest: Map<string, number>;
+  latestGrowth: Map<string, number>;
 } {
   const baseline = new Map<string, number>();
   const latest = new Map<string, number>();
+  const latestGrowth = new Map<string, number>();
   const baselineSrc = new Map<string, "api" | "manual">();
   const latestSrc = new Map<string, "api" | "manual">();
   for (const s of allSnapshots) {
@@ -203,11 +210,12 @@ function buildPriceMaps(
       const prev = latestSrc.get(s.playerId);
       if (!prev || (prev === "api" && s.source === "manual")) {
         latest.set(s.playerId, s.priceSek);
+        latestGrowth.set(s.playerId, s.totalGrowthSek);
         latestSrc.set(s.playerId, s.source);
       }
     }
   }
-  return { baseline, latest };
+  return { baseline, latest, latestGrowth };
 }
 
 /**
@@ -254,6 +262,7 @@ async function _getNationDetail(
               playerId: playerRoundSnapshots.playerId,
               roundId: playerRoundSnapshots.roundId,
               priceSek: playerRoundSnapshots.priceSek,
+              totalGrowthSek: playerRoundSnapshots.totalGrowthSek,
               source: playerRoundSnapshots.source,
             })
             .from(playerRoundSnapshots)
@@ -278,7 +287,7 @@ async function _getNationDetail(
     : [];
 
   const playerIds = new Set(allPlayers.map((p) => p.id));
-  const { baseline, latest } = buildPriceMaps(
+  const { baseline, latest, latestGrowth } = buildPriceMaps(
     allSnapshots,
     baseRoundId,
     latestRoundId,
@@ -287,14 +296,19 @@ async function _getNationDetail(
 
   const roster: NationPlayer[] = allPlayers
     .filter((p: Player) => p.active)
-    .map((p: Player) => ({
-      id: p.id,
-      externalId: p.externalId,
-      name: p.name,
-      position: p.position,
-      priceSek: latest.get(p.id) ?? baseline.get(p.id) ?? null,
-      basePriceSek: baseline.get(p.id) ?? null,
-    }));
+    .map((p: Player) => {
+      const priceSek = latest.get(p.id) ?? baseline.get(p.id) ?? null;
+      const basePriceSek = baseline.get(p.id) ?? null;
+      return {
+        id: p.id,
+        externalId: p.externalId,
+        name: p.name,
+        position: p.position,
+        priceSek,
+        basePriceSek,
+        growthSek: latestGrowth.get(p.id) ?? null,
+      };
+    });
 
   const { startingEleven, dreamTeamFormation, dreamTeamValueSek } =
     buildDreamTeam(roster);
@@ -358,6 +372,7 @@ async function _getAllNations(): Promise<NationSummary[]> {
             playerId: playerRoundSnapshots.playerId,
             roundId: playerRoundSnapshots.roundId,
             priceSek: playerRoundSnapshots.priceSek,
+            totalGrowthSek: playerRoundSnapshots.totalGrowthSek,
             source: playerRoundSnapshots.source,
           })
           .from(playerRoundSnapshots)
@@ -365,7 +380,7 @@ async function _getAllNations(): Promise<NationSummary[]> {
       : Promise.resolve<SnapshotPriceRow[]>([]),
   ]);
   const allPlayerIds = new Set(allPlayers.map((p) => p.id));
-  const { baseline, latest } = buildPriceMaps(
+  const { baseline, latest, latestGrowth } = buildPriceMaps(
     allSnapshots,
     baseRoundId,
     latestRoundId,
@@ -385,14 +400,19 @@ async function _getAllNations(): Promise<NationSummary[]> {
     .filter((c) => c.countryCode != null)
     .map((c) => {
       const roster: NationPlayer[] = (playersByClub.get(c.id) ?? []).map(
-        (p) => ({
-          id: p.id,
-          externalId: p.externalId,
-          name: p.name,
-          position: p.position,
-          priceSek: latest.get(p.id) ?? baseline.get(p.id) ?? null,
-          basePriceSek: baseline.get(p.id) ?? null,
-        }),
+        (p) => {
+          const priceSek = latest.get(p.id) ?? baseline.get(p.id) ?? null;
+          const basePriceSek = baseline.get(p.id) ?? null;
+          return {
+            id: p.id,
+            externalId: p.externalId,
+            name: p.name,
+            position: p.position,
+            priceSek,
+            basePriceSek,
+            growthSek: latestGrowth.get(p.id) ?? null,
+          };
+        },
       );
       const { dreamTeamValueSek } = buildDreamTeam(roster);
       return {

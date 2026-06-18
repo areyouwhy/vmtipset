@@ -300,7 +300,7 @@ function RosterByPosition({ players }: { players: NationPlayer[] }) {
                 const club = clubFor(p.externalId);
                 return (
                   <li key={p.id}>
-                    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 p-2 text-sm">
+                    <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 p-2 text-sm">
                       <span className="text-yellow tabular-nums">
                         {p.position}
                       </span>
@@ -325,6 +325,9 @@ function RosterByPosition({ players }: { players: NationPlayer[] }) {
                           ? "—"
                           : `${(p.priceSek / 1_000_000).toFixed(1)}M`}
                       </span>
+                      <span className="w-14 text-right">
+                        <GrowthTag growthSek={p.growthSek} />
+                      </span>
                     </div>
                   </li>
                 );
@@ -334,5 +337,27 @@ function RosterByPosition({ players }: { players: NationPlayer[] }) {
         );
       })}
     </div>
+  );
+}
+
+/** Total value change since round 1: ↑ green / ↓ red / – flat. */
+function GrowthTag({ growthSek }: { growthSek: number | null }) {
+  if (growthSek === null || growthSek === 0) {
+    return <span className="text-xs text-dim">–</span>;
+  }
+  const abs = Math.abs(growthSek);
+  const mag =
+    abs >= 1_000_000
+      ? `${(abs / 1_000_000).toFixed(1)}M`
+      : abs >= 1_000
+        ? `${Math.round(abs / 1_000)}k`
+        : `${abs}`;
+  return (
+    <span
+      className={`text-xs tabular-nums ${growthSek > 0 ? "text-green" : "text-red"}`}
+    >
+      {growthSek > 0 ? "↑" : "↓"}
+      {mag}
+    </span>
   );
 }
