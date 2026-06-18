@@ -65,6 +65,77 @@ export default async function OmgangPage({
   const prevN = n > 1 ? n - 1 : null;
   const nextN = n < 8 ? n + 1 : null;
 
+  // A played round (stats available) leads with the stats and tucks the
+  // fixtures into an accordion below — once it's over, who-picked-what + the
+  // results matter more than the schedule.
+  const passed = roundStats?.available === true;
+
+  const matchesInner = (
+    <>
+      {sections.length === 0 && (
+        <p className="border border-dashed border-border p-3 text-xs text-dim">
+          — inga matcher i denna omgång ännu —
+        </p>
+      )}
+      {sections.map(({ group, matches: ms }) => {
+        const letterMatch = group.name.match(/([A-Z])\s*$/);
+        const letter = letterMatch?.[1] ?? null;
+        return (
+          <section key={group.externalId}>
+            <h2 className="border-b border-border pb-1 text-[10px] uppercase tracking-widest text-cyan">
+              {letter && !isKnockout ? (
+                <Link
+                  href={`/vm/gruppspel#grupp-${letter}`}
+                  className="hover:text-yellow"
+                >
+                  {group.name}
+                </Link>
+              ) : (
+                group.name
+              )}
+              <span className="ml-2 text-dim">{ms.length}</span>
+            </h2>
+            <ul className="divide-y divide-border/40">
+              {ms.map((m) => (
+                <WcMatchLine key={m.externalId} m={m} teamsById={teamsById} />
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </>
+  );
+
+  const statsSection = (
+    <section>
+      <h2 className="border-b border-border pb-1 text-[10px] uppercase tracking-widest text-cyan">
+        RONDSTATISTIK
+      </h2>
+      {!roundStats || !roundStats.available ? (
+        <p className="mt-3 border border-dashed border-border p-3 text-xs text-dim">
+          — statistik visas när ronden har spelats —
+        </p>
+      ) : (
+        <div className="mt-3 space-y-4">
+          <RoundStatsSummary stats={roundStats.stats} />
+          <RoundStatsLineup lineups={roundStats.lineups} />
+        </div>
+      )}
+    </section>
+  );
+
+  const matchesAccordion = (
+    <details className="group border border-border">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-[10px] uppercase tracking-widest marker:content-none [&::-webkit-details-marker]:hidden">
+        <span className="text-cyan">MATCHER · {matches.length}</span>
+        <span className="text-dim transition-transform group-open:rotate-90">
+          ▸
+        </span>
+      </summary>
+      <div className="space-y-5 border-t border-border p-3">{matchesInner}</div>
+    </details>
+  );
+
   return (
     <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-2xl">
@@ -112,57 +183,17 @@ export default async function OmgangPage({
           )}
         </nav>
 
-        <div className="space-y-5">
-          {sections.length === 0 && (
-            <p className="border border-dashed border-border p-3 text-xs text-dim">
-              — inga matcher i denna omgång ännu —
-            </p>
-          )}
-          {sections.map(({ group, matches: ms }) => {
-            // Group names look like "Group A". Last char is the group letter,
-            // so we can deep-link to the standings anchor on /vm/gruppspel.
-            const letterMatch = group.name.match(/([A-Z])\s*$/);
-            const letter = letterMatch?.[1] ?? null;
-            return (
-            <section key={group.externalId}>
-              <h2 className="border-b border-border pb-1 text-[10px] uppercase tracking-widest text-cyan">
-                {letter && !isKnockout ? (
-                  <Link
-                    href={`/vm/gruppspel#grupp-${letter}`}
-                    className="hover:text-yellow"
-                  >
-                    {group.name}
-                  </Link>
-                ) : (
-                  group.name
-                )}
-                <span className="ml-2 text-dim">{ms.length}</span>
-              </h2>
-              <ul className="divide-y divide-border/40">
-                {ms.map((m) => (
-                  <WcMatchLine key={m.externalId} m={m} teamsById={teamsById} />
-                ))}
-              </ul>
-            </section>
-            );
-          })}
-        </div>
-
-        <section className="mt-10">
-          <h2 className="border-b border-border pb-1 text-[10px] uppercase tracking-widest text-cyan">
-            RONDSTATISTIK
-          </h2>
-          {!roundStats || !roundStats.available ? (
-            <p className="mt-3 border border-dashed border-border p-3 text-xs text-dim">
-              — statistik visas när ronden har spelats —
-            </p>
-          ) : (
-            <div className="mt-3 space-y-4">
-              <RoundStatsSummary stats={roundStats.stats} />
-              <RoundStatsLineup lineups={roundStats.lineups} />
-            </div>
-          )}
-        </section>
+        {passed ? (
+          <div className="space-y-8">
+            {statsSection}
+            {matchesAccordion}
+          </div>
+        ) : (
+          <div className="space-y-8">
+            <div className="space-y-5">{matchesInner}</div>
+            {statsSection}
+          </div>
+        )}
       </div>
     </main>
   );

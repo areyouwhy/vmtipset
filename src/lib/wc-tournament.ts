@@ -59,6 +59,8 @@ type RawMatch = {
   matchGroupId: number;
   periods: RawPeriod[];
   teams: RawMatchTeam[];
+  /** Aftonbladet puts the final score here as strings, not in `periods`. */
+  properties?: { homeScore?: string; awayScore?: string };
 };
 
 type RawMatchGroup = {
@@ -167,9 +169,17 @@ function classifyGroup(name: string): WcMatchGroup {
   return { externalId: 0, name, letter, stage };
 }
 
-function extractScore(periods: RawPeriod[]): { home: number; away: number } | null {
-  if (!periods || periods.length === 0) return null;
-  // Walk in reverse — the last populated period is the final score.
+function extractScore(m: RawMatch): { home: number; away: number } | null {
+  // Aftonbladet's final score lives in `properties` as strings.
+  const hp = m.properties?.homeScore;
+  const ap = m.properties?.awayScore;
+  if (hp != null && ap != null && hp !== "" && ap !== "") {
+    const home = Number.parseInt(hp, 10);
+    const away = Number.parseInt(ap, 10);
+    if (Number.isFinite(home) && Number.isFinite(away)) return { home, away };
+  }
+  // Fallback: some payloads carry it on a period instead.
+  const periods = m.periods ?? [];
   for (let i = periods.length - 1; i >= 0; i--) {
     const p = periods[i];
     if (p.score && typeof p.score.home === "number") return { home: p.score.home, away: p.score.away };
@@ -179,14 +189,33 @@ function extractScore(periods: RawPeriod[]): { home: number; away: number } | nu
   return null;
 }
 
+/** Aftonbladet statuses → our three display states. "completed" is their
+ *  finished state; anything mid-match maps to "ongoing". */
+function normaliseStatus(raw: string): "pending" | "ongoing" | "finished" {
+  const s = raw.toLowerCase();
+  if (s === "completed" || s === "finished" || s === "ended" || s === "ft") {
+    return "finished";
+  }
+  if (
+    s === "ongoing" ||
+    s === "live" ||
+    s === "playing" ||
+    s === "inprogress" ||
+    s.includes("half")
+  ) {
+    return "ongoing";
+  }
+  return "pending";
+}
+
 function normaliseMatch(m: RawMatch, roundNumber: number): WcMatch {
   const home = m.teams.find((t) => t.type === "home");
   const away = m.teams.find((t) => t.type === "away");
-  const score = extractScore(m.periods);
+  const score = extractScore(m);
   return {
     externalId: m.id,
     kickoff: m.start,
-    status: m.status,
+    status: normaliseStatus(m.status),
     matchGroupId: m.matchGroupId,
     roundNumber,
     homeTeamId: home?.team ?? 0,
