@@ -28,7 +28,8 @@ export type Rivalry = {
   tagline: string;
   /** "duel" = 1v1 head-to-head; "team" = aggregated camp vs camp. */
   kind: "duel" | "team";
-  sides: [RivalrySide, RivalrySide];
+  /** Two camps for a duel/2-way; three for the Ramos-Riahi-Ejder triangel. */
+  sides: RivalrySide[];
 };
 
 const MATCH_OFF: Rivalry = {
@@ -80,7 +81,33 @@ const RAMOS_VS_RIAHI: Rivalry = {
   ],
 };
 
-export const RIVALRIES: Rivalry[] = [MATCH_OFF, RAMOS_VS_RIAHI];
+const EJDER_VS_AI: Rivalry = {
+  slug: "ejder-vs-ai",
+  title: "EJDER VS. AI",
+  tagline:
+    "Människa mot maskin. Bröderna Ejder mot de två egenbyggda modellerna — Large Lindmarker Model och El Bizteka. Summan av lagvärdet avgör vem som får skryta.",
+  kind: "team",
+  sides: [
+    {
+      key: "ejder",
+      label: "EJDER",
+      accent: "green",
+      teamNames: ["Don Pedros Gubbar", "Ilses Gubbar"],
+    },
+    {
+      key: "ai",
+      label: "AI",
+      accent: "cyan",
+      teamNames: ["Large Lindmarker Model", "Los Biztekas"],
+    },
+  ],
+};
+
+export const RIVALRIES: Rivalry[] = [
+  MATCH_OFF,
+  RAMOS_VS_RIAHI,
+  EJDER_VS_AI,
+];
 
 export function getRivalry(slug: string): Rivalry | undefined {
   return RIVALRIES.find((r) => r.slug === slug);
@@ -105,6 +132,12 @@ export const RIVALRY_LINKS: Array<{
     title: "RAMOS > riahi",
     blurb: "Tre mot tre. Lagvärdet avgör.",
     accent: "yellow",
+  },
+  {
+    slug: "ejder-vs-ai",
+    title: "Ejder vs AI",
+    blurb: "Bröderna Ejder mot Lindmarker Model och El Bizteka. Människa mot maskin.",
+    accent: "green",
   },
   {
     slug: "fades",

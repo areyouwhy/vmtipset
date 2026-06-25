@@ -84,7 +84,11 @@ export function VotePanel({
         VEM VINNER? · RÖSTNING
       </header>
 
-      <div className="grid grid-cols-2 gap-2 p-3">
+      <div
+        className={`grid gap-2 p-3 ${
+          sides.length === 3 ? "grid-cols-3" : "grid-cols-2"
+        }`}
+      >
         {sides.map((s) => {
           const selected = choice === s.key;
           return (
