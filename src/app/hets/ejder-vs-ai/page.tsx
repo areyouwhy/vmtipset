@@ -42,14 +42,14 @@ export default async function EjderVsAiPage() {
         signedIn={!!userId}
       />
 
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {sides.map((side) => (
           <SideColumn key={side.key} side={side} />
         ))}
       </div>
 
       <p className="mt-4 border border-magenta/40 bg-magenta/5 px-3 py-3 text-xs text-magenta">
-        {campVerdict(sides)}
+        {campVerdict(sides[0], sides[1])}
         {!anyScored && (
           <span className="ml-1 text-dim">
             (rankas på lagvärde tills första ronden är poängsatt)
@@ -142,15 +142,12 @@ function AggStat({
   );
 }
 
-function campVerdict(sides: ResolvedSide[]): string {
-  const ranked = [...sides].sort(
-    (a, b) => (b.totalTeamValueSek ?? 0) - (a.totalTeamValueSek ?? 0),
-  );
-  const leader = ranked[0];
-  const last = ranked[ranked.length - 1];
-  const lv = leader.totalTeamValueSek ?? 0;
-  const lastv = last.totalTeamValueSek ?? 0;
-  if (lv === lastv) return "Helt jämnt mellan lägren. Ingen får säga ett ord.";
-  const diff = lv - lastv;
-  return `Lag ${leader.label} leder lägret med ${fmtSek(diff)} i samlat lagvärde ner till ${last.label}. ${last.label} har en del kvar att snacka ihop.`;
+function campVerdict(a: ResolvedSide, b: ResolvedSide): string {
+  const av = a.totalTeamValueSek ?? 0;
+  const bv = b.totalTeamValueSek ?? 0;
+  if (av === bv) return "Helt jämnt mellan lägren. Ingen får säga ett ord.";
+  const leader = av > bv ? a : b;
+  const loser = av > bv ? b : a;
+  const diff = Math.abs(av - bv);
+  return `Lag ${leader.label} leder med ${fmtSek(diff)} i samlat lagvärde. Lag ${loser.label} har en del kvar att snacka ihop.`;
 }
