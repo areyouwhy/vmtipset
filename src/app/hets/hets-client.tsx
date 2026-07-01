@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { HetsAccent, HetsPage, HetsRow } from "@/lib/banter";
 import type { H2HSquad } from "@/lib/leaderboard";
+import type { RoundProgress } from "@/lib/round-progress-data";
 import { teamSlug } from "@/lib/team-slug";
 import { fmtSek, MatchupBody } from "./matchup";
 
@@ -38,10 +39,13 @@ export function HetsClient({
   pages,
   squads,
   anyScored,
+  progress = {},
 }: {
   pages: HetsPage[];
   squads: Record<string, H2HSquad>;
   anyScored: boolean;
+  /** Per-team current-round progress ("8/11 spelat"), keyed by teamId. */
+  progress?: Record<string, RoundProgress>;
 }) {
   const [active, setActive] = useState(0);
   const page = pages[active];
@@ -119,7 +123,12 @@ export function HetsClient({
             <li className="px-3 py-4 text-xs text-dim">Tomt här. Lugnt.</li>
           ) : (
             page.rows.map((row) => (
-              <HetsRowLine key={row.teamId} row={row} accent={page.accent} />
+              <HetsRowLine
+                key={row.teamId}
+                row={row}
+                accent={page.accent}
+                progress={progress[row.teamId]}
+              />
             ))
           )}
         </ol>
@@ -131,7 +140,15 @@ export function HetsClient({
   );
 }
 
-function HetsRowLine({ row, accent }: { row: HetsRow; accent: HetsAccent }) {
+function HetsRowLine({
+  row,
+  accent,
+  progress,
+}: {
+  row: HetsRow;
+  accent: HetsAccent;
+  progress?: RoundProgress;
+}) {
   const a = ACCENT[accent];
   return (
     <li className="flex items-start gap-3 px-3 py-2.5">
@@ -161,8 +178,48 @@ function HetsRowLine({ row, accent }: { row: HetsRow; accent: HetsAccent }) {
         <p className="text-[10px] uppercase tracking-widest text-dim">
           {row.ownerHandle}
         </p>
+        {progress && (
+          <RoundProgressLine
+            progress={progress}
+            roundGrowthSek={row.roundGrowthSek}
+            accent={accent}
+          />
+        )}
       </div>
     </li>
+  );
+}
+
+/** Compact Text-TV sub-line: "OMG 1 · 8/11 SPELAT · +1.2M". */
+function RoundProgressLine({
+  progress,
+  roundGrowthSek,
+  accent,
+}: {
+  progress: RoundProgress;
+  roundGrowthSek: number | null;
+  accent: HetsAccent;
+}) {
+  const a = ACCENT[accent];
+  const done = progress.total > 0 && progress.played >= progress.total;
+  return (
+    <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10px] uppercase tracking-widest tabular-nums text-dim">
+      <span>OMG {progress.roundNumber}</span>
+      <span className="text-dim">·</span>
+      <span className={done ? "text-green" : a.text}>
+        {progress.played}/{progress.total} SPELAT
+        {done && " · KLAR"}
+      </span>
+      {roundGrowthSek !== null && (
+        <>
+          <span className="text-dim">·</span>
+          <span className={roundGrowthSek < 0 ? "text-red" : "text-green"}>
+            {roundGrowthSek >= 0 ? "+" : ""}
+            {fmtSek(roundGrowthSek)}
+          </span>
+        </>
+      )}
+    </p>
   );
 }
 

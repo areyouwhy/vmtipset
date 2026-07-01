@@ -1,4 +1,5 @@
 import type { LeaderboardRow } from "@/lib/leaderboard";
+import type { RoundProgress } from "@/lib/round-progress-data";
 
 /**
  * Fake standings for previewing /hets?demo=1 in development before any real
@@ -19,6 +20,18 @@ const SEEDS: Array<Partial<LeaderboardRow> & { rank: number; teamName: string }>
   { rank: 11, teamName: "Sämst i Klassen", ownerHandle: "olle", rankChange: -5, bankSek: -200_000, roundGrowthSek: -300_000, dailyBetsPoints: 1, ownerStatus: "pending" },
   { rank: 12, teamName: "Bottennappet", ownerHandle: "mia", rankChange: -1, bankSek: -50_000, roundGrowthSek: -120_000, dailyBetsPoints: 0 },
 ];
+
+/** Fake per-team current-round progress ("8/11 spelat") for the demo view. */
+export function demoRoundProgress(): Record<string, RoundProgress> {
+  // Deterministic spread of played counts so the preview shows partial, full
+  // and just-started teams (and a couple of small squads).
+  const played = [11, 9, 8, 7, 11, 6, 5, 4, 10, 3, 2, 8];
+  const out: Record<string, RoundProgress> = {};
+  for (let i = 0; i < SEEDS.length; i++) {
+    out[`demo-${i}`] = { roundNumber: 3, played: played[i] ?? 0, total: 11 };
+  }
+  return out;
+}
 
 export function demoLeaderboardRows(): LeaderboardRow[] {
   const n = SEEDS.length;

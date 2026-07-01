@@ -5,9 +5,10 @@ import { getH2HSquads, getLeaderboard } from "@/lib/leaderboard";
 import { RIVALRY_LINKS } from "@/lib/rivalries";
 import { teamSlug } from "@/lib/team-slug";
 import { getLiveView, type LiveView } from "@/lib/live-exposure-data";
+import { getRoundProgress } from "@/lib/round-progress-data";
 import type { TeamDailyAggregate } from "@/lib/live-exposure";
 import { HetsClient } from "../hets/hets-client";
-import { demoLeaderboardRows } from "../hets/demo-data";
+import { demoLeaderboardRows, demoRoundProgress } from "../hets/demo-data";
 import { ACCENT_TEXT } from "../hets/rivalry-ui";
 
 export const revalidate = 300;
@@ -32,15 +33,21 @@ export default async function TabellPage({
         <p className="mb-3 border border-magenta/40 bg-magenta/5 px-3 py-1.5 text-[10px] uppercase tracking-widest text-magenta">
           ▌ DEMOLÄGE · FEJKAD DATA · SYNS BARA I DEV
         </p>
-        <HetsClient pages={buildHets(demoLeaderboardRows())} squads={{}} anyScored />
+        <HetsClient
+          pages={buildHets(demoLeaderboardRows())}
+          squads={{}}
+          anyScored
+          progress={demoRoundProgress()}
+        />
       </Shell>
     );
   }
 
-  const [lb, squads, live] = await Promise.all([
+  const [lb, squads, live, progress] = await Promise.all([
     getLeaderboard().catch(() => null),
     getH2HSquads().catch(() => ({})),
     getLiveView().catch(() => null),
+    getRoundProgress().catch(() => ({})),
   ]);
 
   if (!lb || lb.rows.length === 0) {
@@ -64,7 +71,12 @@ export default async function TabellPage({
           ▌ INGEN ROND POÄNGSATT ÄNNU · RANKAS PÅ LAGVÄRDE (SQUAD + BANK) JUST NU
         </p>
       )}
-      <HetsClient pages={pages} squads={squads} anyScored={lb.anyScored} />
+      <HetsClient
+        pages={pages}
+        squads={squads}
+        anyScored={lb.anyScored}
+        progress={progress}
+      />
 
       {lb.dailyBets.length > 0 && (
         <section className="mt-10">
