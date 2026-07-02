@@ -182,7 +182,6 @@ function HetsRowLine({
           <RoundProgressLine
             progress={progress}
             roundGrowthSek={row.roundGrowthSek}
-            accent={accent}
           />
         )}
       </div>
@@ -194,19 +193,19 @@ function HetsRowLine({
 function RoundProgressLine({
   progress,
   roundGrowthSek,
-  accent,
 }: {
   progress: RoundProgress;
   roundGrowthSek: number | null;
-  accent: HetsAccent;
 }) {
-  const a = ACCENT[accent];
   const done = progress.total > 0 && progress.played >= progress.total;
+  // Traffic light on players left: green = most still to play, red = nearly done.
+  const light =
+    progress.played > 8 ? "text-red" : progress.played > 5 ? "text-yellow" : "text-green";
   return (
     <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10px] uppercase tracking-widest tabular-nums text-dim">
       <span>OMG {progress.roundNumber}</span>
       <span className="text-dim">·</span>
-      <span className={done ? "text-green" : a.text}>
+      <span className={light}>
         {progress.played}/{progress.total} SPELAT
         {done && " · KLAR"}
       </span>
